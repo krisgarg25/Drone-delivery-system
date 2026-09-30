@@ -1,0 +1,183 @@
+authoritative: false
+facilities:
+- charge_power_w: 1200
+  charger_bays: 3
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: depot-north-synthetic
+  kind: hub
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30756000
+    lon_e6: 76780000
+  name: Fictional North Depot
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 2
+- charge_power_w: 1200
+  charger_bays: 3
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: depot-south-synthetic
+  kind: hub
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  name: Fictional South Depot
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 2
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-central-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  name: Fictional Central Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-campus-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30690000
+    lon_e6: 76760000
+  name: Fictional Campus Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-ridge-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76825000
+  name: Fictional Ridge Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 0
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-market-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  name: Fictional Market Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-industrial-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30683000
+    lon_e6: 76810000
+  name: Fictional Industrial Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 0
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-riverside-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30762000
+    lon_e6: 76805000
+  name: Fictional Riverside Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-stadium-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30710000
+    lon_e6: 76820000
+  name: Fictional Stadium Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 0
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: pad-airfield-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30748000
+    lon_e6: 76765000
+  name: Fictional Airfield Perimeter Handover
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+schema_version: 1

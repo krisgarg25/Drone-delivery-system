@@ -1,16 +1,71 @@
-schema_version: 1
-authoritative: false
-# Synthetic aircraft. Identifiers are generic on purpose: no real operator or airframe.
 aircraft:
-  - aircraft_id: air-01-synthetic
-    battery_wh: 900
-    cruise_speed_mps: 18
-    home_facility_id: depot-north-synthetic
-  - aircraft_id: air-02-synthetic
-    battery_wh: 780
-    cruise_speed_mps: 16
-    home_facility_id: depot-north-synthetic
-  - aircraft_id: air-03-synthetic
-    battery_wh: 620
-    cruise_speed_mps: 20
-    home_facility_id: depot-south-synthetic
+- aircraft_id: air-01-synthetic
+  available_at_minute: 0
+  charge_pct: 100
+  home_facility_id: depot-north-synthetic
+  profile_id: airframe-x-sim
+  status: available
+- aircraft_id: air-02-synthetic
+  available_at_minute: 0
+  charge_pct: 82
+  home_facility_id: depot-north-synthetic
+  profile_id: airframe-x-sim
+  status: charging
+- aircraft_id: air-03-synthetic
+  available_at_minute: 0
+  charge_pct: 95
+  home_facility_id: depot-south-synthetic
+  profile_id: airframe-y-sim
+  status: available
+- aircraft_id: air-04-synthetic
+  available_at_minute: 26
+  charge_pct: 60
+  home_facility_id: depot-south-synthetic
+  profile_id: airframe-y-sim
+  status: maintenance
+- aircraft_id: air-05-synthetic
+  available_at_minute: 90
+  charge_pct: 90
+  home_facility_id: depot-north-synthetic
+  profile_id: airframe-x-sim
+  status: offline
+- aircraft_id: air-06-synthetic
+  available_at_minute: 0
+  charge_pct: 88
+  home_facility_id: depot-south-synthetic
+  profile_id: airframe-y-sim
+  status: available
+authoritative: false
+profiles:
+- battery_curve:
+  - payload_g: 0
+    wh_per_100km: 1200
+  - payload_g: 1000
+    wh_per_100km: 1500
+  - payload_g: 2000
+    wh_per_100km: 1900
+  capacity_wh: 400
+  charge_power_w: 900
+  cruise_speed_mps: 12
+  illustrative: true
+  max_payload_g: 2000
+  profile_id: airframe-x-sim
+  reserve_fraction_bp: 2500
+  source: contracts/vehicle-profile/airframe-x-sim.yaml
+- battery_curve:
+  - payload_g: 0
+    wh_per_100km: 2000
+  - payload_g: 1750
+    wh_per_100km: 2400
+  - payload_g: 3500
+    wh_per_100km: 2800
+  capacity_wh: 650
+  charge_power_w: 1200
+  cruise_speed_mps: 10
+  illustrative: true
+  max_payload_g: 3500
+  profile_id: airframe-y-sim
+  reserve_fraction_bp: 3000
+  source: contracts/vehicle-profile/airframe-y-sim.yaml
+profiles_note: Illustrative battery curves only. Not certified aircraft data.
+schema_version: 1

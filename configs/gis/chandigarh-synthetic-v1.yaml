@@ -1,0 +1,274 @@
+# Chandigarh geodata / obstacle ETL configuration.
+#
+# Versioned config, not code: conventions.md section 3 says separation and clearance
+# numbers are experiment parameters and must be read from here. Change a number here,
+# re-run the ETL, and the new value is recorded in the manifest and in every feature's
+# provenance. Nothing in `adapters/gis-etl` hard-codes a height.
+#
+# THIS CONFIG PRODUCES SYNTHETIC VERTICAL DATA. No value below is a surveyed,
+# published or approved obstacle height. See docs/conventions.md section 3 and
+# technical-build/12-chandigarh-geodata-obstacles.md section 6.
+schema_version: 1
+config_version: chandigarh-geodata-1.0.0
+dataset_id: chandigarh-synthetic-v1
+authoritative: false
+
+region:
+  name: Chandigarh (Union Territory of Chandigarh, IN-CH)
+  administrative_boundary:
+    osm_relation_id: 1942809
+    # Verified live on 2026-10-01: admin_level 4, ISO3166-2=IN-CH,
+    # wikipedia=en:Union Territory of Chandigarh.
+    expected_name: Chandigarh
+    licence: ODbL
+    attribution: (c) OpenStreetMap contributors
+  # Service bbox is roughly 11 x 15 km, the shape of the box measured on
+  # 30 September 2026 in technical-build/12 section 4.
+  service_bbox:
+    south: 30.68
+    west: 76.72
+    north: 30.78
+    east: 76.86
+  central_bbox:
+    south: 30.73
+    west: 76.78
+    north: 30.75
+    east: 76.8
+  reference_latitude_deg: 30.73
+
+overpass:
+  # A real, identifying user agent is not decoration: without one the public
+  # endpoints answer HTTP 406 (technical-build/12 section 3).
+  user_agent: "DroneOps-GisETL/1.0 (DroneOps Phase 1 data provenance; contact: geo@droneops.invalid; simulation-only research, no bulk mirroring)"
+  # Ordered attempt list. All of them are public volunteers' servers.
+  # Order is a measurement, not a preference: on 2026-10-01 overpass-api.de returned
+  # HTTP 504 to every Chandigarh query in this session (three consecutive attempts on a
+  # plain building count, 30 s each), kumi.systems and private.coffee timed out at 40 s,
+  # openstreetmap.fr answered 403 "white-listed usages", and maps.mail.ru answered 200
+  # with a fresh replication timestamp. The client still rotates: a mirror that fails or
+  # answers implausibly is cooled down and the next one is tried.
+  endpoints:
+    - https://maps.mail.ru/osm/tools/overpass/api/interpreter
+    - https://overpass-api.de/api/interpreter
+    - https://overpass.kumi.systems/api/interpreter
+    - https://overpass.private.coffee/api/interpreter
+  # Excluded by measurement, listed here so nobody re-adds it: overpass.osm.ch answers
+  # HTTP 200 with a well-formed JSON body, timestamp_osm_base "117395" and zero elements
+  # for every Chandigarh query. The plausibility guard below is what rejects it.
+  request_timeout_s: 60
+  max_attempts_per_endpoint: 3
+  backoff_base_s: 3.0
+  backoff_multiplier: 2.0
+  backoff_cap_s: 45.0
+  jitter_max_s: 2.0
+  # Retry sleeps are jittered but seeded: a run is reproducible, and the seed is
+  # recorded so a reviewer can tell a jittered wait from a measured one.
+  retry_seed: 20261001
+  request_minimum_interval_s: 4.0
+  endpoint_cooldown_s: 90.0
+  allow_live: true
+  # An endpoint that answers 200 with an empty or impossible body is worse than a
+  # timeout: a timeout is honest, a silent zero becomes "evidence" that Chandigarh
+  # has no buildings. Observed on 2026-10-01: overpass.osm.ch answered HTTP 200 with
+  # timestamp_osm_base "117395" and zero elements for every Chandigarh query.
+  plausibility_guard:
+    require_iso_replication_timestamp: true
+    reject_zero_when_baseline_nonzero: true
+    max_consecutive_suspicious: 2
+
+paths:
+  raw_dir: data/raw
+  processed_dir: data/processed/chandigarh-synthetic-v1
+
+coverage_metrics:
+  # Measured now, compared against the 30 September 2026 baseline so the coverage
+  # claim is current rather than quoted.
+  #
+  # A count over the whole 11 x 13 km box is the first attempt; the public endpoints
+  # answer it with 504 often enough that the ETL falls back to a chunk grid and sums.
+  # The fallback is recorded per metric, because a summed chunk count can double-count
+  # an element that straddles a chunk boundary - an error this project states instead of
+  # hiding, and one that is irrelevant to the conclusion (the vertical tags are ~0 either
+  # way).
+  primary_timeout_s: 30
+  chunk_timeout_s: 25
+  chunk_grid: 2
+  baseline:
+    retrieved_at: "2026-09-30T00:00:00Z"
+    bbox_shape_km: [12, 15]
+    building_ways: 33351
+    tagged_height: 1
+    tagged_building_levels: 751
+    power_towers: 2923
+    power_lines: 5674
+    highway_ways: 50556
+    aeroway_ways: 167
+    man_made_towers: 5
+    trees: 44
+    central_buildings: 302
+    central_with_height: 0
+
+layers:
+  # output: center (point per element) or geom (full coordinate rings).
+  # chunk_grid splits the bbox so one 504 does not lose a whole layer.
+  boundary:
+    enabled: true
+    output: geom
+    chunk_grid: 1
+    max_features: 50
+  buildings:
+    enabled: true
+    output: center
+    chunk_grid: 2
+    max_features: 60000
+  landuse:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  pois:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 5000
+  towers:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  power_lines:
+    enabled: true
+    output: geom
+    chunk_grid: 2
+    max_features: 20000
+  power_minor:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  water:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  parks:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  aeroway:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  trees:
+    enabled: true
+    output: center
+    chunk_grid: 1
+    max_features: 20000
+  roads:
+    enabled: true
+    output: geom
+    chunk_grid: 2
+    max_features: 80000
+
+# --------------------------------------------------------------------- synthetic
+# Every number below is an assumption for a demonstration. They are deliberately
+# conservative-looking rather than realistic-looking.
+synthetic_vertical_model:
+  version: chandigarh-vertical-1.0
+  # Spec 12 section 6: levels * 3.2 m.
+  metres_per_level: 3.2
+  # Low class for untagged residential.
+  untagged_residential_height_m: 6.4
+  # Medium class for untagged commercial / retail / office / industrial.
+  untagged_commercial_height_m: 12.8
+  # Anything else untagged (building=yes, roof, construction, ...).
+  untagged_default_height_m: 9.6
+  # Configured assumed clearance for a power line with no surveyed height.
+  power_line_assumed_height_m: 8.0
+  # Untagged point obstacles: the class the tag says, at an assumed height.
+  tower_assumed_height_m: 30.0
+  mast_assumed_height_m: 25.0
+  tree_assumed_height_m: 12.0
+  # Extra uncertainty margin for an area with no height evidence at all.
+  unknown_area_extra_margin_m: 10.0
+  # Per-feature uncertainty band, expressed as a ratio of the assumed height.
+  uncertainty_ratio: 0.5
+  # A levels tag of 40 does not become 128 m of "known" height: it becomes a capped
+  # value plus an unresolved-tolerance marker.
+  height_cap_m: 60.0
+  altitude_reference: AGL
+  classification:
+    # building=* values treated as residential for the low class.
+    residential:
+      - residential
+      - house
+      - detached
+      - semidetached_house
+      - terrace
+      - farm
+      - farm_auxiliary
+      - rural_housing
+      - hut
+      - construction
+    commercial:
+      - commercial
+      - retail
+      - office
+      - industrial
+      - warehouse
+      - school
+      - university
+      - college
+      - hospital
+      - clinic
+      - hotel
+      - apartment
+      - civic
+      - public
+      - government
+      - train_station
+      - transport_station
+      - supermarket
+
+corridor:
+  method: synthetic
+  # Spec 12 section 7: road and green-space alignment is a *visual and planning
+  # heuristic*, never a clearance claim.
+  basis: road and green-space heuristic
+  safety_claim: false
+  planning_heuristic_only: true
+  road_classes:
+    - primary
+    - secondary
+    - tertiary
+    - unclassified
+    - residential
+  green_space_classes:
+    - park
+    - garden
+    - recreation_ground
+    - playground
+    - village_green
+  grouping_tolerance_m: 120.0
+  min_corridor_length_m: 400.0
+  max_corridors: 60
+  corridor_label: Synthetic corridor model (planning heuristic only, not a clearance assessment)
+
+terrain:
+  # Read by adapters/terrain. No DEM is fetched: this project has no credentials for
+  # a licensed Copernicus/SRTM download, so a local raster path is required.
+  source: none-supplied
+  resolution_m: 30
+  vertical_datum: unknown
+  raster_version: unknown
+  clipping_method: polygon-mask-bbox-crop
+  # A 30 m grid cannot represent a tower, a wire or a rooftop edge.
+  usable_for_obstacle_clearance: false
+
+provenance_defaults:
+  licence: ODbL
+  attribution: (c) OpenStreetMap contributors
+  # OSM data ages; a snapshot that is presented as current is a defect.
+  snapshot_ttl_days: 30

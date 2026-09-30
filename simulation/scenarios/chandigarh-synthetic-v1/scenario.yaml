@@ -1,0 +1,26 @@
+authoritative: false
+boundary:
+  attribution: (c) OpenStreetMap contributors
+  extract_date: '2026-09-20'
+  license: ODbL
+  relation_id: 1942809
+  source: OpenStreetMap
+human_expectation: Every committed mission holds protected corridor volumes no other committed mission overlaps;
+  capacity queues rather than overbooks; offline and maintenance aircraft never fly; every rejected request is counted
+  with a reason code; the report shows completed, late, unserved, energy, duration, waits and an illustrative cost
+  per delivery.
+scenario_id: chandigarh-synthetic-v1
+schema_version: 1
+synthetic_flags:
+  corridors: true
+  demand: true
+  facilities: true
+  fleet: true
+  obstacles_require_survey: true
+  weather: true
+title: 'Chandigarh synthetic world: four hubs, six nodes, three partner sites, seeded demand families'
+topology:
+  hubs: 4
+  nodes: 6
+what_this_does_not_prove: Nothing about real Chandigarh airspace, aircraft performance, weather or certification.
+  Boundary geometry is licensed context; everything vertical is synthetic and requires survey.

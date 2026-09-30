@@ -308,8 +308,13 @@ jobs:
             > apps/api/src/droneops_api/_canary_forbidden_import.py
           if uv run lint-imports --no-cache; then
             echo "::error::import-linter allowed the API to reach the vehicle gateway"
+            rm -f apps/api/src/droneops_api/_canary_forbidden_import.py
             exit 1
           fi
+          # Remove it before the next step: the final clean-tree assertion below only
+          # proves anything if no earlier canary is still sitting in the working tree.
+          rm -f apps/api/src/droneops_api/_canary_forbidden_import.py
+          uv run lint-imports --no-cache
           echo "build correctly failed"
 
       - name: canary - a command route must fail the OpenAPI gate

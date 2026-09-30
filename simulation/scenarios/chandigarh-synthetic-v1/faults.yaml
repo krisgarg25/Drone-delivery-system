@@ -1,0 +1,29 @@
+authoritative: false
+faults:
+- at_minute: 20
+  fault_id: flt-telemetry-01
+  target_id: ord-ro006
+  type: telemetry_loss
+- at_minute: 44
+  fault_id: flt-telemetry-02
+  target_id: ord-ru031
+  type: telemetry_loss
+- at_minute: 24
+  fault_id: flt-stall-01
+  target_id: air-02-synthetic
+  type: aircraft_stall
+- at_minute: 47
+  fault_id: flt-stall-02
+  target_id: air-11-synthetic
+  type: aircraft_stall
+- at_minute: 30
+  fault_id: flt-weather-01
+  target_id: lane-hcentral-hsouth-campus-C-synthetic
+  type: weather_window_close
+  until_minute: 38
+- at_minute: 41
+  fault_id: flt-outage-01
+  target_id: hub-ridge-east-synthetic
+  type: facility_outage
+  until_minute: 49
+schema_version: 1

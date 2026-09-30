@@ -17,7 +17,9 @@ def file_sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def collect_file_digests(root: Path, inputs: tuple[str, ...], text_only: bool = True) -> list[dict[str, str]]:
+def collect_file_digests(
+    root: Path, inputs: tuple[str, ...], text_only: bool = True
+) -> list[dict[str, str]]:
     """Return {path, sha256} for every hashed file, sorted by POSIX path."""
     entries: list[dict[str, str]] = []
     for relative in sorted(inputs):

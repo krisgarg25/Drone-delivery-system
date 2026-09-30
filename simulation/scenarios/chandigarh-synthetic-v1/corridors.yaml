@@ -1,0 +1,574 @@
+altitude_reference: AGL
+authoritative: false
+bands:
+- band: A
+  ceiling_m_agl: 50
+  floor_m_agl: 30
+  speed_cap_mps: 14
+- band: B
+  ceiling_m_agl: 70
+  floor_m_agl: 50
+  speed_cap_mps: 16
+- band: C
+  ceiling_m_agl: 90
+  floor_m_agl: 70
+  speed_cap_mps: 18
+closures:
+- corridor_id: lane-hcentral-hsouth-campus-C-synthetic
+  from_minute: 30
+  reason: synthetic crane survey overlay
+  to_minute: 38
+- corridor_id: lane-hsouth-campus-hcentral-C-synthetic
+  from_minute: 30
+  reason: synthetic crane survey overlay
+  to_minute: 38
+edges:
+- band: B
+  corridor_id: lane-hcentral-hnorth-B-synthetic
+  from: hub-central-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30753323
+    lon_e6: 76790895
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  length_m: 3600
+  max_wind_ms: 11
+  synthetic: true
+  to: hub-north-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-hcentral-hridge-east-A-synthetic
+  from: hub-central-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30743427
+    lon_e6: 76813224
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  length_m: 4100
+  max_wind_ms: 11
+  synthetic: true
+  to: hub-ridge-east-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-hcentral-hsouth-campus-C-synthetic
+  from: hub-central-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30702847
+    lon_e6: 76787576
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  length_m: 7800
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-south-campus-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-hcentral-nmedlab-B-synthetic
+  from: hub-central-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30746417
+    lon_e6: 76781507
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30752000
+    lon_e6: 76770000
+  length_m: 4600
+  max_wind_ms: 10
+  synthetic: true
+  to: node-medlab-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-hcentral-nquickcart-A-synthetic
+  from: hub-central-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30718453
+    lon_e6: 76776028
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30700000
+    lon_e6: 76760000
+  length_m: 6800
+  max_wind_ms: 9
+  synthetic: true
+  to: node-quickcart-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-hnorth-hcentral-B-synthetic
+  from: hub-north-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30750294
+    lon_e6: 76787734
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  length_m: 4000
+  max_wind_ms: 11
+  synthetic: true
+  to: hub-central-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-hnorth-nlakeview-B-synthetic
+  from: hub-north-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30749607
+    lon_e6: 76769466
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76750000
+  length_m: 6600
+  max_wind_ms: 10
+  synthetic: true
+  to: node-lakeview-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-hnorth-nmedlab-A-synthetic
+  from: hub-north-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30760636
+    lon_e6: 76777866
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30752000
+    lon_e6: 76770000
+  length_m: 4900
+  max_wind_ms: 11
+  synthetic: true
+  to: node-medlab-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-hnorth-nrimroad-C-synthetic
+  from: hub-north-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30721221
+    lon_e6: 76800697
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30680000
+    lon_e6: 76820000
+  length_m: 5200
+  max_wind_ms: 10
+  synthetic: true
+  to: node-rimroad-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-hridge-east-hcentral-B-synthetic
+  from: hub-ridge-east-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30741203
+    lon_e6: 76812464
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  length_m: 4500
+  max_wind_ms: 11
+  synthetic: true
+  to: hub-central-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-hridge-east-nlakeview-C-synthetic
+  from: hub-ridge-east-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30740403
+    lon_e6: 76789502
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76750000
+  length_m: 7200
+  max_wind_ms: 11
+  synthetic: true
+  to: node-lakeview-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-hridge-east-nsparesdepot-A-synthetic
+  from: hub-ridge-east-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30733666
+    lon_e6: 76833438
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30720000
+    lon_e6: 76840000
+  length_m: 5400
+  max_wind_ms: 9
+  synthetic: true
+  to: node-sparesdepot-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-hsouth-campus-hcentral-C-synthetic
+  from: hub-south-campus-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30706051
+    lon_e6: 76786332
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  length_m: 8200
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-central-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-hsouth-campus-ngreenpark-B-synthetic
+  from: hub-south-campus-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30713610
+    lon_e6: 76796469
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30760000
+    lon_e6: 76810000
+  length_m: 6400
+  max_wind_ms: 9
+  synthetic: true
+  to: node-greenpark-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-hsouth-campus-nquickcart-B-synthetic
+  from: hub-south-campus-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30684967
+    lon_e6: 76769808
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30700000
+    lon_e6: 76760000
+  length_m: 6100
+  max_wind_ms: 10
+  synthetic: true
+  to: node-quickcart-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-hsouth-campus-nsparesdepot-C-synthetic
+  from: hub-south-campus-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30693760
+    lon_e6: 76810347
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30720000
+    lon_e6: 76840000
+  length_m: 8900
+  max_wind_ms: 10
+  synthetic: true
+  to: node-sparesdepot-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-ngreenpark-hsouth-campus-B-synthetic
+  from: node-greenpark-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30760000
+    lon_e6: 76810000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30714266
+    lon_e6: 76794074
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  length_m: 6800
+  max_wind_ms: 9
+  synthetic: true
+  to: hub-south-campus-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-nlakeview-hnorth-B-synthetic
+  from: node-lakeview-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76750000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30751375
+    lon_e6: 76766616
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  length_m: 7000
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-north-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-nlakeview-hridge-east-C-synthetic
+  from: node-lakeview-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76750000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30740904
+    lon_e6: 76791332
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  length_m: 7600
+  max_wind_ms: 11
+  synthetic: true
+  to: hub-ridge-east-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-nmedlab-hcentral-B-synthetic
+  from: node-medlab-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30752000
+    lon_e6: 76770000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30746984
+    lon_e6: 76783200
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  length_m: 5000
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-central-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-nmedlab-hnorth-B-synthetic
+  from: node-medlab-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30752000
+    lon_e6: 76770000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30758862
+    lon_e6: 76778185
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  length_m: 5300
+  max_wind_ms: 11
+  synthetic: true
+  to: hub-north-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-nquickcart-hcentral-B-synthetic
+  from: node-quickcart-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30700000
+    lon_e6: 76760000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30719788
+    lon_e6: 76775601
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  length_m: 7200
+  max_wind_ms: 9
+  synthetic: true
+  to: hub-central-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-nquickcart-hsouth-campus-B-synthetic
+  from: node-quickcart-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30700000
+    lon_e6: 76760000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30685707
+    lon_e6: 76768160
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  length_m: 6500
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-south-campus-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-nrimroad-hnorth-C-synthetic
+  from: node-rimroad-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30680000
+    lon_e6: 76820000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30722243
+    lon_e6: 76803008
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  length_m: 5600
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-north-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-nsparesdepot-hridge-east-B-synthetic
+  from: node-sparesdepot-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30720000
+    lon_e6: 76840000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30732887
+    lon_e6: 76834296
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  length_m: 5800
+  max_wind_ms: 9
+  synthetic: true
+  to: hub-ridge-east-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-nsparesdepot-hsouth-campus-C-synthetic
+  from: node-sparesdepot-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30720000
+    lon_e6: 76840000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30693393
+    lon_e6: 76808487
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  length_m: 9300
+  max_wind_ms: 10
+  synthetic: true
+  to: hub-south-campus-synthetic
+  width_m: 100
+safety_claim: false
+schema_version: 1
+source: synthetic road and green-space heuristic (technical-build/12 section 7)

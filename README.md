@@ -45,7 +45,8 @@ Then open `http://127.0.0.1:8000/docs` and confirm that only simulated planning 
 
 ## What is intentionally absent
 
-- database;
+- production or cloud database (a local PostGIS via `make db-up` holds synthetic
+  simulation data only, and the Alembic baseline is not committed yet);
 - live DigitalSky or UTM access;
 - MAVLink command client;
 - vehicle credentials;
@@ -56,3 +57,9 @@ Then open `http://127.0.0.1:8000/docs` and confirm that only simulated planning 
 ## Before Phase 2
 
 Create ADRs for geometry kernels, reservation commit, scenario bundle format and weather snapshots. Read `technical-build/` in the parent documentation repository for the approved architecture.
+
+## Safety documents
+
+- `security/threat-model.md` — the seven Phase 0 threats, each tied to the test, import contract or CI job that enforces it, plus what the model explicitly does not cover.
+- `security/phase-1-boundaries.md` — asset classification and current boundary controls.
+- `docs/phase-0-gate-report.md` — the Phase 0 exit gate walked criterion by criterion, with the commands actually run and their real output, including the gaps that remain open.

@@ -4,6 +4,11 @@
 #
 # All ports bind to 127.0.0.1: nothing here is reachable from a network.
 # These defaults are for a laptop only and must never appear in a deployed environment.
+#
+# Host defaults are 55432/56379 rather than 5432/6379 on purpose: developer machines
+# commonly already run a native PostgreSQL (and sometimes Valkey/Redis) on the standard
+# ports, which makes `make db-up` fail with "address already in use" — or, worse, points
+# a fresh clone's migrations at somebody else's server.
 
 name: droneops-local
 
@@ -17,7 +22,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-55432}:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
     healthcheck:
@@ -32,7 +37,7 @@ services:
     restart: unless-stopped
     command: ["valkey-server", "--save", "", "--appendonly", "no"]
     ports:
-      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"
+      - "127.0.0.1:${VALKEY_PORT:-56379}:6379"
     volumes:
       - valkey:/data
     healthcheck:

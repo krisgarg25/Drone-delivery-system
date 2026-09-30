@@ -21,7 +21,7 @@ Rules this module enforces
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Final, NewType
 
 from .errors import TimeDomainError
@@ -46,7 +46,9 @@ INT64_MICROSECOND_MAX: Final[int] = 2**63 - 1
 """PostgreSQL ``timestamptz(6)`` and the reservation ledger both store ``int64``
 microseconds, so geom-core refuses to produce a value the ledger cannot hold."""
 
-UTC: Final[timezone] = UTC
+UTC: Final[timezone] = timezone.utc
+"""A local constant rather than a re-export of ``datetime.UTC``, which mypy
+``--strict`` rejects as an implicit re-export; ``timezone.utc`` is the same object."""
 EPOCH: Final[datetime] = datetime(2000, 1, 1, 0, 0, 0, tzinfo=UTC)
 """Frozen epoch. Changing it changes every stored key, so it is a constant.
 

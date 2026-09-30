@@ -305,7 +305,8 @@ class GapAudit:
 class SafeIntervalResult:
     """The answer to a safe-interval query.
 
-    ``windows`` is ascending by entry start and pairwise disjoint. ``blocked`` is
+    ``windows`` is ascending by entry start, pairwise disjoint and non-touching:
+    one window per maximal run of admissible entries. ``blocked`` is
     the merged entry-blocked set clipped to the horizon, so an independent
     checker can re-derive the answer from ``query.occupied`` alone and compare
     notes - which is the entire point of keeping two implementations.
@@ -353,10 +354,12 @@ class EntryDecision:
 def compute_safe_intervals(query: SafeIntervalQuery) -> SafeIntervalResult:
     """Enumerate every admissible entry window inside ``query.horizon``.
 
-    Order: ``windows`` ascending by entry start; ``gap_audit`` in the same order
-    with exactly one entry per gap between consecutive merged occupations,
-    including the two horizon edges. Every gap is examined once, so
-    ``len(gap_audit) == len(windows) + rejected_count`` holds by construction.
+    Order: ``windows`` ascending by entry start, canonical (non-overlapping and
+    non-touching, so the tuple equals ``gaps_within(horizon, blocked)``);
+    ``gap_audit`` in the same order with exactly one entry per gap between
+    consecutive *entry-blocking* occupations, including the two horizon edges.
+    Every gap is examined once, so ``len(gap_audit) == len(windows) +
+    rejected_count`` holds by construction.
     """
     padding = query.padding
     traversal = query.traversal_us
@@ -367,14 +370,19 @@ def compute_safe_intervals(query: SafeIntervalQuery) -> SafeIntervalResult:
         )
     occupied = query.merged_occupied()
 
-    blocked = merge(item.entry_blocked_by(padding, traversal) for item in occupied)
+    blocked_of = tuple((item, item.entry_blocked_by(padding, traversal)) for item in occupied)
+    blocked = merge(window for _, window in blocked_of)
     blocked_in_horizon = tuple(
         window for item in blocked for window in item.intersection(horizon)
     )
+    # Two consecutive gaps are contiguous exactly when the occupation separating
+    # them forbids no entry instant at all, so only a non-empty blocked window is
+    # allowed to split the horizon; the boundary would otherwise be meaningless.
+    boundaries = tuple(item for item, window in blocked_of if not window.is_empty)
 
     windows: list[SafeWindow] = []
     audits: list[GapAudit] = []
-    for before, after in _gap_bounds(occupied):
+    for before, after in _gap_bounds(boundaries):
         bounds = _entry_bounds(horizon, before, after, padding=padding, traversal_us=traversal)
         if bounds.entry_high > bounds.entry_low:
             entry = Interval(as_microseconds(bounds.entry_low), as_microseconds(bounds.entry_high))

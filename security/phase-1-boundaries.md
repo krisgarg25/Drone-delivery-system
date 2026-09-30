@@ -1,5 +1,9 @@
 # Phase 1 security and boundary notes
 
+The full threat model, with the test, import contract or CI job that enforces each
+mitigation, is in [`threat-model.md`](threat-model.md). This file is the short boundary
+register; where the two disagree, `threat-model.md` is the one backed by executed evidence.
+
 ## Asset classification
 
 - Phase 1 scenarios: synthetic internal data.
@@ -20,14 +24,37 @@
 
 ## Threats requiring a future ADR
 
-- spoofed telemetry;
-- duplicate or replayed commands;
-- cross-tenant data access;
-- stale restriction data;
-- supply-chain dependency compromise;
+These are the seven threats from `technical-build/07-infrastructure-ci-security.md`
+section 15 plus the boundary-specific ones. "Enforced today" means a named test, import
+contract or CI job refuses the unsafe change; "open" means no such artifact exists yet.
+
+- spoofed telemetry (partly enforced: message-type allowlist, monotonic `sequence`,
+  required provenance, telemetry cannot command; **open**: device identity, signing,
+  plausibility limits);
+- duplicate or replayed commands (enforced: mandatory `Idempotency-Key`, `409` on
+  duplicate commit, database overlap rejection; **open**: server-side key store and a
+  committed Alembic baseline);
+- cross-tenant data access (partly enforced: closed resource-key grammar, API barred from
+  the write model, second-tenant concurrency test; **open**: PostgreSQL row-level security
+  and log scrubbing);
+- stale restriction data (enforced: provenance expiry fails the run closed, frozen bundle
+  refuses edits, golden replay must match byte-for-byte);
+- supply-chain dependency compromise (enforced: frozen lockfile installs, licence allowlist,
+  `pip-audit --strict`, SBOM, pinned actions and hook revisions; **open**: image signing and
+  automated dependency updates);
+- operational denial through queue flooding (**open — nothing enforces it**): no rate
+  limit, no request-size cap, no tenant budget, no safety-event priority lane and no circuit
+  breaker exist in the code today. See `threat-model.md` section 7 for the exact state and
+  the tests that must land before any queue is introduced;
 - gateway network breakout;
-- simulator accidentally pointed at a live endpoint;
+- simulator accidentally pointed at a live endpoint (enforced by absence:
+  `droneops_sim_core` and `droneops_sim_runner` cannot import `socket`, `httpx`, `requests`,
+  `uvicorn`, `sqlalchemy`, `asyncpg` or persistence, and read no environment variable);
 - human acceptance token abuse.
+
+A read-only technical boundary is not an operating approval, and the aircraft's onboard
+fence and failsafes remain the primary safety layer — see the closing section of
+`threat-model.md`.
 
 ## Data handling
 

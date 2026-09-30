@@ -6,7 +6,7 @@
 # any cloud resource. Phase 0 is a simulator: see docs/conventions.md section 2.
 
 .DEFAULT_GOAL := help
-PYTHON := uv run
+PYTHON := uv run --no-sync
 
 # Git Bash / MSYS on Windows resolves `bash` from PATH; Linux/macOS already have /bin/bash.
 ifeq ($(OS),Windows_NT)
@@ -21,13 +21,14 @@ COMPOSE_FILE := infra/compose/docker-compose.yml
 COMPOSE := docker compose -f $(COMPOSE_FILE)
 CONSOLE_DIR := apps/console
 SIM_BUNDLE := simulation/scenarios/chandigarh-basic
+SIM_WORLD := simulation/scenarios/chandigarh-synthetic-v1
 GOLDEN_DIR := simulation/golden/chandigarh-basic
 RUN_DIR := simulation/reports
 LICE_ALLOWLIST := configs/licensing/licence-allowlist.txt
 
 .PHONY: help bootstrap db-up db-down db-status migrate reset-db api worker test unit \
         imports lint format typecheck sim replay console check sec licence audit sbom \
-        openapi-diff clean-hooks e2e-install dev-env sim-freeze
+        openapi-diff clean-hooks e2e-install dev-env sim-freeze sim-world sim-batch
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
@@ -93,6 +94,14 @@ sim-freeze: ## Re-record bundle digests and promote the current run to the golde
 	$(PYTHON) droneops-sim freeze --scenario $(SIM_BUNDLE) --write-manifest
 	$(PYTHON) droneops-sim run --scenario $(SIM_BUNDLE) --out $(RUN_DIR)/latest
 	$(PYTHON) droneops-sim freeze --scenario $(SIM_BUNDLE) --golden $(GOLDEN_DIR) --out $(RUN_DIR)/latest
+
+sim-world: ## Deterministic run of the full chandigarh-synthetic-v1 world bundle
+	mkdir -p $(RUN_DIR)
+	$(PYTHON) droneops-sim run --scenario $(SIM_WORLD) --out $(RUN_DIR)/world
+
+sim-batch: ## 20 seeded scenarios of the v1 world as a batch with the metrics table
+	mkdir -p $(RUN_DIR)
+	$(PYTHON) droneops-sim batch --scenario $(SIM_WORLD) --seeds 20 --family rush --out $(RUN_DIR)/batch-20
 
 console-install: ## Install console node modules from its lockfile
 	@if [ -f $(CONSOLE_DIR)/package-lock.json ]; then \

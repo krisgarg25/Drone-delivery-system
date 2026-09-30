@@ -89,8 +89,9 @@ def assert_sources_fresh(bundle: ScenarioBundle) -> None:
         expires = _parse_timestamp(str(entry["expires_at"])).replace(tzinfo=UTC)
         if expires <= epoch:
             raise StaleSourceError(
-                f"{bundle.scenario_id}: {name} expired at {entry['expires_at']} before the scenario "
-                f"epoch {epoch.isoformat()}. Refresh and re-freeze the bundle."
+                f"{bundle.scenario_id}: {name} expired at {entry['expires_at']}"
+                f" before the scenario epoch {epoch.isoformat()}."
+                " Refresh and re-freeze the bundle."
             )
 
 

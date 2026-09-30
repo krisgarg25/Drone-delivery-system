@@ -1,31 +1,47 @@
 authoritative: false
 files:
-  corridors.yaml: d9550cfda2622611ea9342e121fa2f93b62a671fa9c2c871f26d72b24246e717
-  demand.yaml: d1555753fa5094aab0f15ae9dc3c8cc69943770d0a902e5c8bad60d3fa11c5c8
-  fleet.yaml: 6a83fa87127ce97f73c4cb3da359ee65a07495a42ef160f55ceec8a97e1dfdae
-  policies.yaml: f0c3faedf122330c4c4096a6c690b40f2c2226234122868cd036a9919432fc1e
-  scenario.yaml: 6be9c273879efa6e9716a09dff653ee677003b44178885efdbb31141cf7194db
-  weather.yaml: 831b9e7a4f23ea9d37ab3d39f252ad746b198d92bcab4842e4a109a2f24d3966
+  corridors.yaml: f4d4f5ab5a5bf0e727df746af5f6b4136afd251f4642d8fbac7853be7861f4bc
+  demand.yaml: b4bce2ff8282c52e2184daa8e8debbaef8ad8f87394542b6daf1d90c3773d242
+  facilities.yaml: eef56693ce9b5d10f1e6822a63ef9453245a0df6654d86dabff64249baf97f0b
+  faults.yaml: ecd26e552debc6acca717abcc90f6d8715769c2243875ca40c2d857d899cc45f
+  fleet.yaml: 498ffe8dd2f0213e0e9eb51aeab1395bc79ed5633bab83b835699a58b86e6005
+  policies.yaml: 0f5038f70ed663cb0f6f1f2b66e67fe099093c3f8f2d37a98d0ef3e8d4aab4d0
+  scenario.yaml: ccba9a5abf6f8987367a82d399a5a7af55e465e41e51aed00276012c0d343b76
+  weather.yaml: 29e5e5c1e701f7322a46b5b8ff761a22049d8ee1ecae2455d8b45fda6f98054b
 runtime:
+  demand_family: routine
   horizon_minutes: 60
   locale: C
   policy_version: chandigarh-synthetic-p1
+  snapshot_interval_min: 10
   solver_worker_count: 1
   timezone: UTC
 scenario_id: chandigarh-basic
 schema_version: 1
 seed: 20260930
 source_manifest:
-  notes: No authoritative aviation data source is represented in Phase 0.
-  osm:
+  boundary:
+    access_policy: user agent + retry + backoff + local cache; never required for
+      a deterministic run
     attribution: (c) OpenStreetMap contributors
-    boundary_relation_id: 1942809
+    extract_date: '2026-09-20'
+    license: ODbL
+    query_hash: sha256:pending-etl-task-4
+    relation_id: 1942809
+    source: OpenStreetMap
+  obstacles:
+    requires_survey: true
+    synthetic: true
+    vertical_authority: none
+  osm_features:
+    attribution: (c) OpenStreetMap contributors
+    building_height_coverage: 1 tagged height of ~33,351 building ways
     extract_date: '2026-09-20'
     license: ODbL
     source: OpenStreetMap
   restrictions:
     authoritative: false
-    expires_at: '2026-09-30T08:00:00Z'
+    expires_at: '2026-10-07T06:00:00Z'
     source: synthetic
   synthetic_flags:
     corridors: true
@@ -33,11 +49,13 @@ source_manifest:
     facilities: true
     fleet: true
     obstacles_require_survey: true
+    weather: true
   terrain:
-    source: synthetic
-    version: none-phase-0
+    source: none (flat synthetic reference)
+    version: phase-1-none
+    vertical_datum: UNSPECIFIED
   weather:
-    expires_at: '2026-09-30T08:00:00Z'
+    expires_at: '2026-10-07T06:00:00Z'
     live_fetch: forbidden
-    retrieved_at: '2026-09-30T05:00:00Z'
+    retrieved_at: '2026-09-30T06:00:00Z'
     source: synthetic

@@ -1,0 +1,61 @@
+authoritative: false
+files:
+  corridors.yaml: d3ddad877e21302afee0731bf9b2985629d14dea345c4d7663fda43789728455
+  demand.yaml: 0e682d93af94f59db825cc67ef623e3851b37e93a04a09d133de4fe63c130dc2
+  facilities.yaml: 28109d8b728dd220d799e1c82b8bd5c371b2ef31db7f22ea01add78e4aa17683
+  faults.yaml: e80492a01b9019a385af1f5d521df7d5bc5edbe4924b2d6e9dcfa752ee439c78
+  fleet.yaml: e449d02e396c6ca7f403902b410490f18222b1141f379eff7dbd96ec55a23558
+  policies.yaml: 3d865c91dc546e25c417ec8054fcb538529a3f08f9666562c89d0ab2df6e92be
+  scenario.yaml: 9d29bbe54b07cd07a8a2120237f77add1567a72868a07276e562163f1be2f2bb
+  weather.yaml: 8ebf76a3d0402c23e0919dccf339c6dbd9ef22418a1829f26e33ff47b02d0699
+runtime:
+  demand_family: routine
+  horizon_minutes: 60
+  locale: C
+  policy_version: chandigarh-synthetic-p1
+  snapshot_interval_min: 10
+  solver_worker_count: 1
+  timezone: UTC
+scenario_id: chandigarh-synthetic-v1
+schema_version: 1
+seed: 202609300
+source_manifest:
+  boundary:
+    access_policy: user agent + retry + backoff + local cache; never required for
+      a deterministic run
+    attribution: (c) OpenStreetMap contributors
+    extract_date: '2026-09-20'
+    license: ODbL
+    query_hash: sha256:pending-etl-task-4
+    relation_id: 1942809
+    source: OpenStreetMap
+  obstacles:
+    requires_survey: true
+    synthetic: true
+    vertical_authority: none
+  osm_features:
+    attribution: (c) OpenStreetMap contributors
+    building_height_coverage: 1 tagged height of ~33,351 building ways
+    extract_date: '2026-09-20'
+    license: ODbL
+    source: OpenStreetMap
+  restrictions:
+    authoritative: false
+    expires_at: '2026-10-07T06:00:00Z'
+    source: synthetic
+  synthetic_flags:
+    corridors: true
+    demand: true
+    facilities: true
+    fleet: true
+    obstacles_require_survey: true
+    weather: true
+  terrain:
+    source: none (flat synthetic reference)
+    version: phase-1-none
+    vertical_datum: UNSPECIFIED
+  weather:
+    expires_at: '2026-10-07T06:00:00Z'
+    live_fetch: forbidden
+    retrieved_at: '2026-09-30T06:00:00Z'
+    source: synthetic

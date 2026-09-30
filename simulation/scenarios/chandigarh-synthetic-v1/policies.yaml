@@ -1,0 +1,26 @@
+altitude_reference_required: AGL
+authoritative: false
+battery_noise_spread_bp: 300
+charge_derate_bp: 11000
+charge_ready_pct: 70
+charge_target_pct: 90
+cost_model:
+  aircraft_cost_per_day_paise: 9000
+  energy_cost_per_kwh_paise: 800
+  failed_mission_cost_paise: 150000
+  hub_cost_per_day_paise: 1800000
+  insurance_cost_per_day_paise: 2500000
+  staff_cost_per_day_paise: 6000000
+demand_jitter_s: 30
+energy_reserve_fraction_bp: 2500
+epoch: '2026-09-30T06:00:00Z'
+link_loss_rate_bp: 500
+max_agl_m: 90
+policy_version: chandigarh-synthetic-p1
+reposition_max_min: 20
+schema_version: 1
+separation_buffer_us: 120000000
+source: configs/base/safety.yaml
+stall_grounding_min: 20
+wind_energy_bp_per_ms: 250
+wind_jitter_ms: 1

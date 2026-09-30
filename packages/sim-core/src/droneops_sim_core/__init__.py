@@ -1,8 +1,40 @@
+"""Deterministic simulation kernel boundary (Phase 0 queue + Phase 1 world model).
+
+`droneops_sim_core` is pure computation: integer microsecond time, seeded streams and
+value objects. Database, network and live adapter imports are forbidden here by
+`.importlinter`; persistence integrates through the protocols in `ports.py`.
+"""
+
 from __future__ import annotations
 
 from bisect import insort
 from collections.abc import Callable
 from dataclasses import dataclass, field
+
+from droneops_sim_core.engine import REJECT_REASONS, Engine, EngineResult, STALE_STATE
+from droneops_sim_core.model import (
+    AIRCRAFT_STATUSES,
+    ALTITUDE_REFERENCES,
+    PRIORITY_RANK,
+    AircraftConfig,
+    AircraftProfile,
+    BatteryCurvePoint,
+    Closure,
+    ConfigRelease,
+    CorridorEdge,
+    Facility,
+    Fault,
+    GeometryPoint,
+    Order,
+    RunMetric,
+    ScenarioMeta,
+    SimRunRecord,
+    WeatherTracePoint,
+    WorldSnapshot,
+    WorldSpec,
+)
+from droneops_sim_core.ports import EventSink, RunMetricSink, RunRecordSink, SnapshotSink
+from droneops_sim_core.streams import STREAM_NAMES, STREAM_OFFSETS, DeterministicStreams
 
 
 @dataclass(order=True)
@@ -37,3 +69,39 @@ class DeterministicEventQueue:
     @property
     def pending_count(self) -> int:
         return len(self._events)
+
+
+__all__ = [
+    "AIRCRAFT_STATUSES",
+    "ALTITUDE_REFERENCES",
+    "AircraftConfig",
+    "AircraftProfile",
+    "BatteryCurvePoint",
+    "Closure",
+    "ConfigRelease",
+    "CorridorEdge",
+    "DeterministicEventQueue",
+    "DeterministicStreams",
+    "Engine",
+    "EngineResult",
+    "EventSink",
+    "Facility",
+    "Fault",
+    "GeometryPoint",
+    "Order",
+    "PRIORITY_RANK",
+    "REJECT_REASONS",
+    "RunMetric",
+    "RunMetricSink",
+    "RunRecordSink",
+    "STALE_STATE",
+    "STREAM_NAMES",
+    "STREAM_OFFSETS",
+    "ScenarioMeta",
+    "ScheduledEvent",
+    "SimRunRecord",
+    "SnapshotSink",
+    "WeatherTracePoint",
+    "WorldSnapshot",
+    "WorldSpec",
+]

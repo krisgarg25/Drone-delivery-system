@@ -1,12 +1,482 @@
-schema_version: 1
+altitude_reference: AGL
 authoritative: false
-corridors:
-  - corridor_id: corr-north-central-synthetic
-    segment_m: 6400
-    width_m: 100
-  - corridor_id: corr-south-campus-synthetic
-    segment_m: 4200
-    width_m: 100
-  - corridor_id: corr-east-ridge-synthetic
-    segment_m: 9800
-    width_m: 120
+bands:
+- band: A
+  ceiling_m_agl: 50
+  floor_m_agl: 30
+  speed_cap_mps: 14
+- band: B
+  ceiling_m_agl: 70
+  floor_m_agl: 50
+  speed_cap_mps: 16
+- band: C
+  ceiling_m_agl: 90
+  floor_m_agl: 70
+  speed_cap_mps: 18
+closures: []
+edges:
+- band: C
+  corridor_id: lane-airfield-south-C-synthetic
+  from: pad-airfield-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30748000
+    lon_e6: 76765000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30713915
+    lon_e6: 76776624
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  length_m: 8300
+  max_wind_ms: 11
+  synthetic: true
+  to: depot-south-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-campus-industrial-B-synthetic
+  from: pad-campus-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30690000
+    lon_e6: 76760000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30685348
+    lon_e6: 76784719
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30683000
+    lon_e6: 76810000
+  length_m: 6200
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-industrial-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-campus-south-A-synthetic
+  from: pad-campus-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30690000
+    lon_e6: 76760000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30684418
+    lon_e6: 76774211
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  length_m: 3100
+  max_wind_ms: 11
+  synthetic: true
+  to: depot-south-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-central-market-A-synthetic
+  from: pad-central-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30732057
+    lon_e6: 76793160
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  length_m: 1800
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-market-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-central-north-B-synthetic
+  from: pad-central-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30745222
+    lon_e6: 76786260
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30756000
+    lon_e6: 76780000
+  length_m: 2600
+  max_wind_ms: 11
+  synthetic: true
+  to: depot-north-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-central-ridge-C-synthetic
+  from: pad-central-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30739670
+    lon_e6: 76808900
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76825000
+  length_m: 4900
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-ridge-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-industrial-campus-B-synthetic
+  from: pad-industrial-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30683000
+    lon_e6: 76810000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30685740
+    lon_e6: 76784470
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30690000
+    lon_e6: 76760000
+  length_m: 6200
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-campus-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-industrial-south-B-synthetic
+  from: pad-industrial-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30683000
+    lon_e6: 76810000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30678510
+    lon_e6: 76799783
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  length_m: 4400
+  max_wind_ms: 11
+  synthetic: true
+  to: depot-south-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-market-central-A-synthetic
+  from: pad-market-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30729593
+    lon_e6: 76794387
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  length_m: 1800
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-central-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-market-south-B-synthetic
+  from: pad-market-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30701938
+    lon_e6: 76793930
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  length_m: 5600
+  max_wind_ms: 11
+  synthetic: true
+  to: depot-south-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-market-stadium-B-synthetic
+  from: pad-market-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30720104
+    lon_e6: 76811959
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30710000
+    lon_e6: 76820000
+  length_m: 3900
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-stadium-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-north-central-B-synthetic
+  from: depot-north-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30756000
+    lon_e6: 76780000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30746847
+    lon_e6: 76784116
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  length_m: 2600
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-central-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-north-riverside-A-synthetic
+  from: depot-north-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30756000
+    lon_e6: 76780000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30760810
+    lon_e6: 76791948
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30762000
+    lon_e6: 76805000
+  length_m: 3700
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-riverside-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-ridge-central-C-synthetic
+  from: pad-ridge-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76825000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30740551
+    lon_e6: 76806170
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76790000
+  length_m: 4900
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-central-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-ridge-stadium-C-synthetic
+  from: pad-ridge-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76825000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30727078
+    lon_e6: 76821592
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30710000
+    lon_e6: 76820000
+  length_m: 5100
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-stadium-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-riverside-north-A-synthetic
+  from: pad-riverside-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30762000
+    lon_e6: 76805000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30757979
+    lon_e6: 76791590
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30756000
+    lon_e6: 76780000
+  length_m: 3700
+  max_wind_ms: 11
+  synthetic: true
+  to: depot-north-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-south-airfield-C-synthetic
+  from: depot-south-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30712308
+    lon_e6: 76776260
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30748000
+    lon_e6: 76765000
+  length_m: 8300
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-airfield-synthetic
+  width_m: 100
+- band: A
+  corridor_id: lane-south-campus-A-synthetic
+  from: depot-south-synthetic
+  geometry:
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30684801
+    lon_e6: 76776331
+  - alt_m_agl: 40
+    altitude_reference: AGL
+    lat_e6: 30690000
+    lon_e6: 76760000
+  length_m: 3100
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-campus-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-south-industrial-B-synthetic
+  from: depot-south-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30681025
+    lon_e6: 76801838
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30683000
+    lon_e6: 76810000
+  length_m: 4400
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-industrial-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-south-market-B-synthetic
+  from: depot-south-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30678000
+    lon_e6: 76790000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30703360
+    lon_e6: 76794459
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  length_m: 5600
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-market-synthetic
+  width_m: 100
+- band: B
+  corridor_id: lane-stadium-market-B-synthetic
+  from: pad-stadium-synthetic
+  geometry:
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30710000
+    lon_e6: 76820000
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30719930
+    lon_e6: 76809786
+  - alt_m_agl: 60
+    altitude_reference: AGL
+    lat_e6: 30728000
+    lon_e6: 76800000
+  length_m: 3900
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-market-synthetic
+  width_m: 100
+- band: C
+  corridor_id: lane-stadium-ridge-C-synthetic
+  from: pad-stadium-synthetic
+  geometry:
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30710000
+    lon_e6: 76820000
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30727029
+    lon_e6: 76823044
+  - alt_m_agl: 85
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76825000
+  length_m: 5100
+  max_wind_ms: 11
+  synthetic: true
+  to: pad-ridge-synthetic
+  width_m: 100
+safety_claim: false
+schema_version: 1
+source: synthetic road and green-space heuristic (technical-build/12 section 7)

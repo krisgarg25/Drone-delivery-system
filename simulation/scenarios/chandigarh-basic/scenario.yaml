@@ -1,24 +1,24 @@
-schema_version: 1
-scenario_id: chandigarh-basic
 authoritative: false
-title: Chandigarh synthetic corridor contention, two aircraft, three departures
-human_expectation: >-
-  Every committed mission holds a protected corridor volume that no other committed
-  mission overlaps, no mission is accepted without its energy reserve, and every rejected
-  request is counted rather than dropped.
-what_this_does_not_prove: >-
-  Nothing about real Chandigarh airspace, aircraft performance, weather or certification.
-  Geometry is synthetic and obstacle heights in the wider dataset require survey.
 boundary:
-  source: OpenStreetMap
-  relation_id: 1942809
-  license: ODbL
   attribution: (c) OpenStreetMap contributors
-  extract_date: "2026-09-20"
+  extract_date: '2026-09-20'
+  license: ODbL
+  relation_id: 1942809
+  source: OpenStreetMap
+human_expectation: Every committed mission holds a protected corridor volume that no other committed mission overlaps,
+  no mission is accepted without its energy reserve, and every rejected request is counted rather than dropped.
+scenario_id: chandigarh-basic
+schema_version: 1
 synthetic_flags:
-  facilities: true
   corridors: true
-  fleet: true
   demand: true
-  weather: true
+  facilities: true
+  fleet: true
   obstacles_require_survey: true
+  weather: true
+title: 'Chandigarh synthetic golden run: two hubs, eight nodes, corridor contention'
+topology:
+  hubs: 2
+  nodes: 8
+what_this_does_not_prove: Nothing about real Chandigarh airspace, aircraft performance, weather or certification.
+  Geometry is synthetic and obstacle heights in the wider dataset require survey.

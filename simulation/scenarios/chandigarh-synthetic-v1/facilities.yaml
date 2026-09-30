@@ -1,0 +1,189 @@
+authoritative: false
+facilities:
+- charge_power_w: 1200
+  charger_bays: 6
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: hub-central-synthetic
+  kind: hub
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30738300
+    lon_e6: 76793600
+  name: Central Ridge Staging Hub (fictional)
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 4
+- charge_power_w: 1200
+  charger_bays: 4
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: hub-north-synthetic
+  kind: hub
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30766000
+    lon_e6: 76785000
+  name: North Perimeter Staging Hub (fictional)
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 3
+- charge_power_w: 1200
+  charger_bays: 4
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: hub-south-campus-synthetic
+  kind: hub
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30670000
+    lon_e6: 76780000
+  name: South Campus Staging Hub (fictional)
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 3
+- charge_power_w: 1200
+  charger_bays: 3
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: hub-ridge-east-synthetic
+  kind: hub
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30745000
+    lon_e6: 76830000
+  name: East Ridge Staging Hub (fictional)
+  offload_turnaround_min: 1
+  open_minute: 4
+  outage:
+    from_minute: 41
+    state: closed
+    to_minute: 49
+  pads: 2
+- charge_power_w: 900
+  charger_bays: 2
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: node-medlab-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30752000
+    lon_e6: 76770000
+  name: Fictional Medical Parcel Node A
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 2
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: node-quickcart-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30700000
+    lon_e6: 76760000
+  name: Fictional Express Retail Node B
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 2
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: node-sparesdepot-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30720000
+    lon_e6: 76840000
+  name: Fictional Industrial Spares Node C
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 2
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: node-rimroad-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30680000
+    lon_e6: 76820000
+  name: Fictional Rim Road Handover D
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 60
+  facility_id: node-greenpark-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30760000
+    lon_e6: 76810000
+  name: Fictional Green Park Handover E
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+- charge_power_w: 900
+  charger_bays: 1
+  close_minute: 60
+  crew_shifts:
+  - - 0
+    - 25
+  - - 30
+    - 60
+  facility_id: node-lakeview-synthetic
+  kind: node
+  loading_turnaround_min: 2
+  location:
+    alt_m_agl: 320
+    altitude_reference: AGL
+    lat_e6: 30735000
+    lon_e6: 76750000
+  name: Fictional Lakeview Handover F
+  offload_turnaround_min: 1
+  open_minute: 0
+  pads: 1
+schema_version: 1
