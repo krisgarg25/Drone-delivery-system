@@ -1,0 +1,133 @@
+{
+  "scenario_id": "gc02",
+  "title": "Crossing",
+  "description": "Two plans on lanes that are not declared adjacent, one east-west and one north-south, crossing over the shared node at t=10 s at the same height. The corridor inspection sees no relation between the lanes; the crossing inspection does.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That every crossing of two corridors is detected: the inspection compares arrival times at a shared planar point, so two lanes that merely converge without their tracks crossing are caught only by the sweep or the corridor test.",
+    "Anything about conflict after the node - it proves the checker can name the contested point, not that the corridor needs a reserved crossing volume."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-10"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.73780068,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.73959932,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-20"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CROSSING_VOLUME"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 7.0,
+        "contact_windows": 2.0,
+        "contact_span_us": 5727819.0,
+        "crossing_points": 1.0,
+        "corridor_pairs": 0.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "Two plans on lanes that are not declared adjacent, one east-west and one north-south, crossing over the shared node at t=10 s at the same height. The corridor inspection sees no relation between the lanes; the crossing inspection does.",
+      "what_this_does_not_prove": [
+        "That every crossing of two corridors is detected: the inspection compares arrival times at a shared planar point, so two lanes that merely converge without their tracks crossing are caught only by the sweep or the corridor test.",
+        "Anything about conflict after the node - it proves the checker can name the contested point, not that the corridor needs a reserved crossing volume."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

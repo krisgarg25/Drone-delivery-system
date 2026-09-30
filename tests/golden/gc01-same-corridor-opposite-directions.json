@@ -1,0 +1,151 @@
+{
+  "scenario_id": "gc01",
+  "title": "Same corridor, opposite directions",
+  "description": "Two committed plans hold the same lane SEG-01 in opposite directions over the same absolute window, meeting head-on at the lane midpoint at t=10 s, both at 40 m AGL.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That the lane is the only geometry in which they conflict, or that either aircraft could have avoided the other: the scenario tests the checker's answer, not the planner's ability to have routed around it.",
+    "That these two volumes would actually collide physically - the margins are experiment parameters from an unvalidated simulation policy file, not a separation standard."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 10,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-01"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 10,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-01"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CONTINUOUS_SWEEP",
+        "ADJACENT_CORRIDOR",
+        "CROSSING_VOLUME"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 26.0,
+        "contact_windows": 20.0,
+        "contact_span_us": 140251009.0,
+        "crossing_points": 3.0,
+        "corridor_pairs": 1.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "Two committed plans hold the same lane SEG-01 in opposite directions over the same absolute window, meeting head-on at the lane midpoint at t=10 s, both at 40 m AGL.",
+      "what_this_does_not_prove": [
+        "That the lane is the only geometry in which they conflict, or that either aircraft could have avoided the other: the scenario tests the checker's answer, not the planner's ability to have routed around it.",
+        "That these two volumes would actually collide physically - the margins are experiment parameters from an unvalidated simulation policy file, not a separation standard."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

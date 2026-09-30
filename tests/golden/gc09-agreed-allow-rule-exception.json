@@ -1,0 +1,155 @@
+{
+  "scenario_id": "gc09",
+  "title": "Both sides agree on one named exception",
+  "description": "The same shared-lane geometry as gc07, but one active, versioned allow rule exists that both committed records name and the measured contact fits inside its duration and separation envelope. The contact is still reported; it simply no longer blocks release.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That any real operation may fly two aircraft in one protected volume: the rule exists to make the mechanism testable, is marked illustrative, and its numbers are not a clearance.",
+    "That the rule generalises - it names the checks it covers, and a contact found by a check it does not name would block release again."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 10,
+          "lat": 30.738699998,
+          "lon": 76.768072207,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-02"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": "sim-formation-v1",
+        "allow_rule_version": "v1"
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 10,
+          "lat": 30.738699998,
+          "lon": 76.768072207,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-02"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": "sim-formation-v1",
+        "allow_rule_version": "v1"
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CONTINUOUS_SWEEP",
+        "TRANSITION_BUFFER",
+        "ADJACENT_CORRIDOR",
+        "CROSSING_VOLUME"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 7.0,
+        "contact_windows": 10.0,
+        "contact_span_us": 80000006.0,
+        "crossing_points": 2.0,
+        "corridor_pairs": 1.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "The same shared-lane geometry as gc07, but one active, versioned allow rule exists that both committed records name and the measured contact fits inside its duration and separation envelope. The contact is still reported; it simply no longer blocks release.",
+      "what_this_does_not_prove": [
+        "That any real operation may fly two aircraft in one protected volume: the rule exists to make the mechanism testable, is marked illustrative, and its numbers are not a clearance.",
+        "That the rule generalises - it names the checks it covers, and a contact found by a check it does not name would block release again."
+      ]
+    }
+  ],
+  "release_allowed": true,
+  "allow_rules": [
+    {
+      "rule_id": "sim-formation-v1",
+      "rule_version": "v1",
+      "policy_version": "sim-policy-v1",
+      "rationale": "two aircraft of one formation briefed to fly the same lane in company",
+      "approved_by": "safety_reviewer",
+      "max_contact_span_us": 45000000,
+      "min_separation_mm": 0,
+      "checks": [
+        "CONTINUOUS_SWEEP",
+        "TRANSITION_BUFFER",
+        "ADJACENT_CORRIDOR",
+        "CROSSING_VOLUME"
+      ],
+      "corridor_pairs": [],
+      "plan_pairs": []
+    }
+  ]
+}

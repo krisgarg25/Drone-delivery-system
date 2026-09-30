@@ -22,7 +22,7 @@ sub-windows, so a 30-38 minute closure leaves both flanking trips routable.
 from __future__ import annotations
 
 import heapq
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from droneops_geom_core import Interval

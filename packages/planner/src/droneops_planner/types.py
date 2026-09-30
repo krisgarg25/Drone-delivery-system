@@ -13,6 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import StrEnum
 
+from droneops_geom_4d import ProfilePoint
 from droneops_geom_core import Interval
 
 from .model_util import canonical_digest
@@ -141,7 +142,7 @@ class PlanRequest:
     idempotency_key: str = ""
 
     def horizon(self) -> Interval:
-        return Interval(self.requested_at_us, self.cutoff_us)
+        return Interval.of(self.requested_at_us, self.cutoff_us)
 
     def request_digest(self) -> str:
         return canonical_digest(
@@ -337,6 +338,12 @@ class CandidatePlan:
     wind_mm_per_s: int
     resource_windows: tuple[tuple[str, int, int], ...]
     lock_order: tuple[str, ...]
+    profile_points: tuple[ProfilePoint, ...] = ()
+    """Raw 4D waypoints of this candidate: time, place, height with its reference, speed.
+
+    Carried outside the digest on purpose - the digest is the integer decision record,
+    these are the geometry a checker re-sweeps from the bundle.
+    """
 
     def digest(self) -> str:
         return canonical_digest(
@@ -528,6 +535,26 @@ class PlanProposal:
     authoritative: bool = False
     safety_claim: bool = False
     requires_survey: bool = True
+
+    @property
+    def config_release_sha(self) -> str:
+        """The config release this proposal was made under, on the proposal itself."""
+        return self.trace.config_release_sha
+
+    @property
+    def resource_keys(self) -> tuple[str, ...]:
+        """Canonical geom-core resource keys this plan asks the ledger to hold."""
+        return () if self.selected is None else self.selected.lock_order
+
+    @property
+    def raw_profile_points(self) -> tuple[ProfilePoint, ...]:
+        """The 4D payload an independent checker needs to re-derive the volumes."""
+        return () if self.selected is None else self.selected.profile_points
+
+    @property
+    def occupancy_windows(self) -> tuple[tuple[str, int, int], ...]:
+        """``(resource identifier, start_us, end_us)`` for every claim in the plan."""
+        return self.resources
 
     def digest(self) -> str:
         return canonical_digest(

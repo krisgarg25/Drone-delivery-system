@@ -118,7 +118,10 @@ class EnergyModel(Protocol):
         reserve_fraction_bp: int,
         recovery_length_mm: int,
         climb_mm: int,
-    ) -> EnergyEvaluation: ...
+        wind_energy_bp_per_ms: int,
+    ) -> EnergyEvaluation:
+        """Wind sensitivity is a policy number, so the port demands it rather than assuming one."""
+        ...
 
 
 class FacilityScheduler(Protocol):

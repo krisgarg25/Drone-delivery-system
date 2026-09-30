@@ -1,0 +1,213 @@
+{
+  "scenario_id": "gc03",
+  "title": "Climb through a layer",
+  "description": "Plan A transits vertically from 20 m to 60 m AGL across a lane whose cruising layer holds Plan B at 40 m AGL. A control plan at a steady 10 m AGL over the same geometry must come back SAFE, which is what makes this a test of the climb and not of the crossing.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That a climb is safe above the layer ceiling or below the layer floor: the scenario fixes one vertical margin from the policy file, and another release would move the altitude at which the control plan begins to conflict.",
+    "That the transition buffer is the right size - only that the checker applies it."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 20,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 10,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-11"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.73780068,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.73959932,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-21"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-CONTROL",
+      "mission_id": "m-control",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 10,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 10,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 10,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 10,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-11"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CONTINUOUS_SWEEP",
+        "CROSSING_VOLUME"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 12.0,
+        "contact_windows": 5.0,
+        "contact_span_us": 13828219.0,
+        "crossing_points": 1.0,
+        "corridor_pairs": 0.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "Plan A transits vertically from 20 m to 60 m AGL across a lane whose cruising layer holds Plan B at 40 m AGL. A control plan at a steady 10 m AGL over the same geometry must come back SAFE, which is what makes this a test of the climb and not of the crossing.",
+      "what_this_does_not_prove": [
+        "That a climb is safe above the layer ceiling or below the layer floor: the scenario fixes one vertical margin from the policy file, and another release would move the altitude at which the control plan begins to conflict.",
+        "That the transition buffer is the right size - only that the checker applies it."
+      ]
+    },
+    {
+      "pair": [
+        "PLAN-CONTROL",
+        "PLAN-B"
+      ],
+      "verdict": "SAFE",
+      "checks": [],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 12.0,
+        "contact_windows": 0.0,
+        "contact_span_us": 0.0,
+        "crossing_points": 1.0,
+        "corridor_pairs": 0.0,
+        "unproven_reasons": 0.0,
+        "min_horizontal_gap_mm": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "control: the same geometry with no climb, expected SAFE",
+      "what_this_does_not_prove": [
+        "That a climb is safe above the layer ceiling or below the layer floor: the scenario fixes one vertical margin from the policy file, and another release would move the altitude at which the control plan begins to conflict.",
+        "That the transition buffer is the right size - only that the checker applies it."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

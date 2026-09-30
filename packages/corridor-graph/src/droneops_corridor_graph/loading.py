@@ -244,7 +244,7 @@ def _nodes(
         if not isinstance(location, Mapping):
             raise TopologyError(f"facility {facility_id} has no location")
         shifts = tuple(
-            Interval(
+            Interval.of(
                 minutes_to_us(_pair[0], epoch_us),
                 minutes_to_us(_pair[1], epoch_us),
             )

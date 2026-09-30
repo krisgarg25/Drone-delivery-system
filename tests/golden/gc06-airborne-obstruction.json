@@ -1,0 +1,141 @@
+{
+  "scenario_id": "gc06",
+  "title": "Airborne obstruction",
+  "description": "A slowly drifting obstruction holds a volume for ten minutes at 50 m AGL; a committed plan flies through that point at the same height halfway through. An obstruction is not a route, so this exercises the path where one record has almost no motion.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That the obstruction's position is current: its record carries the same staleness and expiry rules as any plan, and this bundle gives it a week of validity.",
+    "That the checker can tell a balloon from a tower - it reasons about a volume that occupies a place for a while, whatever put it there."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "OBST-01",
+      "mission_id": "obst-01",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 50,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 300,
+          "lat": 30.738708993,
+          "lon": 76.768710463,
+          "altitude_m": 50,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 600,
+          "lat": 30.738717986,
+          "lon": 76.768720926,
+          "altitude_m": 50,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "volume:OBST-01:0..600000000"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 280,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 50,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 320,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 50,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-60"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "OBST-01",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CONTINUOUS_SWEEP"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 6.0,
+        "contact_windows": 4.0,
+        "contact_span_us": 32373082.0,
+        "crossing_points": 1.0,
+        "corridor_pairs": 0.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "A slowly drifting obstruction holds a volume for ten minutes at 50 m AGL; a committed plan flies through that point at the same height halfway through. An obstruction is not a route, so this exercises the path where one record has almost no motion.",
+      "what_this_does_not_prove": [
+        "That the obstruction's position is current: its record carries the same staleness and expiry rules as any plan, and this bundle gives it a week of validity.",
+        "That the checker can tell a balloon from a tower - it reasons about a volume that occupies a place for a while, whatever put it there."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

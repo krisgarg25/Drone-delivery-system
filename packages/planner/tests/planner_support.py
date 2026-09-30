@@ -147,6 +147,7 @@ def build_pipeline(
     candidate_k: int = 4,
     ledger: Any | None = None,
     occupancy: InMemoryOccupancy | None = None,
+    volumes: Any | None = None,
 ) -> tuple[CandidatePlanPipeline, InMemoryOccupancy, Any]:
     """A fully wired pipeline with an isolated ledger: one per test, never shared."""
     used_occupancy = occupancy if occupancy is not None else InMemoryOccupancy()
@@ -155,7 +156,7 @@ def build_pipeline(
     used_commit = ledger if ledger is not None else InMemoryCommitPort(used_occupancy)
     ports = PipelinePorts(
         occupancy=used_occupancy,
-        volumes=CellSweepVolumeBuilder(graph),
+        volumes=volumes if volumes is not None else CellSweepVolumeBuilder(graph),
         commit=used_commit,
         energy=BatteryCurveEnergyModel(),
         facilities=BundleFacilityScheduler(graph, used_occupancy),

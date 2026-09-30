@@ -31,6 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from droneops_corridor_graph import CorridorGraph, CostProfile
+from droneops_corridor_graph.model import CorridorNode
 from droneops_geom_core import Interval, lock_order, resource_key, ResourceKind
 
 from .model_util import MICROS_PER_MINUTE, MICROS_PER_SECOND, canonical_digest, ceil_div
@@ -52,9 +53,9 @@ from .space_time import (
     prefilter_and_intersect,
 )
 from .strategies import StrategyRegistry
+from .volumes4d import route_profile
 from .types import (
     CandidatePlan,
-    CommitOutcome,
     CommitRequest,
     CommitState,
     DecisionTrace,
@@ -138,10 +139,12 @@ class CandidatePlanPipeline:
         if admission_rejection is not None:
             rejections.append(admission_rejection)
             return self._finish(request, steps, rejections, (), None, version, [], "rejected")
-        sequence, hub_pad = self._terminals_and_windows(request, steps)
+        sequence, hub_pad, pad_rejection = self._terminals_and_windows(request, steps)
         if hub_pad is None:
             rejections.append(
-                Rejection(
+                pad_rejection
+                if pad_rejection is not None
+                else Rejection(
                     subject=request.mission_id,
                     code=ReasonCode.PAD_WINDOW_UNAVAILABLE,
                     detail=(
@@ -305,16 +308,39 @@ class CandidatePlanPipeline:
                 ReasonCode.PAYLOAD_EXCEEDS_ENVELOPE,
                 f"{request.payload_g} g over envelope {request.aircraft.max_payload_g} g",
             )
-        if request.requested_at_us < origin.facility.open_us:
+        origin_facility = origin.facility
+        destination_facility = destination.facility
+        if origin_facility is None or destination_facility is None:
+            missing = (
+                "pickup site " + request.origin_node
+                if origin_facility is None
+                else "drop-off site " + request.destination_node
+            )
+            return reject(
+                ReasonCode.PAD_WINDOW_UNAVAILABLE,
+                f"{missing} declares no pad facility in bundle {self.graph.graph_version}, "
+                "so nothing can be loaded or offloaded there",
+            )
+        if origin_facility.pads == 0 or destination_facility.pads == 0:
+            silent = [
+                node.node_id
+                for node, attributes in ((origin, origin_facility), (destination, destination_facility))
+                if attributes.pads == 0
+            ]
+            return reject(
+                ReasonCode.PAD_WINDOW_UNAVAILABLE,
+                f"{' and '.join(silent)} declare zero pads in the frozen bundle",
+            )
+        if request.requested_at_us < origin_facility.open_us:
             return reject(
                 ReasonCode.OUTSIDE_OPERATING_WINDOW,
-                f"{origin.node_id} opens at {origin.facility.open_us}",
+                f"{origin.node_id} opens at {origin_facility.open_us}",
             )
         return None
 
     def _terminals_and_windows(
         self, request: PlanRequest, steps: list[StepRecord]
-    ) -> tuple[tuple[LegKind, ...], PadWindow | None]:
+    ) -> tuple[tuple[LegKind, ...], PadWindow | None, Rejection | None]:
         """Steps 3 and 4: the terminal model, then the ground windows around it.
 
         The destination pad cannot be fixed before a route exists, so step 4 holds
@@ -324,8 +350,12 @@ class CandidatePlanPipeline:
         """
         origin = self.graph.node(request.origin_node)
         destination = self.graph.node(request.destination_node)
-        loading = origin.facility.loading_turnaround_us
-        offload = destination.facility.offload_turnaround_us
+        origin_facility = origin.facility
+        destination_facility = destination.facility
+        if origin_facility is None or destination_facility is None:
+            return (), None, self._no_facility_rejection(request, origin, destination)
+        loading = origin_facility.loading_turnaround_us
+        offload = destination_facility.offload_turnaround_us
         sequence = (
             LegKind.HUB_PAD,
             LegKind.CLIMB,
@@ -367,7 +397,11 @@ class CandidatePlanPipeline:
                     detail=f"no departure pad at {origin.node_id} before {request.cutoff_us}",
                 )
             )
-            return sequence, None
+            return sequence, None, self._pad_rejection(
+                request,
+                f"no pad index at {origin.node_id} is free for the declared {loading} us loading "
+                f"turnaround inside [{request.requested_at_us}, {request.cutoff_us})",
+            )
         charge_needed = self._needs_charge(request)
         charger = (
             self.ports.facilities.charger_window(
@@ -391,7 +425,11 @@ class CandidatePlanPipeline:
                     ),
                 )
             )
-            return sequence, None
+            return sequence, None, self._charger_rejection(
+                request,
+                f"{request.aircraft.aircraft_id} needs a charge and no bay is free at "
+                f"{origin.node_id} inside [{request.requested_at_us}, {request.cutoff_us})",
+            )
         steps.append(
             StepRecord(
                 step=4,
@@ -405,7 +443,33 @@ class CandidatePlanPipeline:
                 counters=(("pads", 1), ("chargers", 1 if charger else 0)),
             )
         )
-        return sequence, hub_pad
+        return sequence, hub_pad, None
+
+    def _pad_rejection(self, request: PlanRequest, detail: str) -> Rejection:
+        """Step 4 refusal: a named ground cause, never a silent no."""
+        return Rejection(
+            subject=request.mission_id,
+            code=ReasonCode.PAD_WINDOW_UNAVAILABLE,
+            detail=detail,
+            graph_version=self.graph.graph_version,
+        )
+
+    def _charger_rejection(self, request: PlanRequest, detail: str) -> Rejection:
+        return Rejection(
+            subject=request.mission_id,
+            code=ReasonCode.CHARGER_UNAVAILABLE,
+            detail=detail,
+            graph_version=self.graph.graph_version,
+        )
+
+    def _no_facility_rejection(
+        self, request: PlanRequest, origin: CorridorNode, destination: CorridorNode
+    ) -> Rejection:
+        missing = origin.node_id if origin.facility is None else destination.node_id
+        return self._pad_rejection(
+            request,
+            f"{missing} declares no pad facility in bundle {self.graph.graph_version}",
+        )
 
     def _needs_charge(self, request: PlanRequest) -> bool:
         usable = request.aircraft.charge_wh - ceil_div(
@@ -592,7 +656,7 @@ class CandidatePlanPipeline:
                 evidence=evidence,
             )
 
-        window = Interval(hub_pad.window.start, timing.release_us)
+        window = Interval.of(hub_pad.window.start, timing.release_us)
         wind_mm_per_s = self.ports.wind.worst_wind_mm_per_s(window)
         for edge_id in route.edge_ids:
             if edge_id not in search_graph.edges:
@@ -630,7 +694,14 @@ class CandidatePlanPipeline:
                 f"reserve {energy.reserve_required_wh} Wh against {energy.available_wh} Wh "
                 f"available on {request.aircraft.aircraft_id}",
             )
-        offload_duration = search_graph.node(request.destination_node).facility.offload_turnaround_us
+        destination_facility = search_graph.node(request.destination_node).facility
+        if destination_facility is None:
+            return reject(
+                ReasonCode.PAD_WINDOW_UNAVAILABLE,
+                f"destination {request.destination_node} declares no pad facility in graph "
+                f"{search_graph.graph_version}",
+            )
+        offload_duration = destination_facility.offload_turnaround_us
         dest_pad = self.ports.facilities.pad_window(
             request.destination_node,
             "offload",
@@ -654,6 +725,13 @@ class CandidatePlanPipeline:
         if not self.ports.facilities.crew_covers(request.origin_node, hub_pad.window):
             return reject(ReasonCode.CREW_UNAVAILABLE, f"no crew shift covers {hub_pad.window}")
         resources = self._resource_windows(search_graph, route, timing, volumes, hub_pad, dest_pad)
+        profile = route_profile(
+            search_graph,
+            route.edge_ids,
+            timing.timings,
+            plan_version=self.policy.policy_version,
+            source=self.graph.metadata.source,
+        )
         return CandidatePlan(
             candidate_id=f"cand-{canonical_digest(route.canonical())[7:23]}",
             strategy=self.config.strategy,
@@ -671,6 +749,7 @@ class CandidatePlanPipeline:
             wind_mm_per_s=wind_mm_per_s,
             resource_windows=resources,
             lock_order=self._locks(resources),
+            profile_points=profile.points,
         )
 
     def _rank(
@@ -823,18 +902,7 @@ class CandidatePlanPipeline:
             steps=tuple(steps),
             eligible=ranking,
             rejected=tuple(rejection.as_row() for rejection in rejections),
-            ranking=tuple(
-                [
-                    row.candidate_id,
-                    row.total_units,
-                    row.lateness_us,
-                    row.energy_margin_wh,
-                    row.disturbance_units,
-                    row.fairness_units,
-                    index,
-                ]
-                for index, row in enumerate(ranking)
-            ),
+            ranking=tuple(row.as_row() + (index,) for index, row in enumerate(ranking)),
             selected_candidate_id=None if selected is None else selected.candidate_id,
             retries=tuple(retries),
             outcome=outcome,
@@ -918,7 +986,7 @@ class CandidatePlanPipeline:
             TerminalLeg(
                 LegKind.CLIMB,
                 request.origin_node,
-                Interval(hub_pad.window.end, cruise_start),
+                Interval.of(hub_pad.window.end, cruise_start),
                 0,
                 "",
                 first_band,
@@ -926,7 +994,7 @@ class CandidatePlanPipeline:
             TerminalLeg(
                 LegKind.CRUISE,
                 f"{route.node_ids[0]}>{route.node_ids[-1]}",
-                Interval(cruise_start, cruise_start + route.cruise_time_us),
+                Interval.of(cruise_start, cruise_start + route.cruise_time_us),
                 route.length_mm,
                 first_band,
                 last_band,
@@ -934,7 +1002,7 @@ class CandidatePlanPipeline:
             TerminalLeg(
                 LegKind.DESCENT,
                 request.destination_node,
-                Interval(timing.exit_us - descent_us, timing.exit_us),
+                Interval.of(timing.exit_us - descent_us, timing.exit_us),
                 0,
                 last_band,
                 "",
@@ -943,7 +1011,7 @@ class CandidatePlanPipeline:
             TerminalLeg(
                 LegKind.RETURN,
                 request.aircraft.home_facility_id,
-                Interval(dest_pad.window.end, dest_pad.window.end + climb_us + descent_us),
+                Interval.of(dest_pad.window.end, dest_pad.window.end + climb_us + descent_us),
                 self._recovery_length_mm(graph, route),
                 last_band,
                 "",
@@ -1022,15 +1090,15 @@ class CandidatePlanPipeline:
                 keys.append(resource_key(ResourceKind.CORRIDOR, identifier))
             elif identifier.startswith("pad-"):
                 keys.append(
-                    resource_key(ResourceKind.PAD, identifier, Interval(start_us, end_us))
+                    resource_key(ResourceKind.PAD, identifier, Interval.of(start_us, end_us))
                 )
             elif identifier.startswith("charger-"):
                 keys.append(
-                    resource_key(ResourceKind.CHARGER_BAY, identifier, Interval(start_us, end_us))
+                    resource_key(ResourceKind.CHARGER_BAY, identifier, Interval.of(start_us, end_us))
                 )
             else:
                 keys.append(
-                    resource_key(ResourceKind.VOLUME_CELL, identifier, Interval(start_us, end_us))
+                    resource_key(ResourceKind.VOLUME_CELL, identifier, Interval.of(start_us, end_us))
                 )
         return lock_order(keys)
 

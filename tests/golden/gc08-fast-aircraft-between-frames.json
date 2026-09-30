@@ -1,0 +1,160 @@
+{
+  "scenario_id": "gc08",
+  "title": "Fast aircraft between two frames",
+  "description": "A pair closing at 120 m/s, sampled at 1 Hz: at each sampled instant they are 120 m apart and the frame answer is SAFE, while the continuous sweep crosses the protection disc between the samples and says CONFLICT. The contrast is the proof that the checker sweeps rather than samples.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That any fixed sampling rate is safe - only that 1 Hz was not safe here. A slower pair would pass even the frame test, and the frame test would then agree for the wrong reason.",
+    "That the checker's shapely path is more accurate than the planner's rational path: it is a different path, deliberately rounded outward, and its agreement is evidence rather than proof of correctness."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699998,
+          "lon": 76.768072207,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 1,
+          "lat": 30.738699998,
+          "lon": 76.769327793,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-80"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699998,
+          "lon": 76.769327793,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 1,
+          "lat": 30.738699998,
+          "lon": 76.768072207,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-80"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CONTINUOUS_SWEEP",
+        "CROSSING_VOLUME"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 7.0,
+        "contact_windows": 4.0,
+        "contact_span_us": 33337518.0,
+        "crossing_points": 2.0,
+        "corridor_pairs": 1.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "A pair closing at 120 m/s, sampled at 1 Hz: at each sampled instant they are 120 m apart and the frame answer is SAFE, while the continuous sweep crosses the protection disc between the samples and says CONFLICT. The contrast is the proof that the checker sweeps rather than samples.",
+      "what_this_does_not_prove": [
+        "That any fixed sampling rate is safe - only that 1 Hz was not safe here. A slower pair would pass even the frame test, and the frame test would then agree for the wrong reason.",
+        "That the checker's shapely path is more accurate than the planner's rational path: it is a different path, deliberately rounded outward, and its agreement is evidence rather than proof of correctness."
+      ]
+    },
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "SAFE",
+      "checks": [],
+      "basis": "FRAME",
+      "step_seconds": 1.0,
+      "metrics": {
+        "piece_pairs_tested": 2.0,
+        "contact_windows": 0.0,
+        "contact_span_us": 0.0,
+        "crossing_points": 0.0,
+        "corridor_pairs": 0.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "the same pair asked of 1 Hz frame samples instead of a sweep: SAFE, because nothing between the frames is examined",
+      "what_this_does_not_prove": [
+        "That any fixed sampling rate is safe - only that 1 Hz was not safe here. A slower pair would pass even the frame test, and the frame test would then agree for the wrong reason.",
+        "That the checker's shapely path is more accurate than the planner's rational path: it is a different path, deliberately rounded outward, and its agreement is evidence rather than proof of correctness."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

@@ -26,7 +26,7 @@ from corridor_support import SYNTHETIC_BUNDLE, DirectoryBundleSource, build_squa
 TESTS_DIR = Path(__file__).resolve().parent
 
 PROBE = """
-import sys, json
+import sys, json, hashlib
 sys.path.insert(0, %r)
 from corridor_support import build_square_graph, DirectoryBundleSource, SYNTHETIC_BUNDLE
 from droneops_corridor_graph import CostProfile, generate_candidates, load_graph
@@ -53,7 +53,19 @@ second = generate_candidates(
     profile=CostProfile(band_change_units=200, merge_penalty_units=10, crossing_penalty_units=25),
     window=Interval(epoch, epoch + 60 * 60_000_000),
 )
+candidate_bytes = hashlib.sha256(
+    json.dumps(
+        [
+            [path.path_id, list(path.edge_ids), list(path.node_ids), path.cost_units,
+             path.length_mm, path.cruise_time_us, list(path.bands), list(path.merge_nodes),
+             path.crossing_count]
+            for path in second.candidates
+        ],
+        sort_keys=True,
+    ).encode("utf-8")
+).hexdigest()
 payload = {
+    "candidate_bytes": candidate_bytes,
     "square": [list(path.edge_ids) for path in candidates.candidates],
     "square_shuffled": [list(path.edge_ids) for path in shuffled_candidates.candidates],
     "square_ranking": candidates.ranking_digest(),
@@ -87,17 +99,23 @@ def run_probe(seed: str) -> dict[str, Any]:
     return parsed
 
 
+# The seeds the release gate runs: 0 (default hashing off), two arbitrary non-zero
+# seeds, and no assumption that the parent interpreter's seed is any of them.
+HASH_SEEDS = ("0", "4242", "98765", "1", "7", "12345")
+
+
 def test_candidate_order_is_identical_under_every_hash_seed() -> None:
     """Changing ``PYTHONHASHSEED`` reorders nothing - the replay gate depends on it."""
     baseline = run_probe("0")
-    for seed in ("1", "7", "12345"):
+    for seed in HASH_SEEDS:
         observed = run_probe(seed)
         assert observed == baseline, f"output changed under PYTHONHASHSEED={seed}"
+    assert run_probe("4242") == run_probe("98765") == baseline
 
 
 def test_insertion_order_of_the_source_dicts_does_not_change_the_answer() -> None:
     """Equal-cost detours separate on lane id, so reversing dict order is a no-op."""
-    probe = run_probe("3")
+    probe = run_probe("98765")
     assert probe["square"] == probe["square_shuffled"]
     assert probe["square_ranking"] == probe["square_shuffled_ranking"]
 

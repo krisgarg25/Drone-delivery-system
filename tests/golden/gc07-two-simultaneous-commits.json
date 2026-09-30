@@ -1,0 +1,135 @@
+{
+  "scenario_id": "gc07",
+  "title": "Two simultaneous commits",
+  "description": "Two independent missions were both accepted and committed for the same lane, the same track and the identical absolute window. Each planner answer says SAFE; the pair cannot both be true, and the checker is the component that says so out loud.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That the ledger would have allowed this: the reservation layer has an exclusion constraint precisely to stop it. The bundle proves the checker finds the overlap from geometry alone, with no database in the loop.",
+    "Which of the two commits should have lost."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699983,
+          "lon": 76.770792642,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-01"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.7387,
+          "lon": 76.7687,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699983,
+          "lon": 76.770792642,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-01"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "CONFLICT",
+      "checks": [
+        "CONTINUOUS_SWEEP",
+        "ADJACENT_CORRIDOR",
+        "CROSSING_VOLUME"
+      ],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 7.0,
+        "contact_windows": 10.0,
+        "contact_span_us": 100000006.0,
+        "crossing_points": 2.0,
+        "corridor_pairs": 1.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "Two independent missions were both accepted and committed for the same lane, the same track and the identical absolute window. Each planner answer says SAFE; the pair cannot both be true, and the checker is the component that says so out loud.",
+      "what_this_does_not_prove": [
+        "That the ledger would have allowed this: the reservation layer has an exclusion constraint precisely to stop it. The bundle proves the checker finds the overlap from geometry alone, with no database in the loop.",
+        "Which of the two commits should have lost."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

@@ -30,6 +30,7 @@ from droneops_geom_core import (
     AltitudeReference,
     GeoPoint,
     Interval,
+    as_millimetres,
     checked_add,
     traversal_microseconds,
 )
@@ -128,7 +129,9 @@ class AltitudeBandRule:
         The band is built from millimetres so the declared floor and ceiling are
         not re-rounded through a metre float.
         """
-        return AltitudeBand(self.reference, self.floor_mm, self.ceiling_mm)
+        return AltitudeBand(
+            self.reference, as_millimetres(self.floor_mm), as_millimetres(self.ceiling_mm)
+        )
 
     def sort_key(self) -> tuple[str, int, int]:
         return (self.band, self.floor_mm, self.ceiling_mm)
@@ -186,7 +189,7 @@ class FacilityAttributes:
 
     @property
     def operating_window(self) -> Interval:
-        return Interval(self.open_us, self.close_us)
+        return Interval.of(self.open_us, self.close_us)
 
     def crew_windows(self) -> tuple[Interval, ...]:
         """Crew shifts ascending; an empty tuple means no crew constraint stated."""

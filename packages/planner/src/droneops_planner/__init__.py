@@ -51,6 +51,12 @@ from .reasons import (
     RequestValidationError,
     human_reason,
 )
+from .volumes4d import (
+    Geom4dSweepVolumeBuilder,
+    lane_profile,
+    policy_from_snapshot,
+    route_profile,
+)
 from .space_time import (
     EdgeTiming,
     OverlapReport,
@@ -115,6 +121,7 @@ __all__ = [
     "EnergyModel",
     "FacilityScheduler",
     "FrozenWindTrace",
+    "Geom4dSweepVolumeBuilder",
     "HybridRoutingStrategy",
     "InMemoryCommitPort",
     "InMemoryOccupancy",
@@ -154,6 +161,9 @@ __all__ = [
     "connector_lattice",
     "default_policy",
     "human_reason",
+    "lane_profile",
+    "policy_from_snapshot",
+    "route_profile",
     "identical_inputs",
     "identical_inputs_digest",
     "prefilter_and_intersect",

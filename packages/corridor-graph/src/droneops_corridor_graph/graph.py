@@ -28,7 +28,7 @@ from droneops_geom_core import (
 )
 
 from .errors import TopologyError
-from .geometry import PlanarSegment, segment_offsets
+from .geometry import segment_offsets
 from .model import (
     AltitudeBandRule,
     CorridorEdge,
@@ -206,7 +206,7 @@ class CorridorGraph:
             resource_key(
                 ResourceKind.VOLUME_CELL,
                 self._cell_identifier(cell),
-                Interval(start_us, end_us),
+                Interval.of(start_us, end_us),
             )
             for cell in cells
         ]
@@ -315,7 +315,7 @@ class OverlayView:
 
     @property
     def window(self) -> Interval:
-        return Interval(self.start_us, self.end_us)
+        return Interval.of(self.start_us, self.end_us)
 
     def fully_closed(self) -> tuple[Restriction, ...]:
         """Closures that remove candidates outright for this whole window."""

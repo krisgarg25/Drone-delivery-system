@@ -28,6 +28,7 @@ from droneops_geom_core import (
     SafeIntervalQuery,
     SafeIntervalResult,
     SafeWindow,
+    as_microseconds,
     compute_safe_intervals,
     intersect_all,
     merge,
@@ -120,13 +121,14 @@ def safe_intervals_for_edge(
     all of its cells are enterable at the same entry instant.
     """
     geom_padding = SafeIntervalPadding(
-        uncertainty_us=padding.timing_us, transition_buffer_us=padding.transition_us
+        uncertainty_us=as_microseconds(padding.timing_us),
+        transition_buffer_us=as_microseconds(padding.transition_us),
     )
     traversal_us = edge.cruise_time_us()
     start_us = max(earliest_us, horizon.start)
     if horizon.end <= start_us:
         return ()
-    window = Interval(start_us, horizon.end)
+    window = Interval.of(start_us, horizon.end)
     if window.is_empty:
         return ()
     per_cell: list[tuple[SafeWindow, ...]] = []
@@ -136,12 +138,14 @@ def safe_intervals_for_edge(
             # One commitment can hold two adjacent halves of one padded traversal;
             # geom-core requires a distinct label per occupied window, so the label
             # carries its own start and the owner stays readable in any audit.
-            OccupiedWindow(Interval(start_us, end_us), f"{owner}@{start_us}", key)
+            OccupiedWindow(Interval.of(start_us, end_us), f"{owner}@{start_us}", key)
             for start_us, end_us, owner in sorted(
                 occupancy.committed_windows(identifier), key=lambda item: (item[0], item[1], item[2])
             )
         )
-        query = SafeIntervalQuery(key, window, traversal_us, geom_padding, occupied)
+        query = SafeIntervalQuery(
+            key, window, as_microseconds(traversal_us), geom_padding, occupied
+        )
         per_cell.append(compute_safe_intervals(query).windows)
     if not per_cell:
         return ()
@@ -254,7 +258,7 @@ def build_volumes(
                 edge.from_node,
                 previous_band,
                 edge.band,
-                Interval(record.entry_us, record.exit_us),
+                Interval.of(record.entry_us, record.exit_us),
                 padding,
             )
             if approach is not None:
@@ -281,7 +285,7 @@ def prefilter_and_intersect(
             identifier = _cell_identifier(token, graph.metadata.altitude_reference.value)
             committed = occupancy.committed_windows(identifier)
             for start_us, end_us, owner in committed:
-                candidate = Interval(start_us, end_us)
+                candidate = Interval.of(start_us, end_us)
                 if not candidate.overlaps(volume.window):
                     continue
                 hits.append((identifier, owner, start_us, end_us))
@@ -304,7 +308,7 @@ def _lane_level_clashes(
     identifier = graph.edge_resource_key(volume.edge_id).identifier
     found: list[tuple[str, str, Interval]] = []
     for start_us, end_us, owner in occupancy.committed_windows(identifier):
-        window = Interval(start_us, end_us)
+        window = Interval.of(start_us, end_us)
         exact = intersect_all((volume.window, window))
         if exact is not None and not exact.is_empty:
             found.append((volume.edge_id, owner, exact))
@@ -347,8 +351,8 @@ def _intersect_windows(
         kept.append(
             SafeWindow(
                 interval,
-                Interval(interval.start + parent.traversal_us, interval.end + parent.traversal_us),
-                Interval(
+                Interval.of(interval.start + parent.traversal_us, interval.end + parent.traversal_us),
+                Interval.of(
                     interval.start + parent.traversal_us + parent.release.measure,
                     interval.end + parent.traversal_us + parent.release.measure,
                 ),
@@ -407,7 +411,5 @@ __all__ = [
     "chain_route_timing",
     "padding_of",
     "prefilter_and_intersect",
-    "resource_key",
-    "ResourceKind",
     "safe_intervals_for_edge",
 ]

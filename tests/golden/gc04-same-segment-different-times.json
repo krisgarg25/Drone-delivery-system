@@ -1,0 +1,131 @@
+{
+  "scenario_id": "gc04",
+  "title": "Same segment, different times",
+  "description": "Two plans hold the same lane, the same height and the same track, ten minutes apart. This is the negative control: a checker that answered CONFLICT here could say nothing at all.",
+  "invariant": "I1",
+  "what_this_does_not_prove": [
+    "That ten minutes is enough separation for any other pair, policy release or speed: it is enough for this geometry only, and the padding that decides it is 15 s of timing plus transition buffer.",
+    "That the two plans are individually lawful - only that they do not overlap each other."
+  ],
+  "policy": {
+    "schema_version": 1,
+    "policy_version": "sim-policy-v1",
+    "authoritative": false,
+    "altitude_reference": "AGL",
+    "protected_volume": {
+      "horizontal_margin_m": 15,
+      "vertical_margin_m": 10,
+      "position_uncertainty_m": 5,
+      "timing_uncertainty_s": 5,
+      "transition_buffer_s": 10
+    }
+  },
+  "evaluation": {
+    "evaluated_at_utc": "2026-10-01T09:00:00+00:00",
+    "adjacency": {}
+  },
+  "records": [
+    {
+      "plan_version": "PLAN-A",
+      "mission_id": "m-a",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 0,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 20,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-01"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "plan_version": "PLAN-B",
+      "mission_id": "m-b",
+      "status": "committed",
+      "time_origin_utc": "2026-10-01T09:00:00+00:00",
+      "points": [
+        {
+          "t_s": 600,
+          "lat": 30.738699996,
+          "lon": 76.767653679,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        },
+        {
+          "t_s": 620,
+          "lat": 30.738699996,
+          "lon": 76.769746321,
+          "altitude_m": 40.0,
+          "altitude_reference": "AGL",
+          "speed_mm_per_s": 10000
+        }
+      ],
+      "resources": [
+        "corridor:SEG-01"
+      ],
+      "body_radius_mm": 250,
+      "body_half_height_mm": 150,
+      "policy_release": "sim-policy-v1",
+      "planner_claim": {
+        "verdict": "SAFE",
+        "policy_version": "sim-policy-v1",
+        "allow_rule_id": null,
+        "allow_rule_version": null
+      },
+      "restriction_expires_at_utc": "2026-10-08T09:00:00+00:00"
+    }
+  ],
+  "expected": [
+    {
+      "pair": [
+        "PLAN-A",
+        "PLAN-B"
+      ],
+      "verdict": "SAFE",
+      "checks": [],
+      "basis": "CONTINUOUS",
+      "metrics": {
+        "piece_pairs_tested": 0.0,
+        "contact_windows": 0.0,
+        "contact_span_us": 0.0,
+        "crossing_points": 2.0,
+        "corridor_pairs": 1.0,
+        "unproven_reasons": 0.0
+      },
+      "invariants": [
+        "I1"
+      ],
+      "description": "Two plans hold the same lane, the same height and the same track, ten minutes apart. This is the negative control: a checker that answered CONFLICT here could say nothing at all.",
+      "what_this_does_not_prove": [
+        "That ten minutes is enough separation for any other pair, policy release or speed: it is enough for this geometry only, and the padding that decides it is 15 s of timing plus transition buffer.",
+        "That the two plans are individually lawful - only that they do not overlap each other."
+      ]
+    }
+  ],
+  "release_allowed": false
+}

@@ -28,7 +28,7 @@ from droneops_geom_core import (
     overlaps_any,
 )
 
-from .model_util import BP_PER_WHOLE, MM_PER_METRE, apply_bp, ceil_div
+from .model_util import BP_PER_WHOLE, MM_PER_METRE, ceil_div
 from .ports import VolumePadding
 from .reasons import ReasonCode
 from .types import (
@@ -114,9 +114,9 @@ class InMemoryCommitPort:
             )
         for identifier, start_us, end_us in request.resources:
             clash = overlaps_any(
-                Interval(start_us, end_us),
+                Interval.of(start_us, end_us),
                 (
-                    Interval(item[0], item[1])
+                    Interval.of(item[0], item[1])
                     for item in self.occupancy.committed_windows(identifier)
                 ),
             )
@@ -177,8 +177,8 @@ class CellSweepVolumeBuilder:
             raise ValueError(f"traversal window [{entry_us}, {exit_us}) is empty")
         mid_us = entry_us + duration // 2
         return (
-            ProtectedVolume(edge_id, ring, Interval(entry_us, mid_us), band),
-            ProtectedVolume(edge_id, ring, Interval(mid_us, exit_us), band),
+            ProtectedVolume(edge_id, ring, Interval.of(entry_us, mid_us), band),
+            ProtectedVolume(edge_id, ring, Interval.of(mid_us, exit_us), band),
         )
 
     def approach_volume(
@@ -214,7 +214,7 @@ class CellSweepVolumeBuilder:
         return ProtectedVolume(
             f"approach-{node_id}",
             tuple(sorted(cells)),
-            Interval(
+            Interval.of(
                 window.start - padding.timing_us - padding.transition_us,
                 window.end + padding.timing_us + padding.transition_us,
             ),
@@ -281,7 +281,7 @@ class BatteryCurveEnergyModel:
         reserve_fraction_bp: int,
         recovery_length_mm: int,
         climb_mm: int,
-        wind_energy_bp_per_ms: int = 250,
+        wind_energy_bp_per_ms: int,
     ) -> EnergyEvaluation:
         """Consumption, reserve requirement and the remaining margin."""
         cruise_wh = ceil_div(route.length_mm * envelope.wh_per_100km, 100_000_000)
@@ -391,9 +391,9 @@ class BundleFacilityScheduler:
         for index in range(attributes.pads):
             identifier = f"pad-{facility_id}-{index}"
             free = gaps_within(
-                Interval(lower, upper),
+                Interval.of(lower, upper),
                 (
-                    Interval(item[0], item[1])
+                    Interval.of(item[0], item[1])
                     for item in self.occupancy.committed_windows(identifier)
                 ),
             )
@@ -403,7 +403,7 @@ class BundleFacilityScheduler:
                         facility_id,
                         "pad",
                         index,
-                        Interval(candidate.start, candidate.start + duration_us),
+                        Interval.of(candidate.start, candidate.start + duration_us),
                         purpose,
                     )
         return None
@@ -426,16 +426,16 @@ class BundleFacilityScheduler:
         for index in range(attributes.charger_bays):
             identifier = f"charger-{facility_id}-{index}"
             free = gaps_within(
-                Interval(lower, upper),
+                Interval.of(lower, upper),
                 (
-                    Interval(item[0], item[1])
+                    Interval.of(item[0], item[1])
                     for item in self.occupancy.committed_windows(identifier)
                 ),
             )
             for candidate in free:
                 if candidate.measure >= duration_us:
                     return PadWindow(
-                        facility_id, "charger_bay", index, Interval(candidate.start, candidate.start + duration_us), "charge"
+                        facility_id, "charger_bay", index, Interval.of(candidate.start, candidate.start + duration_us), "charge"
                     )
         return None
 
@@ -463,5 +463,4 @@ __all__ = [
     "InMemoryCommitPort",
     "InMemoryOccupancy",
     "rejection_reason",
-    "replace",
 ]

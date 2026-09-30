@@ -65,7 +65,7 @@ class Restriction:
 
     @property
     def window(self) -> Interval:
-        return Interval(self.start_us, self.end_us)
+        return Interval.of(self.start_us, self.end_us)
 
     def blocks_window(self, window: Interval) -> bool:
         """True when this closure covers the whole of ``window``."""
@@ -159,12 +159,14 @@ class ClosureOverlay:
         return min(values)
 
     def edges_closed_throughout(self, window: Interval) -> tuple[str, ...]:
-        return sorted(
-            {
-                item.edge_id
-                for item in self.restrictions
-                if item.kind is RestrictionKind.CLOSED and item.blocks_window(window)
-            }
+        return tuple(
+            sorted(
+                {
+                    item.edge_id
+                    for item in self.restrictions
+                    if item.kind is RestrictionKind.CLOSED and item.blocks_window(window)
+                }
+            )
         )
 
     def mid_plan_expiries(self, window: Interval) -> tuple[Restriction, ...]:
@@ -254,8 +256,24 @@ def _restriction_from(
         end_us=end,
         human_reason=str(raw.get("reason", "unspecified restriction")),
         technical_detail=f"lane {edge_id} {kind.value} binding over [{start}, {end})",
-        value_mm=None if value is None else int(value),
+        value_mm=_millimetres_or_none(value, edge_id),
     )
+
+
+def _millimetres_or_none(value: object, edge_id: str) -> int | None:
+    """A declared cap in whole millimetres, or ``None`` when the binding states none.
+
+    A fractional cap is a bundle defect: rounding it down would make a restriction
+    looser than the operator wrote it.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ClosureOverlayError(
+            f"restriction on lane {edge_id} declares cap {value!r}; "
+            "millimetre values must be whole"
+        )
+    return value
 
 
 def _text(raw: dict[str, object], key: str) -> str:
