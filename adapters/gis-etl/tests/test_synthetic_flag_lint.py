@@ -14,14 +14,13 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from conftest import RETRIEVED_AT, building_node, wire_way
-
 from droneops_adapters_gis_etl.audit import _audit_obstacles, audit_snapshot
 from droneops_adapters_gis_etl.config import GisConfig, repo_root
 from droneops_adapters_gis_etl.errors import GisEtlError
-from droneops_adapters_gis_etl.extract import LayerExtractor
 from droneops_adapters_gis_etl.provenance import RetrievalProvenance, assert_synthetic_flags
 from droneops_adapters_gis_etl.vertical import build_obstacles, write_obstacles
+
+from conftest import RETRIEVED_AT, building_node, wire_way
 
 REQUIRED_FLAGS = ("obstacle_source", "vertical_authority", "requires_survey", "synthetic", "authoritative")
 
@@ -121,6 +120,66 @@ def test_shipped_snapshot_is_flag_complete() -> None:
     assert result["fully_flagged"] == result["count"]
 
 
+def test_every_emitted_layer_of_the_shipped_snapshot_carries_provenance() -> None:
+    """The lint covers *every* layer the pipeline wrote, not just the obstacle file.
+
+    A retrieved layer without source, retrieval time and hash on each feature is as
+    misleading as an unflagged synthetic height: it presents third-party data as if it
+    were this project's own measurement (conventions section 3).
+    """
+    from droneops_adapters_gis_etl.audit import _audit_layers
+
+    layers_dir = SNAPSHOT / "layers"
+    if not layers_dir.is_dir():
+        pytest.skip("no produced snapshot yet; run the gis-etl pipeline first")
+    files = sorted(list(layers_dir.glob("*.jsonl")) + list(layers_dir.glob("*.geojson")))
+    assert files, "the pipeline emitted no layer files"
+    result = _audit_layers(layers_dir)
+    assert result["problems"] == [], result["problems"][:3]
+    # Every emitted feature file was actually counted, so an empty audit proves nothing.
+    assert sum(result["counts"].values()) > 0
+    assert set(result["counts"]) == {path.name for path in files}
+    for path in layers_dir.glob("*.jsonl"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            provenance = json.loads(line)["properties"]["provenance"]
+            for key in ("source", "retrieved_at", "response_sha256", "query_sha256", "licence"):
+                assert provenance.get(key), f"{path.name}: provenance.{key} missing"
+            assert "OpenStreetMap" in provenance["source"]
+    for path in layers_dir.glob("*.geojson"):
+        collection = json.loads(path.read_text(encoding="utf-8"))
+        assert collection["authoritative"] is False, path.name
+
+
+def test_stripping_provenance_from_a_layer_fails_the_layer_lint(tmp_path: Path) -> None:
+    """Prove the layer half of the lint can fail, the same way the obstacle half is proven."""
+    from droneops_adapters_gis_etl.audit import _audit_layers
+
+    layers = tmp_path / "layers"
+    layers.mkdir()
+    good = {
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [76.79, 30.74]},
+        "properties": {
+            "osm_type": "node",
+            "osm_id": 1,
+            "provenance": {
+                "source": "OpenStreetMap via Overpass API",
+                "retrieved_at": RETRIEVED_AT.isoformat(),
+                "response_sha256": "sha256:" + "b" * 64,
+                "query_sha256": "a" * 64,
+            },
+        },
+    }
+    (layers / "buildings.jsonl").write_text(json.dumps(good) + "\n", encoding="utf-8")
+    assert _audit_layers(layers)["problems"] == []
+
+    stripped = json.loads(json.dumps(good))
+    del stripped["properties"]["provenance"]["response_sha256"]
+    (layers / "power_lines.jsonl").write_text(json.dumps(stripped) + "\n", encoding="utf-8")
+    result = _audit_layers(layers)
+    assert any("power_lines.jsonl" in problem for problem in result["problems"]), result
+
+
 def test_full_snapshot_audit_passes_on_the_produced_dataset() -> None:
     from droneops_adapters_gis_etl.config import load_config
 
@@ -130,4 +189,6 @@ def test_full_snapshot_audit_passes_on_the_produced_dataset() -> None:
     report = audit_snapshot(config)
     assert report["ok"], report
     assert report["obstacles"]["count"] > 0
+    assert report["corridors"]["count"] > 0
+    assert sum(report["layers"]["counts"].values()) > 0
     assert report["manifest"]["present"] is True

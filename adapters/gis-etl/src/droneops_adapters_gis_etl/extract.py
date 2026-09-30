@@ -18,7 +18,7 @@ from typing import Any
 from shapely.geometry.base import BaseGeometry
 
 from .config import GisConfig
-from .errors import ExtractionLimitError, GisEtlError
+from .errors import ExtractionLimitError, GisEtlError, ImplausibleEndpointError
 from .geom import (
     clip_feature,
     element_geometry,
@@ -39,6 +39,17 @@ from .provenance import (
 from .queries import boundary_query, boundary_tags_query, layer_query
 
 GEOJSON_MAX_FEATURES = 5000
+#: Which measured baseline number proves a layer must not be empty. A layer absent from
+#: this map has no baseline evidence, so an empty result is reported, not rejected.
+BASELINE_LAYER_KEYS: dict[str, str] = {
+    "buildings": "building_ways",
+    "roads": "highway_ways",
+    "power_lines": "power_lines",
+    "power_minor": "power_towers",
+    "towers": "man_made_towers",
+    "trees": "trees",
+    "aeroway": "aeroway_ways",
+}
 _HEIGHT_PATTERN = re.compile(r"(-?\d+(?:[.,]\d+)?)")
 _TAG_ORDER = (
     "osm_type",
@@ -76,6 +87,7 @@ class LayerOutcome:
 
     layer: str
     features: int = 0
+    elements_seen: int = 0
     dropped_no_geometry: int = 0
     dropped_outside_boundary: int = 0
     duplicates_removed: int = 0
@@ -93,6 +105,7 @@ class LayerOutcome:
         return {
             "layer": self.layer,
             "features": self.features,
+            "elements_seen": self.elements_seen,
             "dropped_no_geometry": self.dropped_no_geometry,
             "dropped_outside_boundary": self.dropped_outside_boundary,
             "duplicates_removed": self.duplicates_removed,
@@ -199,6 +212,7 @@ class LayerExtractor:
             "iso3166_2": str(tags.get("ISO3166-2", "")),
             "wikidata": str(tags.get("wikidata", "")),
             "geometry_valid": bool(polygon.is_valid),
+            "retrieval_mode": geom_result.source_mode,
             "area_km2": round(float(polygon.area) * 111.32 * 110.574, 2),
             "bounds": list(polygon.bounds),
             "identity_provenance": self._provenance(tags_result, note="boundary tags").as_dict(),
@@ -224,7 +238,9 @@ class LayerExtractor:
             outcome.chunks_requested += 1
             label = f"layer:{name}:chunk{index}"
             try:
-                result = self.client.fetch(query, label=label)
+                result = self.client.fetch(
+                    query, label=label, min_expected_total=self._chunk_floor(name, len(chunks))
+                )
             except GisEtlError as exc:
                 outcome.chunks_failed += 1
                 outcome.failures.append(
@@ -242,7 +258,9 @@ class LayerExtractor:
                 outcome.chunks_cached += 1
                 outcome.degraded = True
             provenance = self._provenance(result, note=f"layer {name} chunk {index}")
-            for element in (result.json().get("elements") or []):
+            elements = result.json().get("elements") or []
+            outcome.elements_seen += len(elements)
+            for element in elements:
                 feature = self._feature(element, name, provenance)
                 if feature is None:
                     outcome.dropped_no_geometry += 1
@@ -268,6 +286,7 @@ class LayerExtractor:
             ordered = ordered[: spec.max_features]
             outcome.truncated = True
         outcome.features = len(ordered)
+        self._assert_layer_not_empty(name, outcome)
         outcome.files = self._write_layer(name, ordered)
         outcome.provenance = {
             "source": "OpenStreetMap via Overpass API",
@@ -288,6 +307,47 @@ class LayerExtractor:
             "last_provenance": provenance_dict(ordered),
         }
         return outcome
+
+    def _chunk_floor(self, name: str, chunk_count: int) -> int:
+        """Plausibility floor for one chunk query.
+
+        Only an unchunked query covers the whole service box, so only then does the
+        measured baseline say "this cannot be empty". A sub-box can legitimately hold
+        nothing, and inventing a floor there would reject real data.
+        """
+        if chunk_count != 1 or not self.config.overpass.reject_zero_when_baseline_nonzero:
+            return 0
+        baseline_key = BASELINE_LAYER_KEYS.get(name)
+        if not baseline_key:
+            return 0
+        return 1 if int(self.config.baseline.get(baseline_key, 0) or 0) > 0 else 0
+
+    def _assert_layer_not_empty(self, name: str, outcome: LayerOutcome) -> None:
+        """Refuse to publish an empty layer where the baseline proves features exist.
+
+        This is the case the count-query guard cannot see: a mirror that answers HTTP
+        200 with a well-formed, plausible-looking body whose elements carry no usable
+        geometry. Every feature is dropped, the layer file is written as an empty list,
+        and a reader concludes Chandigarh has no buildings. A timeout is honest; this is
+        not, so the layer is refused and the pipeline records the refusal.
+        """
+        baseline_key = BASELINE_LAYER_KEYS.get(name)
+        if not baseline_key or outcome.features:
+            return
+        if not self.config.overpass.reject_zero_when_baseline_nonzero:
+            return
+        expected = int(self.config.baseline.get(baseline_key, 0) or 0)
+        if expected <= 0:
+            return
+        raise ImplausibleEndpointError(
+            f"layer {name!r} produced 0 usable features "
+            f"({outcome.elements_seen} elements seen, {outcome.dropped_no_geometry} without "
+            f"geometry, {outcome.dropped_outside_boundary} outside the boundary, "
+            f"{outcome.chunks_failed}/{outcome.chunks_requested} chunks failed) where the "
+            f"{self.config.baseline.get('retrieved_at', 'baseline')} measurement recorded "
+            f"{expected}. Refusing to write an empty layer: that would be published as "
+            "'no such features exist' rather than as a retrieval failure."
+        )
 
     def _feature(
         self, element: dict[str, Any], name: str, provenance: RetrievalProvenance

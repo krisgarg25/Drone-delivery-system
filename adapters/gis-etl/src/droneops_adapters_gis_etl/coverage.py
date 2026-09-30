@@ -23,6 +23,14 @@ from .queries import Metric, central_metrics, service_metrics
 #: Below this a baseline zero-vs-nonzero is not evidence of a broken mirror; a metric
 #: legitimately equal to zero today (say aeroway in a shrunk box) must stay reportable.
 PLAUSIBILITY_FLOOR_BASELINE = 100
+#: The floor is *one*, not the baseline value. OSM is edited hourly and the 30 September
+#: figures cannot be reproduced with these filters, so a smaller number today is a
+#: measurement, not a broken mirror. Measured on 2026-09-30 in this run: maps.mail.ru,
+#: overpass-api.de, kumi.systems and private.coffee all independently answered 360 power
+#: towers where the baseline recorded 2,923, and 29 power lines where it recorded 5,674.
+#: Four agreeing mirrors are corroboration; a baseline-sized floor would have thrown all
+#: four away. What is never acceptable is a *zero* for features the same endpoints prove
+#: exist - and that is exactly what floor=1 rejects.
 
 
 @dataclass
@@ -95,11 +103,7 @@ def run_coverage(client: OverpassClient, config: GisConfig) -> CoverageReport:
 
     for metric in service_metrics(config.service_bbox) + central_metrics(config.central_bbox):
         expected = _optional_int(baseline.get(metric.baseline_key))
-        floor = (
-            expected
-            if expected is not None and expected >= PLAUSIBILITY_FLOOR_BASELINE
-            else 0
-        )
+        floor = 1 if expected is not None and expected >= PLAUSIBILITY_FLOOR_BASELINE else 0
         try:
             result = _measure(client, metric, config, floor=floor)
         except (ImplausibleEndpointError, GisEtlError) as exc:
@@ -118,6 +122,15 @@ def run_coverage(client: OverpassClient, config: GisConfig) -> CoverageReport:
             )
             continue
         metrics.append(result)
+        if expected and expected >= PLAUSIBILITY_FLOOR_BASELINE and not 0.75 <= result.total / expected <= 1.33:
+            notes.append(
+                f"{metric.name}: measured {result.total:,} in this run against "
+                f"{expected:,} recorded at {baseline.get('retrieved_at', 'the reference time')}. "
+                f"Both numbers are kept as they are - the count is not adjusted to the "
+                "baseline and the baseline is not overwritten. A divergence this large is "
+                "most likely a filter difference in the 30 September query, and it is a "
+                "finding for review, not something to hide."
+            )
 
     report = _assemble(config, metrics, failures, notes)
     return report

@@ -38,7 +38,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..declarative import Base
-from ..types import TenantMixin, pg_enum, tenant_index, utc_instant_check
+from ..types import TenantMixin, pg_enum, utc_instant_check
 
 GENESIS_HASH = "0" * 64
 
@@ -46,7 +46,6 @@ GENESIS_HASH = "0" * 64
 class AuditLog(Base, TenantMixin):
     __tablename__ = "audit_log"
     __table_args__: tuple[Any, ...] = (
-        tenant_index("audit_log"),
         utc_instant_check("occurred_at"),
         CheckConstraint("length(btrim(action)) > 0", name="action_is_not_blank"),
         CheckConstraint("length(btrim(resource_type)) > 0", name="resource_type_is_not_blank"),
@@ -66,6 +65,11 @@ class AuditLog(Base, TenantMixin):
         ),
         # One record per hash: a replayed append is refused instead of silently duplicated.
         UniqueConstraint("record_hash", name="record_hash"),
+        # The tenant index the RLS filter and the chain guard's per-tenant newest-row
+        # lookup (`WHERE tenant_id = ? ORDER BY id DESC LIMIT 1`) both need, as one
+        # composite: a separate `ix_audit_log_tenant_id` on `tenant_id` alone would carry
+        # the same name and a second CREATE INDEX of it fails. The leftmost prefix of this
+        # index serves plain tenant_id lookups, so nothing is lost.
         Index("ix_audit_log_tenant_id", "tenant_id", "id"),
     )
 

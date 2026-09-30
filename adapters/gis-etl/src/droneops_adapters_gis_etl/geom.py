@@ -110,6 +110,34 @@ def element_properties(element: dict[str, Any], *, layer: str) -> dict[str, Any]
 # ------------------------------------------------------------------------ boundary
 
 
+def _member_rings(element: dict[str, Any]) -> list[Sequence[dict[str, Any]]]:
+    """Every coordinate sequence one element carries, relation members included.
+
+    ``out geom`` on a relation puts the geometry on each entry of ``members``, not on
+    the relation itself (measured on 2026-09-30 against relation 1942809: 1 element,
+    40 members, no relation-level ``geometry``). Reading only the top level therefore
+    polygonises nothing and turns an administrative boundary into an empty mask.
+    """
+    found: list[Sequence[dict[str, Any]]] = []
+    for raw in _geometry_values(element.get("geometry")):
+        found.append(raw)
+    members = element.get("members")
+    if isinstance(members, list):
+        for member in members:
+            if isinstance(member, dict):
+                found.extend(_geometry_values(member.get("geometry")))
+    return found
+
+
+def _geometry_values(raw: Any) -> list[Sequence[dict[str, Any]]]:
+    """A single ring, or for a multipolygon relation member a list of rings."""
+    if not isinstance(raw, list) or not raw:
+        return []
+    if isinstance(raw[0], dict):
+        return [raw]
+    return [item for item in raw if isinstance(item, list) and item and isinstance(item[0], dict)]
+
+
 def boundary_polygon(elements: Iterable[dict[str, Any]], *, expected_name: str = "") -> BaseGeometry:
     """Rebuild the administrative polygon from relation member geometry.
 
@@ -118,11 +146,15 @@ def boundary_polygon(elements: Iterable[dict[str, Any]], *, expected_name: str =
     polygonised the caller gets an empty geometry and must fail loudly - a missing
     boundary must not turn into "clip against the bbox" and be presented as a mask.
     """
+    elements = list(elements)
     rings: list[Sequence[dict[str, Any]]] = []
     for element in elements:
-        raw = element.get("geometry")
-        if isinstance(raw, list) and len(raw) >= 4:
-            rings.append(raw)
+        if element.get("type") == "node":
+            continue
+        # A relation member is one stretch of perimeter, and a straight border section
+        # is legitimately two points. MIN_RING_POINTS applies to a feature's own ring,
+        # not to a boundary segment: filtering two-point members would break the stitch.
+        rings.extend(ring for ring in _member_rings(element) if len(ring) >= 2)
     if not rings:
         return Polygon()
     coordinates = [
@@ -132,33 +164,29 @@ def boundary_polygon(elements: Iterable[dict[str, Any]], *, expected_name: str =
         ]
         for ring in rings
     ]
-    closed = []
-    for ring in coordinates:
-        if ring[0] != ring[-1]:
-            ring = [*ring, list(ring[0])]
-        closed.append(ring)
+    # A boundary way is an open segment of the perimeter. Implicitly closing each one
+    # into a polygon would add a chord straight across the district, so genuinely closed
+    # rings become polygons directly and open segments are stitched before polygonising.
     polygons: list[BaseGeometry] = []
-    for ring in closed:
-        try:
-            candidate = Polygon(ring)
-        except Exception:
-            continue
-        if not candidate.is_valid:
-            candidate = candidate.buffer(0)
-        if not candidate.is_empty and isinstance(candidate, Polygon):
-            polygons.append(candidate)
-    if not polygons:
-        # Ring order was broken across members: fall back to polygonising the lines.
-        lines = []
-        for ring in closed:
+    segments: list[Any] = []
+    for original in coordinates:
+        ring = original if original[0] == original[-1] else [*original, list(original[0])]
+        if original[0] == original[-1]:
             try:
-                lines.append(MultiLineString([ring]))
+                candidate = Polygon(ring)
             except Exception:
                 continue
-        if not lines:
-            return Polygon()
-        unioned = unary_union(lines)
-        polygons = list(polygonize(unioned))
+            if not candidate.is_valid:
+                candidate = candidate.buffer(0)
+            if not candidate.is_empty and isinstance(candidate, Polygon):
+                polygons.append(candidate)
+        else:
+            try:
+                segments.append(MultiLineString([original]))
+            except Exception:
+                continue
+    if segments:
+        polygons.extend(polygonize(unary_union(segments)))
     if not polygons:
         return Polygon()
     merged = unary_union(polygons)

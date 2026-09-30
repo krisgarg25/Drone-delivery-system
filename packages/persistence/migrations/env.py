@@ -102,6 +102,12 @@ async def run_async_migrations() -> None:
     )
     async with engine.connect() as connection:
         await connection.run_sync(do_run_migrations)
+        # `_configure_connection` opens the transaction with its first SET statement, so
+        # alembic's own `begin_transaction()` only gets a delegated/savepoint transaction and
+        # its "commit" reaches the driver, not the session. Without this COMMIT the whole
+        # upgrade is rolled back when the connection closes: `upgrade head` exits 0 and the
+        # schema stays empty, so the next `upgrade head` starts from base again.
+        await connection.commit()
     await engine.dispose()
 
 

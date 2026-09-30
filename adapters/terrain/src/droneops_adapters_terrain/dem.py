@@ -285,8 +285,11 @@ def clip_dem(
 def clearance_guard(record: TerrainRecord) -> None:
     """Raise unless the clip may legitimately feed a clearance calculation.
 
-    Today that is always: no 30 m DEM in this project may be used for obstacle
-    clearance. The function exists so the refusal is a checked invariant, not a comment.
+    Nothing this adapter produces may: a 30 m grid is the ground, and a tower, a wire or
+    a rooftop is not the ground. ``clip_dem`` therefore always writes
+    ``usable_for_clearance=False``, and this guard is what fails the build if a record is
+    ever promoted to clearance-usable by hand, or if its vertical datum is undeclared.
+    The refusal is a checked invariant, not a comment.
     """
     if record.usable_for_clearance:
         raise VerticalDatumError(

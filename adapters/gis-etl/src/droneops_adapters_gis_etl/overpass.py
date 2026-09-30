@@ -357,6 +357,18 @@ class OverpassClient:
                     self._suspicious[endpoint] = self._suspicious.get(endpoint, 0) + 1
                     if self._suspicious[endpoint] >= self.settings.max_consecutive_suspicious:
                         self._cooldowns[endpoint] = time.monotonic() + self.settings.endpoint_cooldown_s
+                    # Kept as evidence of the mirror, excluded from replay: the body is
+                    # written under _quarantine so a refused zero can never come back as
+                    # a cached measurement on the next offline run.
+                    self.cache.quarantine(
+                        query_text,
+                        response.content,
+                        reason=str(exc),
+                        endpoint=endpoint,
+                        retrieved_at=self.now(),
+                        http_status=response.status_code,
+                        label=label,
+                    )
                     failures.append(f"{endpoint} implausible: {exc}")
                     break
 

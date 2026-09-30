@@ -25,6 +25,9 @@ from .errors import CacheError, CacheMissError
 from .hashing import file_sha256, prefixed, query_sha256, sha256_hex
 
 INDEX_NAME = "index.jsonl"
+#: Bodies refused by the plausibility guard. Prefixed with an underscore so no query
+#: hash can collide with it, and one directory deeper than the replay path looks at.
+QUARANTINE_DIRNAME = "_quarantine"
 
 
 def _stamp(retrieved_at: datetime) -> str:
@@ -148,6 +151,74 @@ class RawCache:
         meta_path.write_text(json.dumps(asdict(record), indent=2, sort_keys=True) + "\n", "utf-8")
         self._append_index(record)
         return record
+
+    def quarantine(
+        self,
+        query_text: str,
+        payload: bytes,
+        *,
+        reason: str,
+        endpoint: str,
+        retrieved_at: datetime,
+        http_status: int = 0,
+        label: str = "",
+    ) -> Path:
+        """Keep a rejected body as evidence without ever letting it be replayed.
+
+        An untrustworthy mirror's answer is still a fact about that mirror, so it is not
+        deleted - but it must never satisfy ``latest()``, or a quarantined zero becomes a
+        cached measurement on the next offline run. Quarantined entries therefore live
+        under ``_quarantine/<key>/``, outside the directory the replay reads.
+        """
+        key = query_sha256(query_text)
+        directory = self.dir / QUARANTINE_DIRNAME / key
+        directory.mkdir(parents=True, exist_ok=True)
+        digest = sha256_hex(payload)
+        body_path = directory / f"{_stamp(retrieved_at)}+{digest[:8]}.json"
+        body_path.write_bytes(payload)
+        sidecar = {
+            "quarantined": True,
+            "reason": reason,
+            "endpoint": endpoint,
+            "key": key,
+            "query_sha256": key,
+            "query_text": " ".join(query_text.split()),
+            "retrieved_at": retrieved_at.astimezone(UTC).isoformat(),
+            "http_status": http_status,
+            "label": label,
+            "response_sha256": prefixed(digest),
+            "path": str(body_path),
+        }
+        (directory / f"{_stamp(retrieved_at)}+{digest[:8]}.meta.json").write_text(
+            json.dumps(sidecar, indent=2, sort_keys=True) + "\n", "utf-8"
+        )
+        self._append_index(
+            CacheRecord(
+                key=key,
+                query_sha256=key,
+                retrieved_at=retrieved_at.astimezone(UTC).isoformat(),
+                path=str(body_path),
+                meta_path=str(directory / f"{_stamp(retrieved_at)}+{digest[:8]}.meta.json"),
+                response_sha256=prefixed(digest),
+                endpoint=endpoint,
+                query_text=" ".join(query_text.split()),
+                source_mode="quarantined",
+                http_status=http_status,
+                label=label,
+                note=reason,
+            )
+        )
+        return body_path
+
+    def quarantined(self) -> list[dict[str, object]]:
+        """Every body this project refused to believe."""
+        found: list[dict[str, object]] = []
+        for meta_path in sorted((self.dir / QUARANTINE_DIRNAME).glob("*/*.meta.json")):
+            try:
+                found.append(json.loads(meta_path.read_text(encoding="utf-8")))
+            except (OSError, json.JSONDecodeError):  # pragma: no cover - corrupt sidecar
+                continue
+        return found
 
     def _append_index(self, record: CacheRecord) -> None:
         line = json.dumps(

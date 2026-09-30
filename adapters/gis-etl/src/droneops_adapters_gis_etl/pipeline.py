@@ -17,8 +17,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .config import GisConfig, default_config_path, load_config
 from .cache import RawCache
+from .config import GisConfig, default_config_path, load_config
 from .corridor import CorridorSet, build_corridors, write_corridors
 from .coverage import CoverageReport, run_coverage
 from .errors import GisEtlError
@@ -28,7 +28,7 @@ from .hashing import file_sha256
 from .manifest import RunRecord, build_manifest, write_manifest
 from .overpass import OverpassClient
 from .provenance import utc_now
-from .sources import ExtractInfo, ingest_extract, inspect_extract, clip_features_to_mask
+from .sources import ExtractInfo, clip_features_to_mask, ingest_extract, inspect_extract
 from .vertical import build_obstacles
 
 COVERAGE_FILE = "coverage_report.json"
@@ -83,16 +83,33 @@ class ChandigarhEtl:
             "area_km2": extra["detail"]["area_km2"],
             "bounds": extra["detail"]["bounds"],
         }
-        self._count_component(provenance.source_mode)
+        # Counted from the retrieval mode of *this* fetch, not from the cache record's
+        # stored mode: an offline replay touched no network and must not book itself as
+        # a live component.
+        self._count_component(extra["detail"]["retrieval_mode"])
         self.record.layers["boundary"] = {"files": extra["files"], "features": 1, "chunks": {}}
         return self.record.boundary
 
     def run_layers(self, names: list[str] | None = None) -> dict[str, Any]:
-        targets = names or list(sorted(self.config.layers))
+        targets = names or sorted(self.config.layers)
         for name in targets:
             if name == "boundary" or name not in self.config.layers:
                 continue
-            outcome = self.extractor.run_layer(name, self.mask)
+            try:
+                outcome = self.extractor.run_layer(name, self.mask)
+            except GisEtlError as exc:
+                # A refused layer is a result, not a crash: the manifest carries the
+                # reason so an empty layer can never be read as "nothing exists here".
+                self.record.failed_components += 1
+                self.record.degradations.append(f"layer {name}: REFUSED - {str(exc)[:300]}")
+                self.record.layers[name] = {
+                    "layer": name,
+                    "features": 0,
+                    "refused": True,
+                    "reason": str(exc)[:700],
+                    "files": {},
+                }
+                continue
             self.record.layers[name] = outcome.as_dict()
             self.record.live_components += outcome.chunks_live
             self.record.cached_components += outcome.chunks_cached

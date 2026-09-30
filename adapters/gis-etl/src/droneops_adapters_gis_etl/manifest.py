@@ -20,7 +20,7 @@ import yaml
 
 from .config import GisConfig
 from .errors import GisEtlError
-from .provenance import OSM_ATTRIBUTION, OSM_LICENSE, utc_now
+from .provenance import OSM_ATTRIBUTION, OSM_LICENSE
 
 NOT_AUTHORISED = "Simulation only. Not authorised for flight."
 
@@ -306,6 +306,9 @@ def _layers_section(run: RunRecord) -> dict[str, Any]:
     for name, outcome in sorted(run.layers.items()):
         section[name] = {
             "features": outcome.get("features", 0),
+            "elements_seen": outcome.get("elements_seen", 0),
+            "refused": bool(outcome.get("refused", False)),
+            "reason": outcome.get("reason", ""),
             "chunks": outcome.get("chunks", {}),
             "degraded": outcome.get("degraded", False),
             "truncated": outcome.get("truncated", False),
