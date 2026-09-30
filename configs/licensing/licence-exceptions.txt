@@ -1,0 +1,27 @@
+# Reviewed per-package licence exceptions. Format: `<package-lowercase> <normalised-licence>`
+#
+# Each line covers ONE package and ONE licence family token, never a whole family for all
+# packages. A change here needs a second reviewer (configs/licensing is a CODEOWNERS
+# path). None of these may be network-copyleft (AGPL) or source-available
+# (BUSL, SSPL, Elastic, Confluent); those have no exception mechanism at all.
+
+# runtime: BSD-style Python Software Foundation licence
+greenlet psf
+typing_extensions psf
+
+# runtime: numpy ships permissive public-domain and Zlib sub-components
+numpy zlib
+numpy cc0-1.0
+
+# runtime: TLS root certificates, file-level copyleft with no network clause
+certifi mpl-2.0
+
+# dev-only tooling pulled in by the required test, lint and contract stack
+hypothesis mpl-2.0
+pathspec mpl-2.0
+fqdn mpl-2.0
+defusedxml psf
+distlib psf
+
+# dev-only: metadata states the MIT licence twice, once as a DFSG badge
+pytest-timeout dfsg-approved

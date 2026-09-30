@@ -1,0 +1,15 @@
+# Event catalogue entry: order.registered (data model section 10)
+schema_version: 1
+event_id: 35872084-e35f-5605-b03e-9153fce42015
+event_type: order.registered
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: order
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 1
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  order_status: received

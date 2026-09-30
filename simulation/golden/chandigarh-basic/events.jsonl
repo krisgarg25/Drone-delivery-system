@@ -1,0 +1,11 @@
+{"aircraft_id":"air-01-synthetic","at_us":615528532,"corridor_id":"corr-north-central-synthetic","end_us":1211084087,"energy_wh":110,"kind":"mission.committed","mission_id":"aba44947-d9c7-5b32-b945-a29876feda73","order_id":"ord-0001","start_us":735528532}
+{"aircraft_id":"air-02-synthetic","at_us":733605826,"corridor_id":"corr-south-campus-synthetic","end_us":1236105826,"energy_wh":108,"kind":"mission.committed","mission_id":"3169a8b9-4c06-5e04-ad28-a80be9e06575","order_id":"ord-0002","start_us":853605826}
+{"aircraft_id":"air-01-synthetic","at_us":1211084087,"kind":"mission.complete","order_id":"ord-0001"}
+{"aircraft_id":"air-02-synthetic","at_us":1236105826,"kind":"mission.complete","order_id":"ord-0002"}
+{"aircraft_id":"air-01-synthetic","at_us":1821157303,"corridor_id":"corr-north-central-synthetic","end_us":2416712858,"energy_wh":104,"kind":"mission.committed","mission_id":"b4d8c0ed-f7de-5abb-a283-dc8c0cfa4771","order_id":"ord-0003","start_us":1941157303}
+{"at_us":1884485575,"kind":"order.rejected","order_id":"ord-0004","reason":"reservation_conflict"}
+{"at_us":2118935080,"kind":"telemetry.lost","mission_id":"b4d8c0ed-f7de-5abb-a283-dc8c0cfa4771","order_id":"ord-0003","state":"protected_pending_reconciliation"}
+{"aircraft_id":"air-01-synthetic","at_us":2416712858,"kind":"mission.complete","order_id":"ord-0003"}
+{"aircraft_id":"air-01-synthetic","at_us":2707459990,"corridor_id":"corr-east-ridge-synthetic","end_us":3491904434,"energy_wh":138,"kind":"mission.committed","mission_id":"64fa458f-0cd8-53e5-b4f8-046777e44796","order_id":"ord-0005","start_us":2827459990}
+{"at_us":3142643311,"kind":"order.rejected","order_id":"ord-0006","reason":"reservation_conflict"}
+{"aircraft_id":"air-01-synthetic","at_us":3491904434,"kind":"mission.complete","order_id":"ord-0005"}

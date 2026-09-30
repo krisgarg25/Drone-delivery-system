@@ -1,0 +1,114 @@
+# Local development stack. Exposes exactly api, console, postgres and valkey
+# (07-infrastructure-ci-security.md section 2). Worker and sim-runner are `make`
+# processes, not containers, so they cannot silently gain production credentials.
+#
+# All ports bind to 127.0.0.1: nothing here is reachable from a network.
+# These defaults are for a laptop only and must never appear in a deployed environment.
+
+name: droneops-local
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-droneops}
+      POSTGRES_USER: ${POSTGRES_USER:-droneops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-droneops} -d ${POSTGRES_DB:-droneops} -h 127.0.0.1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  valkey:
+    image: valkey/valkey:8
+    restart: unless-stopped
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:${VALKEY_PORT:-6379}:6379"
+    volumes:
+      - valkey:/data
+    healthcheck:
+      test: ["CMD-SHELL", "valkey-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    image: droneops-api:local
+    restart: unless-stopped
+    env_file:
+      - path: ../../.env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-droneops}:${POSTGRES_PASSWORD:-local-development-only}@postgres:5432/${POSTGRES_DB:-droneops}
+      VALKEY_URL: valkey://valkey:6379/0
+      DRONEOPS_SIMULATION_ONLY: "1"
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)",
+        ]
+      interval: 10s
+      timeout: 4s
+      retries: 5
+      start_period: 15s
+
+  console:
+    build:
+      context: ../..
+      dockerfile: apps/console/Dockerfile
+    image: droneops-console:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${CONSOLE_PORT:-5173}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8080/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 4s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres:
+  valkey:

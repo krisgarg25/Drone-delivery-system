@@ -1,0 +1,15 @@
+# Protected-volume policy — versioned configuration contract.
+# Source: technical-build/11-simulation-routing-engine.md section 5.
+# Every number is ILLUSTRATIVE. The safety requirement is the invariant and test
+# suite, not these specific margins. A real route must replace these from a
+# validated aircraft, operation and regulatory profile. Simulation only.
+schema_version: 1
+policy_version: sim-policy-v1
+authoritative: false
+altitude_reference: AGL
+protected_volume:
+  horizontal_margin_m: 15      # illustrative
+  vertical_margin_m: 10        # illustrative
+  position_uncertainty_m: 5    # illustrative
+  timing_uncertainty_s: 5      # illustrative
+  transition_buffer_s: 10      # illustrative

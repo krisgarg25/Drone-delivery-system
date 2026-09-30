@@ -1,0 +1,17 @@
+# Licence allowlist for DroneOps dependencies.
+#
+# Source of truth: 07-infrastructure-ci-security.md section 12.
+# Only these four licence families are permitted. Adding a family requires a written
+# justification and a second reviewer; ban network-copyleft (AGPL/GPL-with-linking
+# restriction) and source-available (BUSL, SSPL, Elastic, Confluent) licences outright.
+#
+# Entries are matched case/punctuation-insensitively, so both the SPDX identifier and
+# the classifier text a distribution reports are accepted.
+
+MIT
+Apache-2.0
+BSD
+BSD-2-Clause
+BSD-3-Clause
+BSD-4-Clause
+ISC

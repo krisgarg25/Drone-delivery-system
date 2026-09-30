@@ -1,0 +1,16 @@
+schema_version: 1
+authoritative: false
+# Synthetic aircraft. Identifiers are generic on purpose: no real operator or airframe.
+aircraft:
+  - aircraft_id: air-01-synthetic
+    battery_wh: 900
+    cruise_speed_mps: 18
+    home_facility_id: depot-north-synthetic
+  - aircraft_id: air-02-synthetic
+    battery_wh: 780
+    cruise_speed_mps: 16
+    home_facility_id: depot-north-synthetic
+  - aircraft_id: air-03-synthetic
+    battery_wh: 620
+    cruise_speed_mps: 20
+    home_facility_id: depot-south-synthetic

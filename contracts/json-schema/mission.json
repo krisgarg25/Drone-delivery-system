@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "MissionStatus": {
+      "enum": [
+        "draft",
+        "eligible",
+        "planning",
+        "reserved_pending_commit",
+        "accepted",
+        "activated",
+        "in_progress",
+        "complete",
+        "cancelled",
+        "failed",
+        "unresolved"
+      ],
+      "title": "MissionStatus",
+      "type": "string"
+    },
+    "PriorityClass": {
+      "enum": [
+        "safety_contingency",
+        "life_critical",
+        "commercial_sla",
+        "routine"
+      ],
+      "title": "PriorityClass",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "activated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Activated At"
+    },
+    "aircraft_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Aircraft Id"
+    },
+    "authoritative": {
+      "default": false,
+      "title": "Authoritative",
+      "type": "boolean"
+    },
+    "completed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Completed At"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "order_id": {
+      "format": "uuid",
+      "title": "Order Id",
+      "type": "string"
+    },
+    "plan_version_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Plan Version Id"
+    },
+    "policy_version": {
+      "title": "Policy Version",
+      "type": "string"
+    },
+    "priority_class": {
+      "$ref": "#/$defs/PriorityClass"
+    },
+    "status": {
+      "$ref": "#/$defs/MissionStatus"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "order_id",
+    "tenant_id",
+    "status",
+    "priority_class",
+    "policy_version"
+  ],
+  "title": "Mission",
+  "type": "object"
+}

@@ -1,0 +1,41 @@
+schema_version: 1
+authoritative: false
+# Synthetic demand. Facility identifiers are generic; no real hospital, business or
+# customer name appears anywhere in this bundle (docs/conventions.md section 3).
+orders:
+  - order_id: ord-0001
+    arrival_minute: 10
+    corridor_id: corr-north-central-synthetic
+    origin_facility_id: depot-north-synthetic
+    destination_facility_id: pad-central-synthetic
+    priority_class: routine
+  - order_id: ord-0002
+    arrival_minute: 12
+    corridor_id: corr-south-campus-synthetic
+    origin_facility_id: depot-south-synthetic
+    destination_facility_id: pad-campus-synthetic
+    priority_class: commercial_sla
+  - order_id: ord-0003
+    arrival_minute: 30
+    corridor_id: corr-north-central-synthetic
+    origin_facility_id: depot-north-synthetic
+    destination_facility_id: pad-central-synthetic
+    priority_class: life_critical
+  - order_id: ord-0004
+    arrival_minute: 31
+    corridor_id: corr-north-central-synthetic
+    origin_facility_id: depot-north-synthetic
+    destination_facility_id: pad-central-synthetic
+    priority_class: routine
+  - order_id: ord-0005
+    arrival_minute: 45
+    corridor_id: corr-east-ridge-synthetic
+    origin_facility_id: depot-south-synthetic
+    destination_facility_id: pad-ridge-synthetic
+    priority_class: routine
+  - order_id: ord-0006
+    arrival_minute: 52
+    corridor_id: corr-east-ridge-synthetic
+    origin_facility_id: depot-south-synthetic
+    destination_facility_id: pad-ridge-synthetic
+    priority_class: safety_contingency

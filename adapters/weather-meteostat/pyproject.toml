@@ -1,0 +1,21 @@
+[project]
+name = "droneops-weather-meteostat"
+version = "0.1.0"
+description = "DroneOps adapter: Meteostat station cross-check"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "httpx>=0.28",
+  "shapely>=2.0",
+  "tenacity>=9.0",
+  "droneops-contracts",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_adapters_weather_meteostat"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }

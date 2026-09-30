@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "AltitudeReference": {
+      "enum": [
+        "AGL",
+        "AMSL",
+        "GROUND",
+        "PAD",
+        "UNSPECIFIED"
+      ],
+      "title": "AltitudeReference",
+      "type": "string"
+    },
+    "PriorityClass": {
+      "enum": [
+        "safety_contingency",
+        "life_critical",
+        "commercial_sla",
+        "routine"
+      ],
+      "title": "PriorityClass",
+      "type": "string"
+    }
+  },
+  "description": "Phase 0 request DTO kept mutable and permissive for the existing API.",
+  "properties": {
+    "altitude_reference": {
+      "$ref": "#/$defs/AltitudeReference",
+      "default": "AGL"
+    },
+    "destination_facility_id": {
+      "minLength": 1,
+      "title": "Destination Facility Id",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Idempotency Key"
+    },
+    "origin_facility_id": {
+      "minLength": 1,
+      "title": "Origin Facility Id",
+      "type": "string"
+    },
+    "priority_class": {
+      "$ref": "#/$defs/PriorityClass",
+      "default": "routine"
+    },
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "origin_facility_id",
+    "destination_facility_id"
+  ],
+  "title": "SimulatedOrderRequest",
+  "type": "object"
+}

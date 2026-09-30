@@ -1,0 +1,13 @@
+# Separation and energy numbers are experiment parameters, never certified values.
+# They are versioned here so a run can record which policy produced it.
+schema_version: 1
+authoritative: false
+policy_version: chandigarh-synthetic-p1
+epoch: "2026-09-30T06:00:00"
+energy_wh_per_100km: 640
+energy_reserve_fraction_bp: 2500
+separation_buffer_us: 120000000
+link_loss_rate_bp: 3500
+altitude_reference_required: AGL
+max_agl_m: 90
+source: configs/base/safety.yaml

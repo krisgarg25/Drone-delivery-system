@@ -1,0 +1,11 @@
+# Allowed reservation resource kinds — closed-set contract.
+# Source: technical-build/04-data-model-and-contracts.md section 2.
+# A resource key must be "<kind>:<qualifier>..." with kind in this set.
+schema_version: 1
+allowed_resource_kinds:
+  - corridor
+  - volume_cell
+  - crossing
+  - pad
+  - charger_bay
+  - crew

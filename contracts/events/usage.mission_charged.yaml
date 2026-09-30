@@ -1,0 +1,16 @@
+# Event catalogue entry: usage.mission_charged (data model section 10)
+schema_version: 1
+event_id: 4fffe4af-bde0-59d2-a8ea-fdb4c32ef13d
+event_type: usage.mission_charged
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: mission
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 22
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  amount_minor_units: 0
+  currency: INR

@@ -1,0 +1,27 @@
+[project]
+name = "droneops-dispatcher"
+version = "0.1.0"
+description = "DroneOps deterministic fleet assignment, priority and fairness"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "ortools>=9.10",
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-energy",
+  "droneops-facilities",
+  "droneops-platform",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_dispatcher"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-energy = { workspace = true }
+droneops-facilities = { workspace = true }
+droneops-platform = { workspace = true }

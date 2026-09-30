@@ -1,0 +1,15 @@
+# Event catalogue entry: telemetry.observed (data model section 10)
+schema_version: 1
+event_id: bf019650-3749-5bb0-bccc-3977e8b69e6d
+event_type: telemetry.observed
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: mission
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 11
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  sequence: 412

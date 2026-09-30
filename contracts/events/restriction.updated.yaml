@@ -1,0 +1,15 @@
+# Event catalogue entry: restriction.updated (data model section 10)
+schema_version: 1
+event_id: a83cd1c5-fbb9-54a0-930d-3c1576dc0028
+event_type: restriction.updated
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: system
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 20
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  restriction_id: R-101

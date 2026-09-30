@@ -1,0 +1,26 @@
+[project]
+name = "droneops-airspace-import"
+version = "0.1.0"
+description = "DroneOps adapter: authoritative or manual restriction snapshots"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "httpx>=0.28",
+  "shapely>=2.0",
+  "pyyaml>=6.0",
+  "tenacity>=9.0",
+  "droneops-contracts",
+  "droneops-airspace",
+  "droneops-geom-core",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_adapters_airspace_import"
+
+[tool.uv.sources]
+droneops-airspace = { workspace = true }
+droneops-contracts = { workspace = true }
+droneops-geom-core = { workspace = true }

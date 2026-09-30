@@ -1,0 +1,37 @@
+[project]
+name = "droneops-testing-support"
+version = "0.1.0"
+description = "DroneOps factories, seeded events and property strategies"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "pytest>=8.3",
+  "hypothesis>=6.115",
+  "httpx>=0.28",
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-geom-core",
+  "droneops-geom-4d",
+  "droneops-reservations",
+  "droneops-conflict-checker",
+  "droneops-telemetry",
+  "droneops-sim-core",
+  "droneops-platform",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_testing_support"
+
+[tool.uv.sources]
+droneops-conflict-checker = { workspace = true }
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-geom-4d = { workspace = true }
+droneops-geom-core = { workspace = true }
+droneops-platform = { workspace = true }
+droneops-reservations = { workspace = true }
+droneops-sim-core = { workspace = true }
+droneops-telemetry = { workspace = true }

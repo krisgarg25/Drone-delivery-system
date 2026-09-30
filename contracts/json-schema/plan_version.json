@@ -1,0 +1,123 @@
+{
+  "$defs": {
+    "Freshness": {
+      "enum": [
+        "fresh",
+        "aging",
+        "stale",
+        "unknown"
+      ],
+      "title": "Freshness",
+      "type": "string"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a synthetic or externally-derived object came from.\n\nRequired on any model that \"cannot be constructed without provenance\".",
+      "properties": {
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        },
+        "freshness": {
+          "$ref": "#/$defs/Freshness",
+          "default": "unknown"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "retrieved_at"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "A committed plan candidate; every plan carries a config-release hash.",
+  "properties": {
+    "authoritative": {
+      "default": false,
+      "title": "Authoritative",
+      "type": "boolean"
+    },
+    "config_release_sha": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Config Release Sha",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "energy_margin_wh": {
+      "title": "Energy Margin Wh",
+      "type": "integer"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "mission_id": {
+      "format": "uuid",
+      "title": "Mission Id",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "route_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Route Hash",
+      "type": "string"
+    },
+    "superseded_by": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Superseded By"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "tenant_id",
+    "mission_id",
+    "route_hash",
+    "energy_margin_wh",
+    "config_release_sha",
+    "created_at",
+    "provenance"
+  ],
+  "title": "PlanVersion",
+  "type": "object"
+}

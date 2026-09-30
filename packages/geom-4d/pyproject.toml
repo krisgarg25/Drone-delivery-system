@@ -1,0 +1,22 @@
+[project]
+name = "droneops-geom-4d"
+version = "0.1.0"
+description = "DroneOps swept-volume and 4D intersection geometry"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "shapely>=2.0",
+  "numpy>=1.26",
+  "droneops-geom-core",
+  "droneops-contracts",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_geom_4d"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }
+droneops-geom-core = { workspace = true }

@@ -1,0 +1,115 @@
+{
+  "$defs": {
+    "ReservationState": {
+      "enum": [
+        "tentative",
+        "committed",
+        "activated",
+        "completed",
+        "cancelled",
+        "unresolved"
+      ],
+      "title": "ReservationState",
+      "type": "string"
+    },
+    "ResourceKind": {
+      "enum": [
+        "corridor",
+        "volume_cell",
+        "crossing",
+        "pad",
+        "charger_bay",
+        "crew"
+      ],
+      "title": "ResourceKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "activated_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Activated At"
+    },
+    "commitment_token": {
+      "title": "Commitment Token",
+      "type": "string"
+    },
+    "completed_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Completed At"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "mission_id": {
+      "format": "uuid",
+      "title": "Mission Id",
+      "type": "string"
+    },
+    "resource_key": {
+      "title": "Resource Key",
+      "type": "string"
+    },
+    "resource_kind": {
+      "$ref": "#/$defs/ResourceKind"
+    },
+    "state": {
+      "$ref": "#/$defs/ReservationState"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    },
+    "valid_from": {
+      "format": "date-time",
+      "title": "Valid From",
+      "type": "string"
+    },
+    "valid_until": {
+      "format": "date-time",
+      "title": "Valid Until",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "tenant_id",
+    "mission_id",
+    "resource_key",
+    "resource_kind",
+    "valid_from",
+    "valid_until",
+    "state",
+    "commitment_token",
+    "created_at"
+  ],
+  "title": "Reservation",
+  "type": "object"
+}

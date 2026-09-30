@@ -1,0 +1,15 @@
+# Event catalogue entry: config.released (data model section 10)
+schema_version: 1
+event_id: d08b2706-9057-55ac-b849-525428ebdc96
+event_type: config.released
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: config
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 23
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000

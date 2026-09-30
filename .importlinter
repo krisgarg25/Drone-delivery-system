@@ -1,0 +1,236 @@
+[importlinter]
+include_external_packages = True
+root_packages =
+    droneops_api
+    droneops_worker
+    droneops_sim_runner
+    droneops_gateway
+    droneops_contracts
+    droneops_core_domain
+    droneops_geom_core
+    droneops_geom_4d
+    droneops_corridor_graph
+    droneops_airspace
+    droneops_reservations
+    droneops_planner
+    droneops_dispatcher
+    droneops_energy
+    droneops_facilities
+    droneops_telemetry
+    droneops_conflict_checker
+    droneops_persistence
+    droneops_platform
+    droneops_observability
+    droneops_testing_support
+    droneops_sim_core
+    droneops_adapters_weather_open_meteo
+    droneops_adapters_weather_meteostat
+    droneops_adapters_gis_etl
+    droneops_adapters_terrain
+    droneops_adapters_airspace_import
+    droneops_adapters_vehicle_mavlink
+
+# ------------------------------------------------------------------ no command path
+[importlinter:contract:api-has-no-command-path]
+name = API cannot reach a vehicle command, the gateway or the write model
+type = forbidden
+source_modules =
+    droneops_api
+forbidden_modules =
+    droneops_gateway
+    droneops_adapters_vehicle_mavlink
+    droneops_persistence
+    droneops_sim_runner
+
+[importlinter:contract:telemetry-cannot-command]
+name = Telemetry projection cannot plan, dispatch or commit
+type = forbidden
+source_modules =
+    droneops_telemetry
+forbidden_modules =
+    droneops_planner
+    droneops_dispatcher
+    droneops_persistence
+
+[importlinter:contract:dispatcher-has-no-vehicle-link]
+name = Dispatcher cannot reach a vehicle link
+type = forbidden
+source_modules =
+    droneops_dispatcher
+forbidden_modules =
+    droneops_adapters_vehicle_mavlink
+    droneops_gateway
+
+# ------------------------------------------------------------------ simulation isolation
+[importlinter:contract:sim-core-has-no-network-or-database]
+name = Simulation kernel has no database, network or live adapter
+type = forbidden
+source_modules =
+    droneops_sim_core
+    droneops_sim_runner
+forbidden_modules =
+    droneops_persistence
+    droneops_adapters_vehicle_mavlink
+    droneops_adapters_gis_etl
+    droneops_adapters_terrain
+    droneops_adapters_weather_open_meteo
+    droneops_adapters_weather_meteostat
+    droneops_adapters_airspace_import
+    sqlalchemy
+    asyncpg
+    httpx
+    requests
+    socket
+    uvicorn
+
+# ------------------------------------------------------------------ domain purity
+[importlinter:contract:domain-is-pure]
+name = Contracts, core domain and reservations have no framework or database
+type = forbidden
+source_modules =
+    droneops_contracts
+    droneops_core_domain
+    droneops_reservations
+forbidden_modules =
+    fastapi
+    sqlalchemy
+    httpx
+    droneops_persistence
+
+[importlinter:contract:core-domain-cannot-reach-planner]
+name = Core domain cannot reach the planner
+type = forbidden
+source_modules =
+    droneops_core_domain
+forbidden_modules =
+    droneops_planner
+
+[importlinter:contract:geom-core-is-pure]
+name = geom-core is stdlib only
+type = forbidden
+source_modules =
+    droneops_geom_core
+forbidden_modules =
+    sqlalchemy
+    psycopg2
+    asyncpg
+    httpx
+    requests
+    fastapi
+    redis
+
+[importlinter:contract:energy-has-no-database]
+name = Energy model has no database
+type = forbidden
+source_modules =
+    droneops_energy
+forbidden_modules =
+    sqlalchemy
+    asyncpg
+    alembic
+    droneops_persistence
+
+[importlinter:contract:facilities-has-no-telemetry-truth]
+name = Facilities cannot own telemetry truth or the link
+type = forbidden
+source_modules =
+    droneops_facilities
+forbidden_modules =
+    droneops_telemetry
+    droneops_gateway
+    droneops_adapters_vehicle_mavlink
+
+[importlinter:contract:airspace-has-no-pricing]
+name = Airspace validity cannot reach dispatch or pricing decisions
+type = forbidden
+source_modules =
+    droneops_airspace
+forbidden_modules =
+    droneops_dispatcher
+
+[importlinter:contract:geom-4d-cannot-reach-planner]
+name = geom-4d cannot reach the planner
+type = forbidden
+source_modules =
+    droneops_geom_4d
+forbidden_modules =
+    droneops_planner
+
+[importlinter:contract:corridor-graph-has-no-live-vehicle-api]
+name = Corridor graph cannot reach a live vehicle API
+type = forbidden
+source_modules =
+    droneops_corridor_graph
+forbidden_modules =
+    droneops_adapters_vehicle_mavlink
+    droneops_gateway
+
+[importlinter:contract:platform-has-no-business-policy]
+name = Platform ports cannot carry business policy
+type = forbidden
+source_modules =
+    droneops_platform
+forbidden_modules =
+    droneops_planner
+    droneops_reservations
+    droneops_dispatcher
+    droneops_energy
+
+[importlinter:contract:observability-cannot-mutate-reservations]
+name = Observability cannot mutate reservations or commit
+type = forbidden
+source_modules =
+    droneops_observability
+forbidden_modules =
+    droneops_reservations
+    droneops_persistence
+    droneops_planner
+
+[importlinter:contract:worker-has-no-api-import]
+name = Worker is a process, not a caller of the API
+type = forbidden
+source_modules =
+    droneops_worker
+forbidden_modules =
+    droneops_api
+
+# ------------------------------------------------------------------ checker independence
+[importlinter:contract:conflict-checker-independent]
+name = Conflict checker is independent of the planner, geom-4d and the write model
+type = forbidden
+source_modules =
+    droneops_conflict_checker
+forbidden_modules =
+    droneops_planner
+    droneops_geom_4d
+    droneops_persistence
+
+# ------------------------------------------------------------------ adapter containment
+[importlinter:contract:adapters-cannot-decide-reservations]
+name = Adapters write observations only and never decide a reservation
+type = forbidden
+source_modules =
+    droneops_adapters_gis_etl
+    droneops_adapters_terrain
+    droneops_adapters_weather_open_meteo
+    droneops_adapters_weather_meteostat
+    droneops_adapters_airspace_import
+    droneops_adapters_vehicle_mavlink
+forbidden_modules =
+    droneops_reservations
+    droneops_planner
+    droneops_dispatcher
+
+[importlinter:contract:mavlink-adapter-is-dependency-free]
+name = Vehicle adapter cannot reach any DroneOps domain package
+type = forbidden
+source_modules =
+    droneops_adapters_vehicle_mavlink
+forbidden_modules =
+    droneops_api
+    droneops_worker
+    droneops_gateway
+    droneops_persistence
+    droneops_planner
+    droneops_reservations
+    droneops_conflict_checker

@@ -1,0 +1,15 @@
+# Event catalogue entry: reservation.unresolved (data model section 10)
+schema_version: 1
+event_id: 7c3cf4b8-1253-5e8c-85f3-09a390512f3d
+event_type: reservation.unresolved
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: reservation
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 10
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  reason_code: commit_uncertain

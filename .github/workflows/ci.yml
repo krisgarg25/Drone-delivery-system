@@ -1,0 +1,378 @@
+name: CI
+
+# Pull request pipeline from 07-infrastructure-ci-security.md section 3.
+# Every job here is a gate, not a report: a failure must mean the repository got less
+# safe, less reproducible, or less licence-clean.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "24"
+
+jobs:
+  # ------------------------------------------------------------------ 1 install
+  workspace:
+    runs-on: ubuntu-latest
+    outputs:
+      lock_hash: ${{ steps.lock.outputs.hash }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - name: Lockfile is complete and frozen
+        id: lock
+        run: |
+          uv sync --frozen --all-packages
+          echo "hash=$(sha256sum uv.lock | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - name: Node install from lockfile
+        run: npm --prefix apps/console ci --no-audit --fund=false
+      - name: Windows wheel sanity (the same pins developers get)
+        run: |
+          uv run python -c "import shapely, pyproj, ortools, asyncpg, numpy, geoalchemy2, sqlalchemy; \
+          print('shapely', shapely.__version__); print('pyproj', pyproj.__version__); \
+          print('asyncpg', asyncpg.__version__); print('sqlalchemy', sqlalchemy.__version__)"
+
+  # ------------------------------------------------------------------- 2 lint
+  lint:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: ruff
+        run: uv run ruff check .
+      - name: ruff format
+        run: uv run ruff format --check .
+      - name: mypy --strict
+        run: uv run mypy
+      - name: ESLint
+        run: npm --prefix apps/console ci --no-audit --fund=false && npm --prefix apps/console run lint
+
+  # ------------------------------------------------------------ 3 boundaries
+  architecture:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: import-linter contracts
+        run: uv run lint-imports
+      - name: no command artifact, no command route, contracts declared
+        run: uv run python scripts/check_boundaries.py
+      - name: OpenAPI diff plus no-command-route check
+        run: uv run python scripts/openapi_gate.py --report data/reports/openapi-diff.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openapi-diff
+          path: data/reports/openapi-diff.json
+
+  # ------------------------------------------------------------------ 4 tests
+  unit:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: unit tests
+        run: uv run pytest -m unit --no-cov -q
+      - name: import-linter bites on a synthetic violation
+        run: uv run pytest tests/security -m security --no-cov -q
+
+  property:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: property tests
+        run: uv run pytest -m property --no-cov -q
+      - uses: actions/cache@v4
+        with:
+          key: hypothesis-${{ github.run_created_at }}
+          path: .hypothesis
+
+  # ---------------------------------------------------------------- 5 database
+  migrations:
+    needs: workspace
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_DB: droneops
+          POSTGRES_USER: droneops
+          POSTGRES_PASSWORD: ci-only-not-a-secret
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U droneops -d droneops"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DRONEOPS_TEST_POSTGRES_DSN: postgresql://droneops:ci-only-not-a-secret@127.0.0.1:5432/droneops
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: migrate against a copy of the prior schema
+        run: |
+          if [ -f packages/persistence/alembic.ini ]; then
+            uv run alembic -c packages/persistence/alembic.ini upgrade head
+            uv run alembic -c packages/persistence/alembic.ini downgrade -1
+            uv run alembic -c packages/persistence/alembic.ini upgrade head
+          else
+            echo "::notice::Alembic baseline not committed yet; migration job is a no-op"
+          fi
+      - name: concurrency tests on real Postgres
+        run: uv run pytest tests/concurrency -m concurrency --no-cov -q
+
+  # --------------------------------------------------------------- 6 simulation
+  simulation:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: deterministic golden run
+        run: |
+          uv run droneops-sim run --scenario simulation/scenarios/chandigarh-basic \
+            --out simulation/reports/ci
+      - name: replay must be byte-identical to the committed golden
+        run: |
+          uv run droneops-sim replay --scenario simulation/scenarios/chandigarh-basic \
+            --golden simulation/golden/chandigarh-basic --out simulation/reports/replay
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulation-report
+          path: simulation/reports/ci
+
+  # ----------------------------------------------------------------- 7 contract
+  contract:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: API contract tests
+        run: uv run pytest tests/contract -m contract --no-cov -q
+      - name: Schemathesis against the implemented surface
+        run: |
+          uv run uvicorn --app-dir apps/api/src droneops_api.main:app --port 8000 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/health >/dev/null && break; sleep 1
+          done
+          uv run schemathesis run --url http://127.0.0.1:8000/openapi.json \
+            --checks all --hypothesis-max-examples=25
+
+  # --------------------------------------------------------------------- 8 UI
+  ui:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/console/package-lock.json
+      - run: uv sync --frozen --all-packages
+      - name: console build
+        run: |
+          npm --prefix apps/console ci --no-audit --fund=false
+          npm --prefix apps/console run build
+      - name: UI smoke test
+        run: |
+          npm --prefix apps/console run preview >/tmp/console.log 2>&1 &
+          uv run uvicorn --app-dir apps/api/src droneops_api.main:app --port 8000 >/tmp/api.log 2>&1 &
+          uv run playwright install chromium --with-deps
+          for i in $(seq 1 40); do
+            curl -sf http://127.0.0.1:4173/ >/dev/null && curl -sf http://127.0.0.1:8000/health >/dev/null && break
+            sleep 1
+          done
+          uv run pytest tests/e2e -m e2e --no-cov -q
+
+  # ---------------------------------------------------------------- 9 security
+  security:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+      - name: secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: licence allowlist (MIT, BSD, Apache-2.0, ISC)
+        run: |
+          uv run python scripts/check_licences.py \
+            --allowlist configs/licensing/licence-allowlist.txt \
+            --exceptions configs/licensing/licence-exceptions.txt \
+            --report data/licenses/python-licences.json
+      - name: dependency vulnerabilities
+        run: uv run pip-audit --progress-spinner off --strict
+      - uses: actions/upload-artifact@v4
+        with:
+          name: licence-report
+          path: data/licenses/python-licences.json
+
+  # ----------------------------------------------------------------- 10 images
+  images:
+    needs: [workspace, lint, unit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: build api image
+        run: docker build -f apps/api/Dockerfile -t droneops-api:${{ github.sha }} .
+      - name: build console image
+        run: docker build -f apps/console/Dockerfile -t droneops-console:${{ github.sha }} .
+      - name: images run as non-root
+        run: |
+          for image in droneops-api:${{ github.sha }} droneops-console:${{ github.sha }}; do
+            user=$(docker inspect --format '{{.Config.User}}' "$image")
+            echo "$image user=$user"
+            [ "$user" != "root" ] && [ "$user" != "0" ] || { echo "$image must not run as root"; exit 1; }
+          done
+      - name: SBOM
+        run: |
+          mkdir -p data/sbom
+          uv export --frozen --all-packages --no-dev --no-emit-project -o data/sbom/requirements.txt
+          uv run cyclonedx-py requirements --output-format json \
+            -o data/sbom/droneops.cdx.json data/sbom/requirements.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: data/sbom/droneops.cdx.json
+
+  # -------------------------------------------------- 11 canary: prove a bite
+  # A green pipeline that cannot fail is a lie. This job introduces the exact violation
+  # the safety story forbids and asserts the build refuses it. If this job fails, the
+  # boundary is no longer enforced.
+  canary-forbidden-import:
+    needs: workspace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          enable-cache: true
+      - run: uv sync --frozen --all-packages
+
+      - name: canary - API importing the vehicle gateway must fail the build
+        run: |
+          echo "from droneops_gateway import telemetry_decoder  # deliberate canary" \
+            > apps/api/src/droneops_api/_canary_forbidden_import.py
+          if uv run lint-imports --no-cache; then
+            echo "::error::import-linter allowed the API to reach the vehicle gateway"
+            exit 1
+          fi
+          echo "build correctly failed"
+
+      - name: canary - a command route must fail the OpenAPI gate
+        run: |
+          cp contracts/openapi/v1.yaml /tmp/v1.bak
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("contracts/openapi/v1.yaml")
+          text = path.read_text(encoding="utf-8")
+          injected = text.replace(
+              "paths:",
+              "paths:\n  /v1/missions/{id}/launch:\n    post:\n      operationId: launchMission\n      responses:\n        '200':\n          description: canary",
+              1,
+          )
+          assert injected != text, "no paths: key found"
+          path.write_text(injected, encoding="utf-8")
+          PY
+          if uv run python scripts/openapi_gate.py; then
+            echo "::error::the no-command-route gate accepted a launch endpoint"
+            exit 1
+          fi
+          mv /tmp/v1.bak contracts/openapi/v1.yaml
+          echo "build correctly failed"
+
+      - name: canary - simulation importing persistence must fail the build
+        run: |
+          echo "import droneops_persistence  # deliberate canary" \
+            > packages/sim-core/src/droneops_sim_core/_canary_forbidden_import.py
+          if uv run lint-imports --no-cache; then
+            echo "::error::import-linter allowed the simulator to reach persistence"
+            exit 1
+          fi
+          rm -f packages/sim-core/src/droneops_sim_core/_canary_forbidden_import.py
+          uv run lint-imports --no-cache
+
+  # ------------------------------------------------------------- aggregate gate
+  required:
+    if: ${{ always() }}
+    needs:
+      - workspace
+      - lint
+      - architecture
+      - unit
+      - property
+      - migrations
+      - simulation
+      - contract
+      - ui
+      - security
+      - images
+      - canary-forbidden-import
+    runs-on: ubuntu-latest
+    steps:
+      - name: all gates green
+        run: |
+          statuses='${{ toJSON(needs) }}'
+          echo "$statuses" > /tmp/needs.json
+          python3 - <<'PY'
+          import json, os
+          needs = json.loads(open("/tmp/needs.json").read())
+          failed = [name for name, info in needs.items() if info.get("result") not in ("success", "skipped")]
+          if failed:
+              print("failed gates:", ", ".join(sorted(failed)))
+              raise SystemExit(1)
+          print("all Phase 0 gates passed")
+          PY

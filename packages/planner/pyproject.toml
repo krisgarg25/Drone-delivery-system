@@ -1,0 +1,36 @@
+[project]
+name = "droneops-planner"
+version = "0.1.0"
+description = "DroneOps candidate plan pipeline"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-geom-core",
+  "droneops-geom-4d",
+  "droneops-corridor-graph",
+  "droneops-airspace",
+  "droneops-energy",
+  "droneops-reservations",
+  "droneops-facilities",
+  "droneops-platform",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_planner"
+
+[tool.uv.sources]
+droneops-airspace = { workspace = true }
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-corridor-graph = { workspace = true }
+droneops-energy = { workspace = true }
+droneops-facilities = { workspace = true }
+droneops-geom-4d = { workspace = true }
+droneops-geom-core = { workspace = true }
+droneops-platform = { workspace = true }
+droneops-reservations = { workspace = true }

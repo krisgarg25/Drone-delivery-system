@@ -1,0 +1,42 @@
+# CODEOWNERS. Branch protection turns these into required reviews.
+#
+# The paths marked "TWO REVIEWS" below must be configured with `required_approving_review_count: 2`
+# plus the "Reservation safety" and "Telemetry safety" review teams in repository settings
+# (08-repo-bootstrap-checklist.md section 15). CODEOWNERS alone cannot express a count;
+# the setting is part of the Phase 0 acceptance checklist and must be verified with a
+# test PR before any reservation code merges.
+
+# Default owner for everything not called out below.
+* @krisgarg25
+
+# --- safety-critical: two reviewers, no self-merge, no auto-merge ---------------------
+/packages/reservations/ @krisgarg25
+/packages/conflict-checker/ @krisgarg25
+/packages/telemetry/ @krisgarg25
+/apps/gateway/ @krisgarg25
+/adapters/vehicle-mavlink/ @krisgarg25
+
+# --- contracts and authority ----------------------------------------------------------
+/contracts/ @krisgarg25
+/packages/contracts/ @krisgarg25
+/configs/ @krisgarg25
+
+# --- identity, tenancy and authorisation ----------------------------------------------
+/packages/platform/ @krisgarg25
+/apps/api/src/droneops_api/ @krisgarg25
+
+# --- pipeline and boundaries ----------------------------------------------------------
+/.github/ @krisgarg25
+/.pre-commit-config.yaml @krisgarg25
+/.importlinter @krisgarg25
+/uv.lock @krisgarg25
+/apps/console/package-lock.json @krisgarg25
+/configs/licensing/ @krisgarg25
+/infra/ @krisgarg25
+/security/ @krisgarg25
+/Makefile @krisgarg25
+/pyproject.toml @krisgarg25
+
+# --- read-only, informational ---------------------------------------------------------
+/docs/ @krisgarg25
+/adr/ @krisgarg25

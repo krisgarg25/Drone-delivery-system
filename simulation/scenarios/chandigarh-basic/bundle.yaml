@@ -1,0 +1,43 @@
+authoritative: false
+files:
+  corridors.yaml: d9550cfda2622611ea9342e121fa2f93b62a671fa9c2c871f26d72b24246e717
+  demand.yaml: d1555753fa5094aab0f15ae9dc3c8cc69943770d0a902e5c8bad60d3fa11c5c8
+  fleet.yaml: 6a83fa87127ce97f73c4cb3da359ee65a07495a42ef160f55ceec8a97e1dfdae
+  policies.yaml: f0c3faedf122330c4c4096a6c690b40f2c2226234122868cd036a9919432fc1e
+  scenario.yaml: 6be9c273879efa6e9716a09dff653ee677003b44178885efdbb31141cf7194db
+  weather.yaml: 831b9e7a4f23ea9d37ab3d39f252ad746b198d92bcab4842e4a109a2f24d3966
+runtime:
+  horizon_minutes: 60
+  locale: C
+  policy_version: chandigarh-synthetic-p1
+  solver_worker_count: 1
+  timezone: UTC
+scenario_id: chandigarh-basic
+schema_version: 1
+seed: 20260930
+source_manifest:
+  notes: No authoritative aviation data source is represented in Phase 0.
+  osm:
+    attribution: (c) OpenStreetMap contributors
+    boundary_relation_id: 1942809
+    extract_date: '2026-09-20'
+    license: ODbL
+    source: OpenStreetMap
+  restrictions:
+    authoritative: false
+    expires_at: '2026-09-30T08:00:00Z'
+    source: synthetic
+  synthetic_flags:
+    corridors: true
+    demand: true
+    facilities: true
+    fleet: true
+    obstacles_require_survey: true
+  terrain:
+    source: synthetic
+    version: none-phase-0
+  weather:
+    expires_at: '2026-09-30T08:00:00Z'
+    live_fetch: forbidden
+    retrieved_at: '2026-09-30T05:00:00Z'
+    source: synthetic

@@ -1,0 +1,22 @@
+[project]
+name = "droneops-conflict-checker"
+version = "0.1.0"
+description = "DroneOps independent adversarial post-commit validator"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-geom-core",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_conflict_checker"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-geom-core = { workspace = true }

@@ -1,0 +1,85 @@
+:root {
+  color-scheme: light;
+  --ink: #14202b;
+  --muted: #5b6b7c;
+  --rule: #d8e0e8;
+  --banner: #8a1c1c;
+  --background: #f7f9fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--ink);
+  font:
+    16px/1.55 "Segoe UI",
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.safety-banner {
+  background: var(--banner);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 1.5rem;
+  text-align: center;
+}
+
+main {
+  max-width: 46rem;
+  padding: 2rem 1.5rem 3rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin: 0 0 0.25rem;
+}
+
+.lede {
+  color: var(--muted);
+  margin: 0 0 1.75rem;
+}
+
+section {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: #fff;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1fr) 2fr;
+  gap: 0.35rem 1rem;
+  margin: 0;
+}
+
+dt {
+  font-weight: 600;
+}
+
+dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.disclaimer {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}

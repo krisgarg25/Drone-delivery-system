@@ -1,0 +1,228 @@
+{
+  "$defs": {
+    "EligibleCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "aircraft_id": {
+          "format": "uuid",
+          "title": "Aircraft Id",
+          "type": "string"
+        },
+        "disturbance_score": {
+          "minimum": 0.0,
+          "title": "Disturbance Score",
+          "type": "number"
+        },
+        "energy_margin_wh": {
+          "title": "Energy Margin Wh",
+          "type": "integer"
+        },
+        "fairness_score": {
+          "minimum": 0.0,
+          "title": "Fairness Score",
+          "type": "number"
+        },
+        "lateness_s": {
+          "minimum": 0,
+          "title": "Lateness S",
+          "type": "integer"
+        },
+        "plan_version_id": {
+          "format": "uuid",
+          "title": "Plan Version Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_version_id",
+        "aircraft_id",
+        "lateness_s",
+        "energy_margin_wh",
+        "disturbance_score",
+        "fairness_score"
+      ],
+      "title": "EligibleCandidate",
+      "type": "object"
+    },
+    "Freshness": {
+      "enum": [
+        "fresh",
+        "aging",
+        "stale",
+        "unknown"
+      ],
+      "title": "Freshness",
+      "type": "string"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a synthetic or externally-derived object came from.\n\nRequired on any model that \"cannot be constructed without provenance\".",
+      "properties": {
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        },
+        "freshness": {
+          "$ref": "#/$defs/Freshness",
+          "default": "unknown"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "retrieved_at"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "RejectedCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "aircraft_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Aircraft Id"
+        },
+        "plan_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plan Version Id"
+        },
+        "reason_code": {
+          "minLength": 1,
+          "title": "Reason Code",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason_code"
+      ],
+      "title": "RejectedCandidate",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "authoritative": {
+      "default": false,
+      "title": "Authoritative",
+      "type": "boolean"
+    },
+    "config_release_sha": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Config Release Sha",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "deciding_actor": {
+      "title": "Deciding Actor",
+      "type": "string"
+    },
+    "eligible_candidates": {
+      "items": {
+        "$ref": "#/$defs/EligibleCandidate"
+      },
+      "title": "Eligible Candidates",
+      "type": "array"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "input_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Input Hash",
+      "type": "string"
+    },
+    "mission_id": {
+      "format": "uuid",
+      "title": "Mission Id",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "reason_codes": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Reason Codes",
+      "type": "array"
+    },
+    "rejected_candidates": {
+      "items": {
+        "$ref": "#/$defs/RejectedCandidate"
+      },
+      "title": "Rejected Candidates",
+      "type": "array"
+    },
+    "selected_plan_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Selected Plan Id"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "tenant_id",
+    "mission_id",
+    "input_hash",
+    "deciding_actor",
+    "created_at",
+    "config_release_sha",
+    "provenance"
+  ],
+  "title": "DecisionRecord",
+  "type": "object"
+}

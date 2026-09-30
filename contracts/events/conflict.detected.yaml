@@ -1,0 +1,15 @@
+# Event catalogue entry: conflict.detected (data model section 10)
+schema_version: 1
+event_id: 70c7b377-53d6-5867-b33c-633e57e88bbf
+event_type: conflict.detected
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: mission
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 13
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  resource_key: crossing:node-b:x1

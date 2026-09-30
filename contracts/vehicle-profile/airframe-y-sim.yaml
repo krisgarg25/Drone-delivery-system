@@ -1,0 +1,20 @@
+# Illustrative aircraft profile: airframe-y-sim (heavy-payload class)
+# Every field below is ILLUSTRATIVE (synthetic placeholders). No field is a
+# certified value. Simulation only. Not authorised for flight.
+profile_id: airframe-y-sim
+illustrative: true
+authoritative: false
+type_cert_status: unverified-simulated   # illustrative
+name: Airframe Y (illustrative)          # illustrative
+vendor: illustrative-vendor              # illustrative
+empty_mass_g: 3600                       # illustrative
+max_payload_g: 3500                       # illustrative
+cruise_speed_ms: 10.0                     # illustrative
+max_wind_ms: 10.0                         # illustrative
+battery_profile:                        # illustrative block
+  energy_capacity_wh: 650                # illustrative
+  cruise_power_w: 240                     # illustrative
+  hover_power_w: 340                      # illustrative
+  reserve_fraction: 0.30                  # illustrative
+handover_type: land_transfer             # the only value permitted in this build
+altitude_reference_default: AGL          # illustrative

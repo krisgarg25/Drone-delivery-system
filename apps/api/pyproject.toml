@@ -1,0 +1,40 @@
+[project]
+name = "droneops-api"
+version = "0.1.0"
+description = "DroneOps control-plane API with no aircraft command path"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.115",
+  "pydantic>=2.0",
+  "pydantic-settings>=2.5",
+  "uvicorn[standard]>=0.32",
+  "sqlalchemy[asyncio]>=2.0",
+  "alembic>=1.14",
+  "asyncpg>=0.30",
+  "structlog>=24.4",
+  "tenacity>=9.0",
+  "click>=8.1",
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-reservations",
+  "droneops-conflict-checker",
+  "droneops-platform",
+  "droneops-observability",
+  "droneops-telemetry",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_api"
+
+[tool.uv.sources]
+droneops-conflict-checker = { workspace = true }
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-observability = { workspace = true }
+droneops-platform = { workspace = true }
+droneops-reservations = { workspace = true }
+droneops-telemetry = { workspace = true }

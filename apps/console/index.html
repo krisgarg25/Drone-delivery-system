@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DroneOps Console - Simulation Only</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="safety-banner" role="banner">Simulation only. Not authorised for flight.</header>
+
+    <main>
+      <h1>DroneOps operations console</h1>
+      <p class="lede">
+        Phase 0 shows the service boundary only. No scheduling, dispatch or reservation logic lives
+        in the browser; every value below is read from the simulation API.
+      </p>
+
+      <section id="status" aria-live="polite">
+        <h2>Service status</h2>
+        <dl id="status-list">
+          <dt>Loading</dt>
+          <dd>contacting the API</dd>
+        </dl>
+      </section>
+
+      <section id="notice">
+        <p class="disclaimer">
+          Results are synthetic. Corridors, facilities, fleet and weather in this product are
+          experiment inputs, and no displayed state authorises an aircraft.
+        </p>
+      </section>
+    </main>
+
+    <footer class="safety-banner">Simulation only. Not authorised for flight.</footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

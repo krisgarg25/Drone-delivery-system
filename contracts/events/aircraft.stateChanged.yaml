@@ -1,0 +1,15 @@
+# Event catalogue entry: aircraft.stateChanged (data model section 10)
+schema_version: 1
+event_id: af44a3eb-3b7b-56d9-9ba4-b32c62f96ceb
+event_type: aircraft.stateChanged
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: aircraft
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 15
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  operational_state: available

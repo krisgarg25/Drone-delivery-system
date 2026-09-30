@@ -1,0 +1,15 @@
+[project]
+name = "droneops-platform"
+version = "0.1.0"
+description = "DroneOps clocks, identifiers, configuration release and auth port"
+requires-python = ">=3.12,<3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_platform"
+
+[tool.uv.sources]

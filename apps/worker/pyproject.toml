@@ -1,0 +1,38 @@
+[project]
+name = "droneops-worker"
+version = "0.1.0"
+description = "DroneOps background projections and refresh workers"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "click>=8.1",
+  "structlog>=24.4",
+  "tenacity>=9.0",
+  "sqlalchemy[asyncio]>=2.0",
+  "asyncpg>=0.30",
+  "alembic>=1.14",
+  "redis>=5.2",
+  "droneops-platform",
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-persistence",
+  "droneops-telemetry",
+  "droneops-observability",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_worker"
+
+[project.scripts]
+droneops-worker = "droneops_worker.cli:main"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-observability = { workspace = true }
+droneops-persistence = { workspace = true }
+droneops-platform = { workspace = true }
+droneops-telemetry = { workspace = true }

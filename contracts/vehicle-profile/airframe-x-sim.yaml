@@ -1,0 +1,20 @@
+# Illustrative aircraft profile: airframe-x-sim
+# Every field below is ILLUSTRATIVE (synthetic placeholders). No field is a
+# certified value. Simulation only. Not authorised for flight.
+profile_id: airframe-x-sim
+illustrative: true
+authoritative: false
+type_cert_status: unverified-simulated   # illustrative
+name: Airframe X (illustrative)          # illustrative
+vendor: illustrative-vendor              # illustrative
+empty_mass_g: 2400                       # illustrative
+max_payload_g: 2000                       # illustrative
+cruise_speed_ms: 12.0                     # illustrative
+max_wind_ms: 8.0                          # illustrative
+battery_profile:                        # illustrative block
+  energy_capacity_wh: 400                # illustrative
+  cruise_power_w: 180                     # illustrative
+  hover_power_w: 260                      # illustrative
+  reserve_fraction: 0.25                  # illustrative
+handover_type: land_transfer             # the only value permitted in this build
+altitude_reference_default: AGL          # illustrative

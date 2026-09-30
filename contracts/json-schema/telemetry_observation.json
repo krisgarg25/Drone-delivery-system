@@ -1,0 +1,311 @@
+{
+  "$defs": {
+    "AltitudeReference": {
+      "enum": [
+        "AGL",
+        "AMSL",
+        "GROUND",
+        "PAD",
+        "UNSPECIFIED"
+      ],
+      "title": "AltitudeReference",
+      "type": "string"
+    },
+    "Freshness": {
+      "enum": [
+        "fresh",
+        "aging",
+        "stale",
+        "unknown"
+      ],
+      "title": "Freshness",
+      "type": "string"
+    },
+    "Integrity": {
+      "additionalProperties": false,
+      "properties": {
+        "out_of_order": {
+          "default": false,
+          "title": "Out Of Order",
+          "type": "boolean"
+        },
+        "signature_verified": {
+          "default": false,
+          "title": "Signature Verified",
+          "type": "boolean"
+        },
+        "stale": {
+          "default": false,
+          "title": "Stale",
+          "type": "boolean"
+        }
+      },
+      "title": "Integrity",
+      "type": "object"
+    },
+    "IntegrityStatus": {
+      "enum": [
+        "ok",
+        "degraded",
+        "unsigned",
+        "quarantined"
+      ],
+      "title": "IntegrityStatus",
+      "type": "string"
+    },
+    "Kinematics": {
+      "additionalProperties": false,
+      "properties": {
+        "heading_deg": {
+          "exclusiveMaximum": 360.0,
+          "minimum": 0.0,
+          "title": "Heading Deg",
+          "type": "number"
+        },
+        "speed_ms": {
+          "minimum": 0.0,
+          "title": "Speed Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "speed_ms",
+        "heading_deg"
+      ],
+      "title": "Kinematics",
+      "type": "object"
+    },
+    "Link": {
+      "additionalProperties": false,
+      "properties": {
+        "quality": {
+          "$ref": "#/$defs/LinkQuality"
+        },
+        "rtt_ms": {
+          "minimum": 0,
+          "title": "Rtt Ms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "quality",
+        "rtt_ms"
+      ],
+      "title": "Link",
+      "type": "object"
+    },
+    "LinkQuality": {
+      "enum": [
+        "good",
+        "degraded",
+        "lost",
+        "unknown"
+      ],
+      "title": "LinkQuality",
+      "type": "string"
+    },
+    "Position": {
+      "additionalProperties": false,
+      "description": "A geodetic point whose altitude carries an explicit reference (I9).",
+      "properties": {
+        "altitude_m": {
+          "title": "Altitude M",
+          "type": "number"
+        },
+        "altitude_reference": {
+          "$ref": "#/$defs/AltitudeReference"
+        },
+        "lat": {
+          "maximum": 90.0,
+          "minimum": -90.0,
+          "title": "Lat",
+          "type": "number"
+        },
+        "lon": {
+          "maximum": 180.0,
+          "minimum": -180.0,
+          "title": "Lon",
+          "type": "number"
+        },
+        "uncertainty_m": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Uncertainty M"
+        }
+      },
+      "required": [
+        "lat",
+        "lon",
+        "altitude_m",
+        "altitude_reference"
+      ],
+      "title": "Position",
+      "type": "object"
+    },
+    "Power": {
+      "additionalProperties": false,
+      "properties": {
+        "battery_pct": {
+          "maximum": 100.0,
+          "minimum": 0.0,
+          "title": "Battery Pct",
+          "type": "number"
+        },
+        "energy_wh_remaining": {
+          "minimum": 0,
+          "title": "Energy Wh Remaining",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "battery_pct",
+        "energy_wh_remaining"
+      ],
+      "title": "Power",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Where a synthetic or externally-derived object came from.\n\nRequired on any model that \"cannot be constructed without provenance\".",
+      "properties": {
+        "expires_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Expires At"
+        },
+        "freshness": {
+          "$ref": "#/$defs/Freshness",
+          "default": "unknown"
+        },
+        "retrieved_at": {
+          "format": "date-time",
+          "title": "Retrieved At",
+          "type": "string"
+        },
+        "source": {
+          "default": "",
+          "title": "Source",
+          "type": "string"
+        }
+      },
+      "required": [
+        "retrieved_at"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "aircraft_id": {
+      "format": "uuid",
+      "title": "Aircraft Id",
+      "type": "string"
+    },
+    "authoritative": {
+      "default": false,
+      "title": "Authoritative",
+      "type": "boolean"
+    },
+    "integrity": {
+      "$ref": "#/$defs/Integrity",
+      "default": {
+        "out_of_order": false,
+        "signature_verified": false,
+        "stale": false
+      }
+    },
+    "integrity_status": {
+      "$ref": "#/$defs/IntegrityStatus",
+      "default": "ok"
+    },
+    "kinematics": {
+      "$ref": "#/$defs/Kinematics"
+    },
+    "link": {
+      "$ref": "#/$defs/Link"
+    },
+    "measurement_time": {
+      "format": "date-time",
+      "title": "Measurement Time",
+      "type": "string"
+    },
+    "message_type": {
+      "minLength": 1,
+      "title": "Message Type",
+      "type": "string"
+    },
+    "observation_id": {
+      "format": "uuid",
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "position": {
+      "$ref": "#/$defs/Position"
+    },
+    "power": {
+      "$ref": "#/$defs/Power"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "raw_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Raw Hash",
+      "type": "string"
+    },
+    "received_time": {
+      "format": "date-time",
+      "title": "Received Time",
+      "type": "string"
+    },
+    "sequence": {
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "source_adapter": {
+      "title": "Source Adapter",
+      "type": "string"
+    },
+    "tenant_id": {
+      "format": "uuid",
+      "title": "Tenant Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "observation_id",
+    "tenant_id",
+    "aircraft_id",
+    "message_type",
+    "sequence",
+    "measurement_time",
+    "received_time",
+    "position",
+    "kinematics",
+    "power",
+    "link",
+    "raw_hash",
+    "source_adapter",
+    "provenance"
+  ],
+  "title": "TelemetryObservation",
+  "type": "object"
+}

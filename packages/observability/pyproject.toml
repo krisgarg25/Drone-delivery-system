@@ -1,0 +1,19 @@
+[project]
+name = "droneops-observability"
+version = "0.1.0"
+description = "DroneOps tracing, logging and metrics boundary"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "structlog>=24.4",
+  "droneops-platform",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_observability"
+
+[tool.uv.sources]
+droneops-platform = { workspace = true }

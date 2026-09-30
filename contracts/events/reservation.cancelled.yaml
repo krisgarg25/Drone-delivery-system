@@ -1,0 +1,15 @@
+# Event catalogue entry: reservation.cancelled (data model section 10)
+schema_version: 1
+event_id: dec49e57-fa1f-57c5-b981-7907e91f3cd1
+event_type: reservation.cancelled
+occurred_at: '2026-10-01T09:00:00Z'
+tenant_id: 00000000-0000-0000-0000-000000000002
+stream_type: reservation
+stream_id: 00000000-0000-0000-0000-000000000003
+seq: 9
+correlation_id: req-0001
+causation_id: 00000000-0000-0000-0000-000000000001
+actor: system
+config_release_sha: sha256:0000000000000000000000000000000000000000000000000000000000000000
+payload:
+  reason_code: order_cancelled

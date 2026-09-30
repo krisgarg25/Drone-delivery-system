@@ -1,0 +1,16 @@
+[project]
+name = "droneops-core-domain"
+version = "0.1.0"
+description = "DroneOps core-domain boundary package"
+requires-python = ">=3.10"
+dependencies = ["droneops-contracts"]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_core_domain"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }

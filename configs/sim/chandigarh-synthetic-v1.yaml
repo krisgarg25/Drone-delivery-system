@@ -1,0 +1,14 @@
+schema_version: 1
+scenario_id: chandigarh-synthetic-v1
+authoritative: false
+boundary:
+  source: OpenStreetMap
+  relation_id: 1942809
+  license: ODbL
+  attribution: © OpenStreetMap contributors
+obstacles:
+  building_height_coverage: synthetic
+  requires_survey: true
+airspace:
+  source: synthetic
+  authorized_for_flight: false

@@ -1,0 +1,12 @@
+schema_version: 1
+authoritative: false
+corridors:
+  - corridor_id: corr-north-central-synthetic
+    segment_m: 6400
+    width_m: 100
+  - corridor_id: corr-south-campus-synthetic
+    segment_m: 4200
+    width_m: 100
+  - corridor_id: corr-east-ridge-synthetic
+    segment_m: 9800
+    width_m: 120

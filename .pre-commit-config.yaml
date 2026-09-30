@@ -1,0 +1,68 @@
+# Local mirrors of the CI gates. Hook revisions are pinned; bump deliberately, never
+# `--autoupdate` in a reservation or telemetry branch (07 section 12).
+minimum_pre_commit_version: "3.7.0"
+default_language_version:
+  python: python3
+ci:
+  skip: [mypy, import-linter, boundaries, licences]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: ^(contracts/openapi/|apps/console/dist/)
+      - id: trailing-whitespace
+        exclude: ^(contracts/openapi/|apps/console/dist/)
+      - id: check-yaml
+        args: ["--allow-multiple-documents"]
+        exclude: ^(data/)
+      - id: check-json
+      - id: check-added-large-files
+        args: ["--maxkb=512"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.1
+    hooks:
+      - id: mypy
+        additional_dependencies: []
+        pass_filenames: false
+        entry: uv run mypy
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.24.5
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: import-linter
+        name: import-linter architecture contracts
+        entry: uv run lint-imports
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: boundaries
+        name: no command artifact and boundary contracts declared
+        entry: uv run python scripts/check_boundaries.py
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: licences
+        name: licence allowlist
+        entry: uv run python scripts/check_licences.py --allowlist configs/licensing/licence-allowlist.txt --exceptions configs/licensing/licence-exceptions.txt
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [manual]

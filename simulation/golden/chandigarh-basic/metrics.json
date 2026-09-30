@@ -1,0 +1,15 @@
+{
+  "authorized_for_flight": false,
+  "committed_reservations": 4,
+  "completed_missions": 4,
+  "energy_margin_mean_wh": 518,
+  "energy_margin_min_wh": 464,
+  "events_emitted": 11,
+  "invalid_committed_overlaps": 0,
+  "missions_accepted": 4,
+  "orders_requested": 6,
+  "rejected_energy_margin": 0,
+  "rejected_no_aircraft": 0,
+  "rejected_reservation_conflict": 2,
+  "telemetry_lost": 1
+}

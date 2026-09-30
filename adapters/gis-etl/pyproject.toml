@@ -1,0 +1,22 @@
+[project]
+name = "droneops-gis-etl"
+version = "0.1.0"
+description = "DroneOps adapter: Geofabrik and Overpass ingestion with provenance"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "httpx>=0.28",
+  "shapely>=2.0",
+  "tenacity>=9.0",
+  "pyyaml>=6.0",
+  "droneops-contracts",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_adapters_gis_etl"
+
+[tool.uv.sources]
+droneops-contracts = { workspace = true }

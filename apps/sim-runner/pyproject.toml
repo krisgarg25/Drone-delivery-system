@@ -1,0 +1,35 @@
+[project]
+name = "droneops-sim-runner"
+version = "0.1.0"
+description = "DroneOps deterministic simulation runner"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "click>=8.1",
+  "pyyaml>=6.0",
+  "droneops-sim-core",
+  "droneops-contracts",
+  "droneops-core-domain",
+  "droneops-geom-core",
+  "droneops-reservations",
+  "droneops-conflict-checker",
+  "droneops-platform",
+]
+
+[build-system]
+requires = ["uv_build>=0.11,<1"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "droneops_sim_runner"
+
+[project.scripts]
+droneops-sim = "droneops_sim_runner.cli:main"
+
+[tool.uv.sources]
+droneops-conflict-checker = { workspace = true }
+droneops-contracts = { workspace = true }
+droneops-core-domain = { workspace = true }
+droneops-geom-core = { workspace = true }
+droneops-platform = { workspace = true }
+droneops-reservations = { workspace = true }
+droneops-sim-core = { workspace = true }

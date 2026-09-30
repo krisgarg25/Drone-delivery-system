@@ -1,0 +1,5 @@
+schema_version: 1
+phase: phase-1-simulation
+mission_authority: simulated_only
+altitude_reference_required: true
+authorized_for_flight: false
