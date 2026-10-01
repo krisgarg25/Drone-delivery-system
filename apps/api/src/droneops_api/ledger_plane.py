@@ -42,29 +42,9 @@ import threading
 import uuid
 from collections.abc import Callable, Coroutine, Mapping, Sequence
 from concurrent.futures import Future
-from typing import TypeVar
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
-from typing import Any, Protocol, cast
-
-from droneops_contracts import AircraftStatus, AltitudeReference, LinkQuality, PriorityClass
-from droneops_platform.ports import AuditEntry, AuditRecord, TenantContext
-from droneops_reservations.intake import (
-    AircraftCandidate,
-    CandidatePlan,
-    CommitCommand,
-    EnergyVerdict,
-    ProfileSample,
-    Verdict,
-    WorldView,
-)
-from droneops_reservations import deterministic_id
-from droneops_reservations.protocol import ResourceClaim
-from droneops_reservations.ledger import (
-    CommitReceipt,
-    LedgerStore,
-    ReservationCommitLedger,
-)
+from datetime import UTC, datetime, timedelta
+from typing import Any, Protocol, TypeVar, cast
 
 from droneops_api.ports import (
     AuditPort,
@@ -98,6 +78,24 @@ from droneops_api.schemas import (
     TelemetryListResponse,
     UncertaintyStateResponse,
 )
+from droneops_contracts import AircraftStatus, AltitudeReference, LinkQuality, PriorityClass
+from droneops_platform.ports import AuditEntry, AuditRecord, TenantContext
+from droneops_reservations import deterministic_id
+from droneops_reservations.intake import (
+    AircraftCandidate,
+    CandidatePlan,
+    CommitCommand,
+    EnergyVerdict,
+    ProfileSample,
+    Verdict,
+    WorldView,
+)
+from droneops_reservations.ledger import (
+    CommitReceipt,
+    LedgerStore,
+    ReservationCommitLedger,
+)
+from droneops_reservations.protocol import ResourceClaim
 
 # ------------------------------------------------------------------ the frozen grid
 #: The corridor lanes a control-plane plan may fly and the ground track each is drawn
@@ -141,8 +139,8 @@ _SEGMENT_MINUTES = 5
 T = TypeVar("T", covariant=True)
 
 _AUDIT_ACTOR_TYPES = frozenset({"user", "service", "checker", "break_glass"})
-_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
-_HORIZON = datetime(2100, 1, 1, tzinfo=timezone.utc)
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
+_HORIZON = datetime(2100, 1, 1, tzinfo=UTC)
 
 
 def _digest(*parts: str) -> str:
@@ -201,7 +199,7 @@ class LoopRunner:
     def submit(self, coroutine: Coroutine[Any, Any, T]) -> Future[T]:
         return asyncio.run_coroutine_threadsafe(coroutine, self._loop)
 
-    def run(self, coroutine: "Coroutine[Any, Any, T]") -> T:
+    def run(self, coroutine: Coroutine[Any, Any, T]) -> T:
         """Await ``coroutine`` on the plane's loop and hand back its result, typed.
 
         The generic is what keeps every adapter below honest: a call that returns
@@ -374,7 +372,7 @@ class LedgerPlane:
         runner: LoopRunner,
         world: Callable[[Principal], PlaneWorld],
         *,
-        clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+        clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
         self.store = store
         self.ledger = ledger
@@ -965,9 +963,9 @@ def cancelled_response(record: OrderRecord) -> MissionResponse:
 
 def _instant(value: object) -> datetime:
     if isinstance(value, datetime):
-        return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
+        return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
     parsed = datetime.fromisoformat(str(value))
-    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+    return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=UTC)
 
 
 __all__ = [

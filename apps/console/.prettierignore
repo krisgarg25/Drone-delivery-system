@@ -4,3 +4,6 @@ package-lock.json
 coverage
 # Committed generator output: formatting it would fight the next run.
 src/generated/**
+
+# Independent audit specs and their artifacts (owned by tests/e2e audit, not app code).
+tests/

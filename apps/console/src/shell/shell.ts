@@ -3,12 +3,16 @@
  * simulation-only banner, focus management and data loading. It renders; it never decides.
  *
  * Structure contract for the next engineer:
- *   header[role=banner].safety-banner   - the standing statement, always present
- *   .provenance-strip > dl#status-list  - scenario, source, retrieval date, hash, authority
- *   nav[role=navigation]                - the seven routes, aria-current on the live one
- *   main#main[role=main] > h2 route     - route heading; panels start at h3
+ *   header#masthead (the banner landmark) > p.safety-banner - the standing statement, always
+ *     present. The role is not repeated on the paragraph: a nested role=banner made a second
+ *     banner landmark and failed axe's landmark top-level/uniqueness rules (audit F-4).
+ *   section.provenance-strip > dl#status-list - scenario, source, retrieval date, hash, authority
+ *   nav#primary-nav (role=navigation) > ul[role=menubar] > a[role=menuitem] - the seven routes,
+ *     aria-current on the live one, ONE tab stop with a roving tabindex and arrow/Home/End keys,
+ *     so a panel's answer is a handful of stops from the top of the document (audit F-1)
+ *   main#main > h2 route - route heading; panels start at h3
  *   section.panel-slot[data-slot]       - the containers registered panels mount into
- *   footer[role=contentinfo].safety-banner
+ *   footer#colophon (the contentinfo landmark) > p.safety-banner
  * The banner is in the header and the footer of the document, outside the route region,
  * so an error page cannot remove it and a route change cannot flicker it.
  *
@@ -165,7 +169,10 @@ export function createShell(api: Api): Shell {
       const mapRegion = document.createElement("section");
       mapRegion.className = "map-region";
       mapRegion.id = "map-root";
-      mapRegion.setAttribute("aria-labelledby", "legend-heading");
+      // Not aria-labelledby="legend-heading": the legend is a region inside this one and is
+      // named by that heading already, so sharing it gave two landmarks the same accessible
+      // name (axe landmark-unique). The map view names this region itself, with its own
+      // synthetic-geometry wording, which is the label an operator hears.
       main.append(mapRegion);
       mapView.mount(mapRegion);
     }
@@ -264,10 +271,14 @@ export function createShell(api: Api): Shell {
     }
     for (const link of document.querySelectorAll<HTMLAnchorElement>("nav a[href^='#/']")) {
       const target = link.getAttribute("href") ?? "";
+      // Roving tabindex: exactly one route link is a tab stop, the live one. The rest stay
+      // reachable by arrow keys inside the menubar and by mouse/touch as ordinary links.
       if (target === next.path) {
         link.setAttribute("aria-current", "page");
+        link.tabIndex = 0;
       } else {
         link.removeAttribute("aria-current");
+        link.tabIndex = -1;
       }
     }
     document.title = `${next.label} - DroneOps console - Simulation only`;
@@ -281,6 +292,48 @@ export function createShell(api: Api): Shell {
       announce(`${next.label} screen. ${next.summary}`);
     }
     history.replaceState(null, "", next.path);
+  }
+
+  /** The menubar's roving tabindex: arrows and Home/End move focus, Tab leaves the nav. */
+  function moveWithinNav(event: KeyboardEvent): void {
+    const moves: Partial<Record<string, "next" | "previous" | "first" | "last">> = {
+      ArrowRight: "next",
+      ArrowLeft: "previous",
+      Home: "first",
+      End: "last",
+    };
+    const move = moves[event.key];
+    if (move === undefined) {
+      return;
+    }
+    const links = Array.from(
+      document.querySelectorAll<HTMLAnchorElement>("#primary-nav a[role='menuitem']"),
+    );
+    const active = document.activeElement;
+    const current = links.findIndex((link) => link === active);
+    // Focus is not inside the nav (or the list is empty): Tab decides where to go, not this.
+    if (current < 0) {
+      return;
+    }
+    const length = links.length;
+    const offset =
+      move === "next"
+        ? (current + 1) % length
+        : move === "previous"
+          ? (current - 1 + length) % length
+          : move === "first"
+            ? 0
+            : length - 1;
+    const target = links.find((_link, index) => index === offset);
+    if (target === undefined) {
+      return;
+    }
+    event.preventDefault();
+    for (const link of links) {
+      link.tabIndex = -1;
+    }
+    target.tabIndex = 0;
+    target.focus();
   }
 
   function onHashChange(): void {
@@ -436,15 +489,28 @@ export function createShell(api: Api): Shell {
       const nav = document.getElementById("primary-nav");
       if (nav instanceof HTMLElement && nav.childElementCount === 0) {
         const list = document.createElement("ul");
+        /*
+         * One tab stop for the whole route list. Seven links in series cost the operator seven
+         * presses before any panel content, which is what made the measured path from the top of
+         * the document to a refusal's technical detail 13 stops (audit F-1). A menubar with a
+         * roving tabindex gives the same seven destinations in one stop, moves between them with
+         * Arrow/Home/End, and follows the link on Enter - the ARIA composite-widget contract, so
+         * nothing here is an ARIA label sprinkled over the old structure.
+         */
+        list.setAttribute("role", "menubar");
         for (const entry of ROUTES) {
           const item = document.createElement("li");
+          item.setAttribute("role", "none");
           const link = document.createElement("a");
           link.href = entry.path;
           link.textContent = entry.label;
+          link.setAttribute("role", "menuitem");
+          link.tabIndex = -1;
           item.append(link);
           list.append(item);
         }
         nav.append(list);
+        nav.addEventListener("keydown", moveWithinNav);
       }
       window.addEventListener("hashchange", onHashChange);
       const initial = routeByHash(location.hash) ?? routeById(DEFAULT_ROUTE) ?? ROUTES[0];

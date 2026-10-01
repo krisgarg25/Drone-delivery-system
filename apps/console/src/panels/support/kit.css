@@ -1,0 +1,283 @@
+/*
+ * Panel primitives shared by every operations panel (kit.ts is the only importer).
+ *
+ * Everything here is scoped to a `kit-` class or to `[data-panel]` descendants, so a panel
+ * can never restyle the shell, the map or another panel. Colours come only from
+ * src/styles/tokens.css; no literal hex is allowed in this file, because a hard-coded
+ * colour is a state the contrast audit cannot see.
+ *
+ * Motion: transitions are limited to hover/focus decoration and are multiplied by
+ * --motion-scale, which collapses to 0 under prefers-reduced-motion. No data state is
+ * ever introduced by an animation.
+ *
+ * Simulation only. Not authorised for flight.
+ */
+
+.kit-resource {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.kit-section-title {
+  margin: var(--space-4) 0 var(--space-1);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border-bottom: var(--border-width) solid var(--rule);
+  padding-bottom: var(--space-1);
+}
+
+.kit-paragraph {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  max-width: 78ch;
+}
+
+.kit-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* fields */
+
+.kit-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+/* One field: a dl of exactly one label/value pair, so it is valid wherever it is placed. */
+.kit-field {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  margin: 0;
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: var(--space-2);
+}
+
+.kit-field-label {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.kit-field-value {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+/* tables */
+
+.kit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  background: var(--surface-1);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+}
+
+.kit-table caption {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-align: left;
+  padding-bottom: var(--space-2);
+}
+
+.kit-table th,
+.kit-table td {
+  text-align: left;
+  padding: var(--space-2);
+  border-bottom: var(--border-width) solid var(--rule);
+  vertical-align: top;
+}
+
+.kit-table thead th {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--surface-2);
+}
+
+.kit-table tbody th {
+  font-weight: 600;
+}
+
+.kit-table tbody tr:last-child th,
+.kit-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* the four non-happy states, all of them designed */
+
+.kit-state-wrap {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width) dashed var(--rule-strong);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  background: var(--surface-1);
+}
+
+.kit-state-wrap--error {
+  border-style: solid;
+  border-color: var(--state-rejected);
+  background: var(--surface-2);
+}
+
+.kit-state-wrap--boundary {
+  border-color: var(--state-uncertain);
+  border-style: dotted;
+}
+
+.kit-state-heading {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.kit-state {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  max-width: 82ch;
+}
+
+.kit-state--error {
+  color: var(--text-primary);
+}
+
+.kit-state-hint {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  max-width: 82ch;
+}
+
+.kit-skeleton {
+  height: 0.5rem;
+  border-radius: var(--radius);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--surface-2),
+    var(--surface-2) 12px,
+    var(--surface-3) 12px,
+    var(--surface-3) 24px
+  );
+}
+
+/* provenance line under every block that came from a request */
+
+.kit-prov {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--rule);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.kit-partial {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* controls */
+
+.kit-button {
+  appearance: none;
+  border: var(--border-width-thick) solid var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  transition: border-color calc(var(--duration-fast) * var(--motion-scale)) ease-in-out;
+}
+
+.kit-button:hover {
+  border-color: var(--link);
+}
+
+.kit-button--primary {
+  background: var(--surface-3);
+  border-color: var(--link);
+}
+
+.kit-button[disabled] {
+  cursor: not-allowed;
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+.kit-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+/* drawer: fixed on screen, but a child of the panel that opened it */
+
+.kit-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  align-items: end;
+  justify-items: stretch;
+  background: rgb(0 0 0 / 62%);
+  padding: 0;
+}
+
+.kit-drawer {
+  display: grid;
+  gap: var(--space-3);
+  max-height: min(78vh, 44rem);
+  overflow: auto;
+  background: var(--surface-1);
+  border-top: var(--border-width-thick) solid var(--focus);
+  box-shadow: var(--shadow-2);
+  padding: var(--space-5);
+}
+
+.kit-drawer-title {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.kit-drawer-sub,
+.kit-drawer-body {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  max-width: 84ch;
+}
+
+@media (min-width: 60rem) {
+  .kit-drawer-overlay {
+    justify-items: end;
+    padding: var(--space-5);
+  }
+
+  .kit-drawer {
+    width: min(46rem, 92vw);
+    border: var(--border-width-thick) solid var(--focus);
+    border-radius: var(--radius-lg);
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "play_buttons_normal_motion": 1,
+  "play_buttons_reduced_motion": 0,
+  "step_buttons_reduced": 4,
+  "elements_with_nonzero_motion_styles": [],
+  "elements_with_microsecond_1e_06s_durations": 0,
+  "slider_present": true,
+  "valuenow_before": "0",
+  "valuenow_after_arrowright": "1",
+  "live_regions": 2
+}

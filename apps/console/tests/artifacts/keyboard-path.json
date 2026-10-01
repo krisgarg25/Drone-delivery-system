@@ -1,0 +1,15 @@
+{
+  "route": "decision on dev+synthetic",
+  "stops_to_first_rejection_word": 2,
+  "stops_from_cold_document_start_to_refusal": 3,
+  "stops_from_cold_document_start_to_detail_trigger": 4,
+  "stops_onward_to_technical_detail_trigger": 1,
+  "refusal_stop_tag": "H4",
+  "refusal_is_a_tab_stop": true,
+  "trigger_outline": "solid 3px rgb(255, 224, 102)",
+  "trigger_focus_visible": true,
+  "drawer_grabs_focus_on_open": true,
+  "tabs_spent_cycling_inside_drawer": 10,
+  "escape_returns_focus_to_trigger": true,
+  "builder_claim": "8 stops to rejection, 1-stop hop, Escape restores"
+}

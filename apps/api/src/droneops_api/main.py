@@ -1,10 +1,15 @@
 """Process entry point for the control plane.
 
 ``create_app`` in :mod:`droneops_api.composition` is the composition root: it injects the
-ports the routers call. This module instantiates it for ``uvicorn`` and keeps the Phase 0
-``/v1/simulated-orders`` endpoint alive until the Phase 4 ``/v1/orders`` surface fully
-replaces it. :mod:`scripts.openapi_gate` lists that route as legacy: command-free,
-reviewed, and not allowed to gain new responsibilities.
+ports the routers call. The default it injects is
+:func:`~droneops_api.composition.build_production_services` - the real read plane, whose
+simulation, comparison and economics answers come from the dispatcher, the planner and the
+corridor graph rather than from fixtures. The test double is still there, and it is only
+reachable by naming it: ``build_reference_services()``.
+
+The Phase 0 ``/v1/simulated-orders`` endpoint stays alive for the same reason it always
+did: :mod:`scripts.openapi_gate` lists it as legacy, command-free and reviewed, and it is
+not allowed to gain new responsibilities.
 """
 
 from __future__ import annotations
@@ -14,7 +19,7 @@ from typing import Annotated
 
 from fastapi import Header, HTTPException, Request, Response
 
-from droneops_api.composition import create_app
+from droneops_api.composition import build_production_services, create_app
 from droneops_contracts import (
     AltitudeReference,
     MissionStatus,
@@ -24,7 +29,10 @@ from droneops_contracts import (
 from droneops_core_domain import create_simulated_mission, transition_mission
 from droneops_platform import get_clock
 
-app = create_app()
+#: The default process is the production composition, not the reference double. The
+#: double stays available to tests as ``composition.build_reference_services()`` and is
+#: never the implicit default of anything.
+app = create_app(build_production_services())
 app.state.missions = {}
 
 

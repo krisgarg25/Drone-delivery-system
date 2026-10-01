@@ -65,11 +65,29 @@ ROLE_CAPABILITIES: dict[str, frozenset[str]] = {
             CAPABILITY_SIMULATION_READ,
         }
     ),
-    OperatorRole.PILOT_OBSERVER.value: frozenset({CAPABILITY_READ}),
-    OperatorRole.SAFETY_REVIEWER.value: frozenset(
-        {CAPABILITY_READ, CAPABILITY_AUDIT_READ, CAPABILITY_PROPOSAL_DECLINE}
+    OperatorRole.PILOT_OBSERVER.value: frozenset(
+        {
+            CAPABILITY_READ,
+            #: Section 5.4 puts an Economics view and a comparison in front of the
+            #: operations console, and the console signs in as an observer. Reading
+            #: simulated results is a *read* scope, so it belongs here rather than in
+            #: the general ``read:all`` scope, which would also hand it to a credential
+            #: that should only see its own orders. It is not in ``WRITE_CAPABILITIES``,
+            #: so a read-only credential keeps it and still cannot accept a proposal.
+            CAPABILITY_SIMULATION_READ,
+        }
     ),
-    OperatorRole.AUDITOR.value: frozenset({CAPABILITY_READ, CAPABILITY_AUDIT_READ}),
+    OperatorRole.SAFETY_REVIEWER.value: frozenset(
+        {
+            CAPABILITY_READ,
+            CAPABILITY_AUDIT_READ,
+            CAPABILITY_PROPOSAL_DECLINE,
+            CAPABILITY_SIMULATION_READ,
+        }
+    ),
+    OperatorRole.AUDITOR.value: frozenset(
+        {CAPABILITY_READ, CAPABILITY_AUDIT_READ, CAPABILITY_SIMULATION_READ}
+    ),
     OperatorRole.PLATFORM_ADMIN.value: ALL_CAPABILITIES,
 }
 

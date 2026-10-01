@@ -15,7 +15,10 @@
     <a class="skip-link" href="#main">Skip to the working area</a>
 
     <header id="masthead">
-      <p class="safety-banner" role="banner">Simulation only. Not authorised for flight.</p>
+      <!-- The banner landmark is the header itself: an explicit role on the paragraph inside
+           it made a second, nested banner (axe landmark-banner-is-top-level +
+           landmark-no-duplicate-banner + landmark-unique, audit F-4). The text is unchanged. -->
+      <p class="safety-banner">Simulation only. Not authorised for flight.</p>
       <div class="masthead-row">
         <h1>DroneOps operations console</h1>
         <p id="transport-badge" class="transport-badge" data-mode="unknown" role="status">
@@ -23,7 +26,7 @@
         </p>
       </div>
 
-      <aside
+      <section
         class="provenance-strip"
         aria-labelledby="provenance-heading"
         data-testid="provenance-strip"
@@ -35,7 +38,7 @@
           <dt>loading</dt>
           <dd>contacting the simulation control plane</dd>
         </dl>
-      </aside>
+      </section>
 
       <nav id="primary-nav" role="navigation" aria-label="Console screens"></nav>
     </header>
@@ -51,7 +54,7 @@
     </main>
 
     <footer id="colophon">
-      <p class="safety-banner" role="contentinfo">Simulation only. Not authorised for flight.</p>
+      <p class="safety-banner">Simulation only. Not authorised for flight.</p>
       <p class="colophon-note">
         Corridors, pads, fleet, weather and reservations in this product are experiment inputs from
         a frozen synthetic bundle. No displayed state authorises an aircraft, and no screen here can

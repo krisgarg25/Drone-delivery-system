@@ -1,0 +1,80 @@
+{
+  "map": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "exceptions": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  },
+  "missions": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "mission-queue": true,
+      "mission-board": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  },
+  "fleet": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "fleet": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  },
+  "economics": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "economics": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  },
+  "decision": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "decision-trace": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  },
+  "replay": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "replay": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  },
+  "comparison": {
+    "banners": 2,
+    "banner_text_ok": true,
+    "banner_visible": true,
+    "roots_present": {
+      "comparison": true
+    },
+    "placeholder_leak": false,
+    "js_errors": [],
+    "console_error_lines": []
+  }
+}

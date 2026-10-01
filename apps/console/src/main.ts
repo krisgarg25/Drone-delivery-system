@@ -24,8 +24,15 @@ function requestedTransport(): string | null {
 
 async function pickTransport(): Promise<{ transport: Transport; note: string }> {
   const forced = requestedTransport();
-  if (forced === "synthetic" && !import.meta.env.PROD) {
-    return { transport: createSyntheticTransport(), note: "forced by ?transport=synthetic" };
+  // `fixtures` is accepted as an alias of `synthetic` because that is the word the demo
+  // notes and the audit trail use for this mode. The alias sits inside the same
+  // `!import.meta.env.PROD` guard, so a production bundle still cannot construct a
+  // synthetic transport by any keyword (docs/phase-4-console-audit.md F-6).
+  if ((forced === "synthetic" || forced === "fixtures") && !import.meta.env.PROD) {
+    return {
+      transport: createSyntheticTransport(),
+      note: `forced by ?transport=${forced} (fixtures is an alias of synthetic, dev only)`,
+    };
   }
   if (forced === "live") {
     return { transport: createHttpTransport(), note: "forced by ?transport=live" };

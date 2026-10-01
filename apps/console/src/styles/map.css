@@ -285,13 +285,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No data state is allowed to travel: uncertainty appears in place or not at all. */
+  /* No data state is allowed to travel: uncertainty appears in place or not at all.
+     Zero means zero: 0s is the claim this file makes, so nothing computes a 0.000001s
+     residual (docs/phase-4-console-audit.md F-5). */
   *,
   *::before,
   *::after {
-    animation-duration: 0.001ms !important;
+    animation-duration: 0s !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
+    transition-duration: 0s !important;
     scroll-behavior: auto !important;
   }
 }

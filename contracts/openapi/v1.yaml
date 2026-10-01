@@ -1103,6 +1103,15 @@ components:
           format: date-time
         state:
           type: string
+        phase:
+          type: string
+        source_kind:
+          type: string
+          enum: [planned, committed, observed, synthetic]
+        authoritative:
+          type: boolean
+        simulation_notice:
+          type: string
           enum:
           - tentative
           - committed
@@ -1904,6 +1913,201 @@ components:
           type: string
       description: 'The frozen identity of a simulation run: the snapshot a replay must reproduce, never the current database
         state.'
+    EconomicsMetricResponse:
+      type: object
+      additionalProperties: false
+      required: [key, label, value, unit, formula, denominator, source, illustrative, phase, source_kind, authoritative, simulation_notice]
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        value:
+          type: string
+        unit:
+          type: string
+        formula:
+          type: string
+          description: docs/05 section 5.8 definition, as arithmetic - never a bare number.
+        denominator:
+          type: string
+          description: What the ratio is divided by, stated so a reader can check it.
+        source:
+          type: string
+        illustrative:
+          type: boolean
+          description: True on every monetary figure; the cost model is unvalidated chapter-7 arithmetic.
+        phase:
+          type: string
+        source_kind:
+          type: string
+          enum: [planned, committed, observed, synthetic]
+        authoritative:
+          type: boolean
+        simulation_notice:
+          type: string
+
+    CostModelResponse:
+      type: object
+      additionalProperties: false
+      required: [currency, illustrative, caveat, phase, source_kind, authoritative, simulation_notice]
+      properties:
+        currency:
+          type: string
+        illustrative:
+          type: boolean
+        caveat:
+          type: string
+        deliveries_per_day_per_hub:
+          type: integer
+        fixed_plus_capital_per_drop_inr:
+          type: integer
+        variable_per_drop_inr:
+          type: integer
+        components:
+          type: object
+          additionalProperties:
+            type: integer
+          description: The seven section 5.9 components, in illustrative rupees per delivery.
+        cost_per_completed_delivery_inr:
+          type: integer
+        cost_per_completed_delivery_usd:
+          type: number
+        road_baseline_inr_low:
+          type: integer
+        road_baseline_inr_high:
+          type: integer
+        cost_vs_road_baseline:
+          type: number
+        sensitivity_inr_per_drop:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Section 5.9 sensitivity to deliveries per day per hub, illustrative.
+        phase:
+          type: string
+        source_kind:
+          type: string
+          enum: [planned, committed, observed, synthetic]
+        authoritative:
+          type: boolean
+        simulation_notice:
+          type: string
+
+    AircraftChargeState:
+      type: object
+      additionalProperties: false
+      required: [aircraft_id, mission_id, charge_wh, capacity_wh, charge_bp, phase, source_kind, authoritative, simulation_notice]
+      properties:
+        aircraft_id:
+          type: string
+        mission_id:
+          type: string
+        charge_wh:
+          type: integer
+        capacity_wh:
+          type: integer
+        charge_bp:
+          type: integer
+        state:
+          type: string
+    EconomicsResponse:
+      type: object
+      additionalProperties: false
+      required: [phase, source_kind, authoritative, simulation_notice]
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/EconomicsMetricResponse'
+        submitted_orders:
+          type: integer
+        completed:
+          type: integer
+        late:
+          type: integer
+        rejected:
+          type: integer
+        unfinished_at_cutoff:
+          type: integer
+          description: Accepted but not served when the cutoff passed - counted once, never inside rejected.
+        unserved_at_cutoff:
+          type: integer
+        deadline_orders:
+          type: integer
+        seeds:
+          type: array
+          items:
+            type: integer
+        repetitions:
+          type: integer
+          description: Seed count behind every median; the dispatcher refuses fewer than its published minimum.
+        energy_wh_median:
+          type: integer
+        cost_model:
+          $ref: '#/components/schemas/CostModelResponse'
+        charge_states:
+          type: array
+          items:
+            $ref: '#/components/schemas/AircraftChargeState'
+        illustrative:
+          type: boolean
+        phase:
+          type: string
+        source_kind:
+          type: string
+          enum: [planned, committed, observed, synthetic]
+        authoritative:
+          type: boolean
+        simulation_notice:
+          type: string
+    StrategyLaneRow:
+      type: object
+      additionalProperties: false
+      required: [strategy, repetitions, phase, source_kind, authoritative, simulation_notice]
+      properties:
+        strategy:
+          type: string
+        run_id:
+          type: string
+        repetitions:
+          type: integer
+        median_completed:
+          type: integer
+        spread_completed:
+          type: integer
+        median_energy_wh:
+          type: integer
+        spread_energy_wh:
+          type: integer
+        median_unserved:
+          type: integer
+        spread_unserved:
+          type: integer
+        median_pad_wait_us:
+          type: integer
+        median_charger_wait_us:
+          type: integer
+        median_crew_wait_us:
+          type: integer
+        median_cost_inr:
+          type: integer
+          description: Illustrative, from the unvalidated chapter-7 cost model.
+        demand_digest:
+          type: string
+        inputs_digest:
+          type: string
+        economics:
+          $ref: '#/components/schemas/EconomicsResponse'
+        phase:
+          type: string
+        source_kind:
+          type: string
+          enum: [planned, committed, observed, synthetic]
+        authoritative:
+          type: boolean
+        simulation_notice:
+          type: string
     SimulationRunResponse:
       type: object
       additionalProperties: false
@@ -1954,6 +2158,16 @@ components:
         frozen_at:
           type: string
           format: date-time
+        strategy:
+          type: string
+          description: Routing lane this run belongs to.
+        repetitions:
+          type: integer
+          description: Seeded repetitions behind the medians reported here.
+        median_seed:
+          type: integer
+        economics:
+          $ref: '#/components/schemas/EconomicsResponse'
       example:
         run_identity:
           bundle_sha256: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
@@ -2063,6 +2277,26 @@ components:
           type: string
         against:
           type: string
+        seeds:
+          type: array
+          items:
+            type: integer
+          description: The seed list every median was taken over (docs/05 section 5.8 requires >=10).
+        repetitions:
+          type: integer
+        lanes:
+          type: array
+          items:
+            $ref: '#/components/schemas/StrategyLaneRow'
+          description: All three registered routing lanes, including the hybrid lane, each with its median and spread.
+        fairness_checks:
+          type: object
+          additionalProperties:
+            type: string
+          description: The dispatcher's proof the race was fair; a weakened baseline never reaches here.
+        comparison_error:
+          type: string
+          description: WeakenedBaselineError text when the comparison was refused; empty when it was not.
     ErrorResponse:
       type: object
       additionalProperties: false

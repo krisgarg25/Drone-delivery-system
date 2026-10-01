@@ -483,6 +483,94 @@ class RunIdentitySchema(BaseModel):
         return _config_release(value)
 
 
+class EconomicsMetricResponse(ProvenanceModel):
+    """One economics figure with its formula and its denominator attached.
+
+    ``docs/05`` section 5.8 defines these figures as ratios, so a bare number is not an
+    answer: the formula and the denominator travel with the value. ``illustrative`` is set
+    on every monetary figure, because the cost model behind it is chapter-7 planning
+    arithmetic and has never been validated against a quote.
+    """
+
+    key: str
+    label: str
+    value: str
+    unit: str
+    formula: str
+    denominator: str
+    source: str
+    illustrative: bool = False
+
+
+class CostModelResponse(ProvenanceModel):
+    """Section 5.9's seven components, labelled illustrative, with its sensitivity table."""
+
+    currency: str = "INR"
+    illustrative: bool = True
+    caveat: str = ""
+    deliveries_per_day_per_hub: int = 0
+    fixed_plus_capital_per_drop_inr: int = 0
+    variable_per_drop_inr: int = 0
+    components: dict[str, int] = Field(default_factory=dict)
+    cost_per_completed_delivery_inr: int = 0
+    cost_per_completed_delivery_usd: float = 0.0
+    road_baseline_inr_low: int = 0
+    road_baseline_inr_high: int = 0
+    cost_vs_road_baseline: float = 0.0
+    sensitivity_inr_per_drop: dict[str, int] = Field(default_factory=dict)
+
+
+class AircraftChargeState(ProvenanceModel):
+    """The state an arm actually flew with: drawn once per seed and shared by every arm."""
+
+    aircraft_id: str
+    mission_id: str
+    charge_wh: int
+    capacity_wh: int
+    charge_bp: int
+    state: str = ""
+
+
+class EconomicsResponse(ProvenanceModel):
+    """The Economics view of ``docs/05`` 5.4, as one object with its definitions."""
+
+    metrics: list[EconomicsMetricResponse] = Field(default_factory=list)
+    submitted_orders: int = 0
+    completed: int = 0
+    late: int = 0
+    rejected: int = 0
+    unfinished_at_cutoff: int = 0
+    unserved_at_cutoff: int = 0
+    deadline_orders: int = 0
+    seeds: list[int] = Field(default_factory=list)
+    repetitions: int = 0
+    energy_wh_median: int = 0
+    cost_model: CostModelResponse
+    charge_states: list[AircraftChargeState] = Field(default_factory=list)
+    illustrative: bool = True
+
+
+class StrategyLaneRow(ProvenanceModel):
+    """One comparison lane: its median and spread over the seed list, not one lucky run."""
+
+    strategy: str
+    run_id: str = ""
+    repetitions: int = 0
+    median_completed: int = 0
+    spread_completed: int = 0
+    median_energy_wh: int = 0
+    spread_energy_wh: int = 0
+    median_unserved: int = 0
+    spread_unserved: int = 0
+    median_pad_wait_us: int = 0
+    median_charger_wait_us: int = 0
+    median_crew_wait_us: int = 0
+    median_cost_inr: int = 0
+    demand_digest: str = ""
+    inputs_digest: str = ""
+    economics: EconomicsResponse | None = None
+
+
 class SimulationRunResponse(ProvenanceModel):
     run_id: str
     run_identity: RunIdentitySchema
@@ -493,6 +581,10 @@ class SimulationRunResponse(ProvenanceModel):
     snapshot_digest: str = ""
     event_hash: str = ""
     frozen_at: datetime | None = None
+    strategy: str = ""
+    repetitions: int = 0
+    median_seed: int = 0
+    economics: EconomicsResponse | None = None
 
 
 class ReplayDiffResponse(ProvenanceModel):
@@ -512,6 +604,11 @@ class ScenarioComparisonResponse(ProvenanceModel):
     run_b: RunIdentitySchema
     compared_metrics: dict[str, str] = Field(default_factory=dict)
     verdict: str
+    seeds: list[int] = Field(default_factory=list)
+    repetitions: int = 0
+    lanes: list[StrategyLaneRow] = Field(default_factory=list)
+    fairness_checks: dict[str, str] = Field(default_factory=dict)
+    comparison_error: str = ""
 
 
 # ------------------------------------------------------------------ status stream

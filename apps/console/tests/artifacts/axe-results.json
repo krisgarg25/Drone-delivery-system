@@ -1,0 +1,33 @@
+{
+  "by_impact_nodes": {},
+  "per_route": {
+    "map": {
+      "violations": [],
+      "passes": 47
+    },
+    "missions": {
+      "violations": [],
+      "passes": 46
+    },
+    "fleet": {
+      "violations": [],
+      "passes": 46
+    },
+    "economics": {
+      "violations": [],
+      "passes": 48
+    },
+    "decision": {
+      "violations": [],
+      "passes": 40
+    },
+    "replay": {
+      "violations": [],
+      "passes": 40
+    },
+    "comparison": {
+      "violations": [],
+      "passes": 46
+    }
+  }
+}

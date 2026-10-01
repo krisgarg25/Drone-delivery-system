@@ -18,6 +18,7 @@
 import type { Api } from "../lib/api/endpoints";
 import type { DataState } from "../lib/api/types";
 import type { LayerId } from "../map/layers";
+import { OPERATIONS_PANELS } from "../panels/index";
 import type { PanelSlot } from "./routes";
 
 /**
@@ -135,11 +136,11 @@ export function createLayerController(
 
 /* ------------------------------------------------------------------ registry */
 
-export const PANELS: Panel[] = [
-  // Empty on purpose. The map, the shell, the design system and the typed client are
-  // Phase 4's foundation; the queue, board, fleet, economics, decision, replay and
-  // comparison panels are mounted through this array by the panel engineer.
-];
+export const PANELS: Panel[] = [...OPERATIONS_PANELS];
+// The Phase 4 operations panels live in src/panels/ and are listed in src/panels/index.ts.
+// The map, the shell, the design system and the typed client are Phase 4's foundation; the
+// queue, board, fleet, economics, decision, replay and comparison panels mount through this
+// one line and register nothing else.
 
 const registered = new Map<string, Panel>();
 

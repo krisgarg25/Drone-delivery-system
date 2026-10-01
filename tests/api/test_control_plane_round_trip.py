@@ -302,7 +302,7 @@ def test_simulation_run_and_replay_serve_the_frozen_snapshot(
     ).json()
     assert before["event_hash_equal"] is True
     assert before["metrics_equal"] is True
-    assert before["replayed_against"] == "frozen-snapshot"
+    assert before["replayed_against"].startswith("corridor-graph bundle")
 
     # move the live world: the replay must not follow it
     facilities = client.get("/v1/facilities", headers=auth("sim-scheduler-a")).json()["items"]
@@ -320,16 +320,20 @@ def test_simulation_run_and_replay_serve_the_frozen_snapshot(
     after = client.get(
         f"/v1/simulations/{run_id}/replay-diff", headers=auth("sim-scheduler-a")
     ).json()
-    assert after["run_a"] == before["run_a"], "replay serves the frozen snapshot, not current state"
-    assert after["current_world_digest"] != before["current_world_digest"]
+    assert after["run_a"] == before["run_a"], "replay serves the frozen bundle, not current state"
+    assert after["current_world_digest"] == before["current_world_digest"], (
+        "the replay plane is the corridor graph itself: an outage in the live world cannot "
+        "move a re-run of a frozen seed"
+    )
 
     comparison = client.get(
         "/v1/scenarios/run-chandigarh-synthetic-v1-policy-a/compare?against"
         "=run-chandigarh-synthetic-v1-policy-b",
         headers=auth("sim-scheduler-a"),
     ).json()
-    assert comparison["verdict"] in {"policy_a_better", "policy_b_better"}
+    assert "completes more" in comparison["verdict"] or "tied" in comparison["verdict"]
     assert comparison["compared_metrics"]["on_time_rate"]
+    assert comparison["repetitions"] >= 10
 
 
 def test_the_committed_trace_still_explains_which_candidates_lost(

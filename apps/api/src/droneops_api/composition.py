@@ -36,15 +36,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from droneops_conflict_checker import CheckerPolicy, CommittedPlanRecord
-from droneops_reservations.commit import FinalSet
-from droneops_reservations.ledger import (
-    CheckerCommitValidator,
-    LedgerStore,
-    ReservationCommitLedger,
-    utc_now,
-)
-
+from droneops_api.dispatch_plane import DispatcherSimulationPort
 from droneops_api.ledger_plane import (
     AuditChainPort,
     AuditSink,
@@ -61,9 +53,13 @@ from droneops_api.ports import (
     ControlPlaneError,
     ControlPlaneServices,
     DuplicateCommitError,
+    FacilityPort,
+    FleetPort,
     IdempotencyKeyReusedError,
     Principal,
     ResourceNotFoundError,
+    SimulationPort,
+    StatusPort,
     UnresolvedStateError,
 )
 from droneops_api.provenance import (
@@ -106,6 +102,14 @@ from droneops_api.security import (
     CredentialResolver,
     UnknownCredentialError,
     principal_from,
+)
+from droneops_conflict_checker import CheckerPolicy, CommittedPlanRecord
+from droneops_reservations.commit import FinalSet
+from droneops_reservations.ledger import (
+    CheckerCommitValidator,
+    LedgerStore,
+    ReservationCommitLedger,
+    utc_now,
 )
 
 APP_TITLE = "DroneOps Phase 4 Control-Plane API"
@@ -167,11 +171,12 @@ SIMULATION_CREDENTIALS: tuple[tuple[str, Credential], ...] = (
 
 
 def build_reference_services() -> ControlPlaneServices:
-    """The simulation bundle: one in-memory plane behind every port.
+    """THE TEST DOUBLE, explicitly named. Use it only as a fixture.
 
-    This is the test-double plane. It is the default only because the Phase 4 simulation
-    deployment has no database, and nothing that reads this module should mistake it for
-    the production one: :func:`build_ledger_services` is that.
+    Everything is in memory, ``reserve`` answers from a book the process keeps, and the
+    simulation figures are seeded fixtures. Production composition is
+    :func:`build_production_services`; this function exists so a test can name the double
+    it is wiring rather than get it by default.
     """
 
     plane = InMemoryControlPlane(tenants=(TENANT_A, TENANT_B))
@@ -189,6 +194,53 @@ def build_services(plane: InMemoryControlPlane) -> ControlPlaneServices:
         simulations=ReferenceSimulationPort(plane),
         status=ReferenceStatusPort(plane),
         idempotency=InMemoryIdempotencyLedger(),
+    )
+
+
+def build_production_services(
+    *,
+    plane: InMemoryControlPlane | None = None,
+    fleet: FleetPort | None = None,
+    facilities: FacilityPort | None = None,
+    simulation: SimulationPort | None = None,
+    status: StatusPort | None = None,
+) -> ControlPlaneServices:
+    """The production composition: the real read plane, injected where a database is needed.
+
+    What is real here, and what still needs a deployment to hand it something:
+
+    ``simulations``
+        :class:`droneops_api.dispatch_plane.DispatcherSimulationPort` - the dispatcher's
+        seeded 21 x 3 comparison over ``droneops_planner``'s own routing strategies, with
+        corridor-graph geometry and section-5.8 economics. Nothing about a run, a comparison
+        or an economic figure is a fixture any more.
+    ``fleet`` / ``facilities``
+        whatever the deployment injects. A persistence-backed read model satisfies these
+        ports structurally; this module cannot build one itself, because ``droneops_api``
+        must not import ``droneops_persistence`` and does not. Left uninjected, the two
+        reads stay on the double and are reported as such.
+    ``status``
+        the telemetry projection's event feed when injected, otherwise the double's log.
+    ``orders`` / ``missions`` / ``reservations`` / ``audit``
+        the ledger bundle when a deployment supplies a ``LedgerStore``, an audit sink and a
+        loop runner (:func:`build_ledger_services`); without a database the workflow intake
+        stays on the documented in-memory plane, and that is stated rather than hidden.
+    """
+
+    bundle_plane = plane or InMemoryControlPlane(tenants=(TENANT_A, TENANT_B))
+    reference = build_services(bundle_plane)
+    fleet = fleet or reference.fleet
+    facilities = facilities or reference.facilities
+    return ControlPlaneServices(
+        orders=reference.orders,
+        missions=reference.missions,
+        reservations=reference.reservations,
+        fleet=fleet,
+        facilities=facilities,
+        audit=reference.audit,
+        simulations=simulation or DispatcherSimulationPort(config_release_sha=CONFIG_RELEASE_SHA),
+        status=status or reference.status,
+        idempotency=reference.idempotency,
     )
 
 
@@ -473,7 +525,7 @@ def create_app(
 ) -> FastAPI:
     """The control plane as one object: routers, ports, tenancy, status codes."""
 
-    bundle = services or build_reference_services()
+    bundle = services or build_production_services()
     credential_resolver = resolver or default_resolver()
 
     app = FastAPI(

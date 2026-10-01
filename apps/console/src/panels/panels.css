@@ -1,0 +1,453 @@
+/*
+ * Panel CSS for the fleet, economics, replay, comparison, exception and mission-board
+ * panels, plus the decision-trace blocks. Scoped by each panel's own root attribute or a
+ * prefixed class, so no panel can reach another's chrome.
+ *
+ * Colour is never the only signal here: the second channels (dash, glyph, tag, weight)
+ * come from src/lib/palette.ts via the shell's state chips. `--motion-scale` collapses to
+ * 0 under prefers-reduced-motion, and the replay track declares no transition at all so
+ * uncertainty can never be eased into a smooth glide.
+ *
+ * Simulation only. Not authorised for flight.
+ */
+
+/* ------------------------------------------------------------------ decision trace */
+
+[data-panel-root="decision-trace"] {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.dt-scope {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.dt-answer {
+  display: grid;
+  gap: var(--space-3);
+  border: var(--border-width-thick) solid var(--state-rejected);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  padding: var(--space-4);
+}
+
+.dt-answer[data-outcome="committed"] {
+  border-color: var(--state-committed);
+}
+
+.dt-answer-heading {
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+
+.dt-answer-sentence {
+  margin: 0;
+  font-size: var(--text-lg);
+  max-width: 88ch;
+}
+
+.dt-answer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.dt-read-time {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.dt-rejection-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.dt-rejection {
+  display: grid;
+  gap: var(--space-2);
+  border-left: var(--border-width-thick) solid var(--state-rejected);
+  background: var(--surface-1);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+}
+
+.dt-rejection-index {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.dt-rejection-human {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+  max-width: 88ch;
+}
+
+.dt-rejection-code {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.dt-error {
+  display: grid;
+  gap: var(--space-3);
+  border: var(--border-width-thick) solid var(--state-rejected);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  background: var(--surface-2);
+}
+
+.dt-partials {
+  margin: 0;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  border-top: var(--border-width) dashed var(--rule-strong);
+  padding-top: var(--space-2);
+}
+
+/* ------------------------------------------------------------------ fleet */
+
+[data-panel-root="fleet"] {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.fl-availability {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width-thick) solid var(--state-committed);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+  padding: var(--space-4);
+}
+
+.fl-availability-heading {
+  margin: 0;
+  font-size: var(--text-lg);
+}
+
+.fl-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fl-count {
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: var(--space-2) var(--space-3);
+}
+
+.fl-count-value {
+  display: block;
+  font-size: var(--text-xl);
+  font-family: var(--font-mono);
+}
+
+.fl-count-key {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+.fl-confusions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.fl-confusion {
+  display: grid;
+  gap: var(--space-1);
+  border-left: var(--border-width-thick) solid var(--state-uncertain);
+  background: var(--surface-1);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+}
+
+.fl-confusion strong {
+  color: var(--text-primary);
+}
+
+/* ------------------------------------------------------------------ economics */
+
+.ec-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ec-metric {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: var(--space-3);
+}
+
+.ec-metric[data-available="false"] {
+  border-style: dashed;
+  border-color: var(--state-uncertain);
+}
+
+.ec-metric-key {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.ec-metric-value {
+  font-size: var(--text-xl);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.ec-metric[data-available="false"] .ec-metric-value {
+  font-size: var(--text-sm);
+  font-family: var(--font-ui);
+  color: var(--text-secondary);
+}
+
+.ec-illustrative {
+  justify-self: start;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: var(--border-width) solid var(--warning);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  padding: 1px var(--space-2);
+}
+
+.ec-metric-foot {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ replay */
+
+[data-panel-root="replay"] {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.rp-snapshot {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width) dotted var(--state-uncertain);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: var(--space-3);
+}
+
+.rp-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.rp-scrub {
+  flex: 1 1 18rem;
+  accent-color: var(--link);
+  height: 2rem;
+}
+
+.rp-clock {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  min-width: 12ch;
+}
+
+.rp-layers {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.rp-layer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--text-sm);
+}
+
+.rp-track {
+  width: 100%;
+  height: 8.5rem;
+  background: var(--map-basemap);
+  border: var(--border-width) solid var(--map-boundary);
+  border-radius: var(--radius);
+  display: block;
+}
+
+.rp-frame {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.rp-uncertain {
+  border-left: var(--border-width-thick) solid var(--state-uncertain);
+  background: var(--surface-2);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+}
+
+/* No transition anywhere on the replay track or its markers: a data state that eased
+   from A to B would read as measured movement it never had. */
+
+/* ------------------------------------------------------------------ comparison */
+
+[data-panel-root="comparison"] {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.cp-arms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cp-arm {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: var(--space-3);
+}
+
+.cp-arm[data-found="false"] {
+  border-style: dashed;
+  border-color: var(--state-rejected);
+}
+
+.cp-arm-name {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.cp-identical {
+  display: grid;
+  gap: var(--space-1);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.cp-guard {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width-thick) solid var(--state-rejected);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  padding: var(--space-4);
+}
+
+/* ------------------------------------------------------------------ exceptions */
+
+[data-panel-root="exceptions"] {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ex-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ex-item {
+  display: grid;
+  gap: var(--space-2);
+  border-left: var(--border-width-thick) solid var(--rule-strong);
+  background: var(--surface-1);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+}
+
+.ex-item[data-severity="blocking"] {
+  border-left-color: var(--state-rejected);
+}
+
+.ex-item[data-severity="watch"] {
+  border-left-color: var(--state-uncertain);
+}
+
+.ex-title {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.ex-body {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  max-width: 88ch;
+}
+
+/* ------------------------------------------------------------------ mission board */
+
+[data-panel-root="mission-board"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: var(--space-3);
+}
+
+.mb-card {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--border-width) solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: var(--space-3);
+}
+
+.mb-card-heading {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.mb-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}

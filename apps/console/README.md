@@ -21,8 +21,10 @@ npm run lint       # eslint . && prettier --check .
 With the control plane up (`make db-up && make api`), the console probes `/health` and uses
 the live API. With nothing listening, it falls back to the synthetic dev transport and says
 so in the header badge and the provenance strip. Force either: `?transport=live` or
-`?transport=synthetic`. The fixture transport is refused at construction in a production
-build (`src/lib/api/mock.ts`), so it cannot ship.
+`?transport=synthetic` - and `?transport=fixtures` is accepted as an alias of `synthetic`,
+because that is the word the demo notes use for the mode. Both keywords are behind the same
+`!import.meta.env.PROD` guard in `src/main.ts`, and the fixture transport is refused at
+construction in a production build (`src/lib/api/mock.ts`), so it cannot ship.
 
 ## Types come from the contract
 
@@ -52,14 +54,14 @@ runtime, so the legend, the canvas and the audit script all measure the same val
 
 Six data states, each with a **second channel** — hue is never the only signal:
 
-| state | token | dash | glyph | fill | tag |
-| --- | --- | --- | --- | --- | --- |
-| committed | `--state-committed` `#f2b53b` | solid | `■` | 0.55 | `LEDGER` |
-| planned | `--state-planned` `#4cc9f0` | `6 4` | `◌` | 0.28 | `PLAN` |
-| observed | `--state-observed` `#7ae582` | `1 3` | `▲` | 0.90 | `MEASURED` |
-| uncertain | `--state-uncertain` `#dfe6ee` | `2 2` | `◎` | 0.18 | `± UNKNOWN` |
-| rejected | `--state-rejected` `#ff6b6b` | `3 1` | `✕` | 0.75 | `REJECTED` |
-| synthetic | `--state-synthetic` `#b89bff` | `12 3 2 3` | `◆` | 0.35 | `SYNTH` |
+| state     | token                         | dash       | glyph | fill | tag         |
+| --------- | ----------------------------- | ---------- | ----- | ---- | ----------- |
+| committed | `--state-committed` `#f2b53b` | solid      | `■`   | 0.55 | `LEDGER`    |
+| planned   | `--state-planned` `#4cc9f0`   | `6 4`      | `◌`   | 0.28 | `PLAN`      |
+| observed  | `--state-observed` `#7ae582`  | `1 3`      | `▲`   | 0.90 | `MEASURED`  |
+| uncertain | `--state-uncertain` `#dfe6ee` | `2 2`      | `◎`   | 0.18 | `± UNKNOWN` |
+| rejected  | `--state-rejected` `#ff6b6b`  | `3 1`      | `✕`   | 0.75 | `REJECTED`  |
+| synthetic | `--state-synthetic` `#b89bff` | `12 3 2 3` | `◆`   | 0.35 | `SYNTH`     |
 
 `npm run audit:contrast` parses the token file and prints measured WCAG 2.1 ratios plus a
 deuteranopia/protanopia/tritanopia separation check; it exits non-zero if a pair misses its
