@@ -28,3 +28,4 @@ apps/console/.vite/
 apps/console/coverage/
 test-results/
 playwright-report/
+apps/console/tests/artifacts/

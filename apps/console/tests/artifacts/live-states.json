@@ -1,8 +1,0 @@
-{
-  "economics_denial": true,
-  "comparison_denial": true,
-  "denial_credential": "sim-partner-a",
-  "observer_status": 200,
-  "partner_status": 403,
-  "queue_head": "Every order the ledger knows about, in two groups, with refused and unserved work drawn first. Nothing is filtered away: a mission the planner refused is a row on this screen, because the refusal is part of the result.\n\nQueue labels are the seven from docs/05 section 5.4 plus one for energy reserve,"
-}

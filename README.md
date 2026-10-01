@@ -1,6 +1,6 @@
-# DroneOps Phase 0 repository skeleton
+# DroneOps operations platform — Phase 0 to Phase 4
 
-**Status:** Local Phase 0 skeleton only. This repository contains no aircraft command path and is not authorized for flight.
+**Status:** Phases 0 through 4 are built and gate-tested: deterministic Chandigarh simulation, transactional 4D reservation ledger with an independent conflict checker, energy- and capacity-aware dispatch, and a React/MapLibre operations console. It is still a simulator. This repository contains no aircraft command path and is not authorized for flight. See `docs/phase-0-to-4-gate-report.md` for what is proven, what is not, and the two Phase 4 criteria that need real humans.
 
 ## Safety promise
 
@@ -62,4 +62,8 @@ Create ADRs for geometry kernels, reservation commit, scenario bundle format and
 
 - `security/threat-model.md` — the seven Phase 0 threats, each tied to the test, import contract or CI job that enforces it, plus what the model explicitly does not cover.
 - `security/phase-1-boundaries.md` — asset classification and current boundary controls.
+- `docs/phase-0-to-4-gate-report.md` — **the whole build measured against every Phase 0-4 exit criterion**, with executed evidence, the criteria that remain unmet and why, and the cost finding that matters more than any test count.
+- `docs/phase-4-console-audit.md` — independent browser and accessibility audit of the console, including the builder claims it disproved.
+- `docs/performance/phase-3-performance-report.md` — profiled numbers with machine details and the first real bottleneck.
+- `docs/conventions.md` — the rules every engineer and automated agent must follow before changing anything.
 - `docs/phase-0-gate-report.md` — the Phase 0 exit gate walked criterion by criterion, with the commands actually run and their real output, including the gaps that remain open.

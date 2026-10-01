@@ -26,7 +26,7 @@ GOLDEN_DIR := simulation/golden/chandigarh-basic
 RUN_DIR := simulation/reports
 LICE_ALLOWLIST := configs/licensing/licence-allowlist.txt
 
-.PHONY: help bootstrap db-up db-down db-status migrate reset-db api worker test unit \
+.PHONY: help bootstrap db-up db-down db-status dev dev-down migrate reset-db api worker test unit \
         imports lint format typecheck sim replay console check sec licence audit sbom \
         openapi-diff clean-hooks e2e-install dev-env sim-freeze sim-world sim-batch
 
@@ -58,6 +58,13 @@ migrate: ## Apply Alembic migrations to head against the local PostGIS
 
 api: ## Run the API on :8000 (simulation only, no command route)
 	$(PYTHON) uvicorn --app-dir apps/api/src droneops_api.main:app --host 127.0.0.1 --port 8000
+
+dev: ## Whole stack in Docker: PostGIS, Valkey, API and console (Ctrl-C ends it)
+	$(COMPOSE) up --build
+	$(COMPOSE) down
+
+dev-down: ## Stop the all-Docker development stack and its containers
+	$(COMPOSE) down
 
 worker: ## Run the background worker process
 	$(PYTHON) droneops-worker
