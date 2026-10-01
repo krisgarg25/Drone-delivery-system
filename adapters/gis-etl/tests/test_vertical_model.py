@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from conftest import RETRIEVED_AT, building_node, wire_way
+from gis_etl_support import RETRIEVED_AT, building_node, wire_way
 
 from droneops_adapters_gis_etl.config import GisConfig
 from droneops_adapters_gis_etl.errors import SyntheticProvenanceError

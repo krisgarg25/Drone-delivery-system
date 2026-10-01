@@ -516,36 +516,37 @@ def _crossing_contacts(
     the nearest segment, which clamps a point a plan never reaches to that plan's window
     edge. A crossing finding therefore cannot invent an instant the plan does not contain;
     it can only report one no earlier than it was, which is why this is a checker test and
-    not a planner one.
+    not a planner one. Each side contributes its own margin: timing uncertainty always,
+    plus the transition buffer for whichever side is arriving on a leg that changes height.
     """
-    tolerance = policy.crossing_tolerance_us()
     findings: list[CrossingFinding] = []
     contacts: list[Contact] = []
     for east, north in geometry.polyline_crossings(left.float_track(), right.float_track()):
-        arrival_left = _arrival_us(left, east, north)
-        arrival_right = _arrival_us(right, east, north)
+        arrival_left = _arrival(left, east, north)
+        arrival_right = _arrival(right, east, north)
         if arrival_left is None or arrival_right is None:
             continue
-        gap = abs(arrival_left - arrival_right)
+        tolerance = policy.crossing_tolerance_us(arrival_left[1], arrival_right[1])
+        gap = abs(arrival_left[0] - arrival_right[0])
         findings.append(
             CrossingFinding(
                 east_mm=int(math.floor(east)),
                 north_mm=int(math.floor(north)),
-                left_arrival_us=arrival_left,
-                right_arrival_us=arrival_right,
+                left_arrival_us=arrival_left[0],
+                right_arrival_us=arrival_right[0],
                 arrival_gap_us=gap,
                 tolerance_us=tolerance,
             )
         )
         contested = gap <= tolerance
         if contested:
-            alt_left = _altitude_at(left, arrival_left)
-            alt_right = _altitude_at(right, arrival_right)
+            alt_left = _altitude_at(left, arrival_left[0])
+            alt_right = _altitude_at(right, arrival_right[0])
             vertical_reach = _vertical_reach(left) + _vertical_reach(right)
             contested = abs(alt_left - alt_right) <= vertical_reach
         if not contested:
             continue
-        first = min(arrival_left, arrival_right)
+        first = min(arrival_left[0], arrival_right[0])
         contacts.append(
             Contact(
                 at_us=first,
@@ -553,7 +554,7 @@ def _crossing_contacts(
                 window_end_us=first + gap,
                 east_mm=int(math.floor(east)),
                 north_mm=int(math.floor(north)),
-                altitude_mm=_altitude_at(left, arrival_left),
+                altitude_mm=_altitude_at(left, arrival_left[0]),
                 horizontal_gap_mm=0.0,
                 vertical_gap_mm=_round_up(float(gap) / 1000.0),
                 check=CheckName.CROSSING_VOLUME,
@@ -574,22 +575,28 @@ def _altitude_at(plan: SweptPlan, at_us: int) -> int:
     return int(math.floor(plan.pieces[0].alt_start))
 
 
-def _arrival_us(plan: SweptPlan, east: float, north: float) -> int | None:
-    """When this plan's track is at a given planar point, clamped to its own legs."""
+def _arrival(plan: SweptPlan, east: float, north: float) -> tuple[int, bool] | None:
+    """When this plan's track is at a given planar point, and whether that leg manoeuvres.
+
+    The second half of the answer is the policy's own manoeuvre test applied to the leg
+    the body arrives on: a plan that crosses the point while changing height may be late
+    by the transition buffer as well as by timing uncertainty, and one that crosses it
+    level may not.
+    """
     if len(plan.track_mm) < 2:
         return None
     legs = [piece for piece in plan.sorted_pieces() if piece.kind is PieceKind.MOTION]
     if not legs:
         legs = list(plan.sorted_pieces())
-    best: tuple[float, int] | None = None
+    best: tuple[float, int, bool] | None = None
     for piece in legs:
         distance, fraction = _point_along(
             (piece.east_start, piece.north_start), (piece.east_end, piece.north_end), (east, north)
         )
         arrival = int(round(piece.start_us + fraction * (piece.end_us - piece.start_us)))
         if best is None or distance < best[0]:
-            best = (distance, arrival)
-    return best[1] if best is not None else None
+            best = (distance, arrival, piece.alt_end != piece.alt_start)
+    return (best[1], best[2]) if best is not None else None
 
 
 def _point_along(

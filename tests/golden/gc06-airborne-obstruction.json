@@ -122,7 +122,7 @@
       "metrics": {
         "piece_pairs_tested": 6.0,
         "contact_windows": 4.0,
-        "contact_span_us": 32373082.0,
+        "contact_span_us": 26191932.0,
         "crossing_points": 1.0,
         "corridor_pairs": 0.0,
         "unproven_reasons": 0.0

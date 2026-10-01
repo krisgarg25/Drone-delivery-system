@@ -265,9 +265,12 @@ def sweep_profile(
 ) -> tuple[SweptPrism, ...]:
     """The exact continuous sweep: one swept prism per leg, in leg order.
 
-    A leg that changes height also carries the policy's transition buffer in
-    time, because a climb or descent is a manoeuvre, not a position: the
-    protected volume has to survive the pilot or the controller being late.
+    The time pad is :meth:`ProtectedVolumePolicy.leg_pad_us`, i.e. the policy file's
+    stated rule: timing uncertainty on every leg, and the transition buffer
+    additionally on a leg that changes height, because a climb or descent is a
+    manoeuvre, not a position - the protected volume has to survive the pilot or the
+    controller being late. A level leg gets no manoeuvre slack: padding it would
+    invent a manoeuvre that is not in the plan.
     """
     _require_reference(profile, policy)
     radius = protected_radius_mm(body, policy)
@@ -275,9 +278,7 @@ def sweep_profile(
     origin = _plane_origin(profile.plane)
     prisms: list[SweptPrism] = []
     for segment in profile.segments():
-        pad: int = policy.timing_uncertainty_us
-        if segment.is_vertical_change:
-            pad += policy.transition_buffer_us
+        pad: int = policy.leg_pad_us(segment.is_vertical_change)
         prisms.append(
             _prism(
                 source=profile.source,
@@ -384,9 +385,7 @@ def discretised_sweep(
             stop_us = min(segment.end.at_us, start_us + step_us)
             interval = stop_us - start_us
             centre = quantised(segment, start_us)
-            pad = policy.timing_uncertainty_us + interval
-            if segment.is_vertical_change:
-                pad += policy.transition_buffer_us
+            pad = policy.leg_pad_us(segment.is_vertical_change) + interval
             prisms.append(
                 _prism(
                     source=profile.source,
@@ -500,7 +499,7 @@ def static_volume(
         policy=policy,
         motion_start_us=from_us,
         motion_end_us=to_us,
-        pad_us=policy.timing_uncertainty_us,
+        pad_us=policy.leg_pad_us(False),  # a stationary volume has no manoeuvre
         start=centre,
         end=centre,
         radius_mm=protected_radius_mm(body, policy),

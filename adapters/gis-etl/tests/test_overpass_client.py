@@ -15,7 +15,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from conftest import (
+from gis_etl_support import (
     GOOD_TIMESTAMP,
     RETRIEVED_AT,
     MockTransport,

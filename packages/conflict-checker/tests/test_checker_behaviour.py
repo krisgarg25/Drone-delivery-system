@@ -12,7 +12,7 @@ from dataclasses import replace
 from datetime import timedelta
 
 import pytest
-from checker_scenarios import EVALUATED_AT, context, point, record, straight
+from checker_scenarios import EVALUATED_AT, context, point, policy, record, straight
 
 from droneops_conflict_checker import (
     AllowRule,
@@ -64,24 +64,58 @@ def test_sixty_metres_of_altitude_separates_a_pair_the_lanes_do_not() -> None:
 
 
 @pytest.mark.unit
-def test_the_transition_buffer_is_applied_to_level_legs_as_well_as_climbing_ones() -> None:
-    """Where the checker is deliberately coarser than the planner, stated as a number.
+def test_the_transition_buffer_pads_a_manoeuvre_leg_and_a_level_leg_gets_timing_only() -> None:
+    """One padding rule, stated in the policy file, read the same way by both sides.
 
-    A pair twenty seconds apart on one lane, level flight on both sides: the planner
-    would pad these legs with timing uncertainty only (5 s), the checker pads them with
-    timing *plus* the transition buffer (15 s), and the difference is a conflict that
-    only the checker sees. That asymmetry is the independence, not a bug in it.
+    A pair thirteen seconds apart on one lane. Level on both sides, each leg is padded
+    with ``timing_uncertainty_s`` alone (5 s): the windows still overlap, but no instant
+    puts the two bodies within reach of each other, so the *sweep* clears them - which is
+    what the planner's own padded prisms say, and the two implementations must say the
+    same thing about the same pair or invariant I1 blocks every release instead of a bad
+    one. The pair is still convicted, by the time-blind shared-lane inspection, and that
+    over-approximation is the documented one an allow rule exists to cover.
+
+    Move the same pair into a climb and the transition buffer appears, because now there
+    is a manoeuvre to be late: the identical geometry and the identical thirteen seconds
+    become a contact the sweep itself finds.
     """
+    active = policy()
+    assert active.level_leg_pad_us() == active.timing_uncertainty_us
+    assert active.manoeuvre_leg_pad_us() == (
+        active.timing_uncertainty_us + active.transition_buffer_us
+    )
+
     ctx = context()
-    left = straight("PLAN-A", 0, 100, at_s=0)
-    right = straight("PLAN-B", 0, 100, at_s=13)
-    assert check_pair(left, right, ctx).verdict == "CONFLICT", "13 s apart, 15 s of pad each side"
-    # Padded claims are inclusive at both ends, so a pair only clears once the gap is
-    # strictly greater than the two pads added: 10 s of flight plus 15 s each side.
-    touching = straight("PLAN-B", 0, 100, at_s=30)
-    assert check_pair(left, touching, ctx).verdict == "CONFLICT", "the pads meet on one instant"
-    far = straight("PLAN-B", 0, 100, at_s=45)
-    assert check_pair(left, far, ctx).verdict == "SAFE", "45 s apart clears the padded windows"
+    level_left = straight("PLAN-A", 0, 100, at_s=0)
+    level_right = straight("PLAN-B", 0, 100, at_s=13)
+    level = check_pair(level_left, level_right, ctx)
+    level_checks = {contact.check for contact in level.contacts}
+    assert CheckName.CONTINUOUS_SWEEP not in level_checks, (
+        "13 s apart with 5 s of pad each side: the sweep sees no contact"
+    )
+    assert CheckName.TRANSITION_BUFFER not in level_checks, (
+        "neither leg changes height, so neither leg carries a manoeuvre buffer"
+    )
+    assert CheckName.ADJACENT_CORRIDOR in level_checks, (
+        "one lane, overlapping padded windows: the lane inspection still says no"
+    )
+
+    climb_left = record(
+        "PLAN-A", [point(0, 0, altitude_m=30), point(100, 0, altitude_m=50, at_s=10)]
+    )
+    climb_right = record(
+        "PLAN-B", [point(0, 0, altitude_m=30, at_s=13), point(100, 0, altitude_m=50, at_s=23)]
+    )
+    climbing = check_pair(climb_left, climb_right, ctx)
+    sweep_checks = {contact.check for contact in climbing.contacts} & {
+        CheckName.CONTINUOUS_SWEEP,
+        CheckName.TRANSITION_BUFFER,
+    }
+    assert sweep_checks, (
+        "the same thirteen seconds, now with a manoeuvre each side: 15 s of pad meets, "
+        "and the contact is the sweep's own, not the lane inspection's"
+    )
+    assert climbing.verdict == "CONFLICT"
 
 
 @pytest.mark.unit
@@ -89,16 +123,17 @@ def test_adjacent_corridors_are_inspected_from_the_committed_lane_map() -> None:
     """The corridor layer convicts a pair the sweep clears, and that is the design.
 
     Two parallel lanes 20 m apart - inside each other's 20.25 m protection, so the
-    coarse lane test fires - with the second plan a quarter of a minute behind the
-    first. The sweep follows each body along its own track and they are hundreds of
-    metres apart whenever both are airborne, so it finds nothing. The lane test does
+    coarse lane test fires - with the second plan eighteen seconds behind the first,
+    close enough that the two legs' timing-uncertainty windows still meet. The sweep
+    follows each body along its own track and they are hundreds of metres apart whenever
+    both are airborne, so it finds nothing. The lane test does
     not care where along the lane either aircraft was, and says these two lanes were
     never meant to be flown together. That gap is the over-approximation, and an
     allow rule is the only way through it.
     """
     ctx = context(adjacency={"SEG-A": ("SEG-B",), "SEG-B": ("SEG-A")})
     left = record("PLAN-A", [point(0, 0), point(100, 0, at_s=10)], ["SEG-A"])
-    right = record("PLAN-B", [point(0, 20, at_s=25), point(100, 20, at_s=35)], ["SEG-B"])
+    right = record("PLAN-B", [point(0, 20, at_s=18), point(100, 20, at_s=28)], ["SEG-B"])
     answer = check_pair(left, right, ctx)
     assert answer.verdict == "CONFLICT"
     assert CheckName.ADJACENT_CORRIDOR in {contact.check for contact in answer.contacts}

@@ -191,7 +191,7 @@
       "checks": [],
       "basis": "CONTINUOUS",
       "metrics": {
-        "piece_pairs_tested": 12.0,
+        "piece_pairs_tested": 10.0,
         "contact_windows": 0.0,
         "contact_span_us": 0.0,
         "crossing_points": 1.0,

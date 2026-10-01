@@ -46,6 +46,10 @@ testpaths = [
   "adapters/*/tests",
 ]
 addopts = "-q --strict-markers --strict-config --cov=. --cov-report=term-missing:skip-covered --cov-report=xml --cov-config=pyproject.toml"
+# Prepend mode requires unique test module basenames repo-wide, because a test dir
+# is put on sys.path by name. tests/unit/test_module_layout.py enforces it, and it
+# also enforces the rule that shared builders live in a *_support.py module:
+# `from conftest import X` resolves to whichever conftest was imported first.
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 120

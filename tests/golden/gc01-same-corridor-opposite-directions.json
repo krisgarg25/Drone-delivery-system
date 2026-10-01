@@ -130,9 +130,9 @@
       ],
       "basis": "CONTINUOUS",
       "metrics": {
-        "piece_pairs_tested": 26.0,
-        "contact_windows": 20.0,
-        "contact_span_us": 140251009.0,
+        "piece_pairs_tested": 22.0,
+        "contact_windows": 18.0,
+        "contact_span_us": 60251009.0,
         "crossing_points": 3.0,
         "corridor_pairs": 1.0,
         "unproven_reasons": 0.0

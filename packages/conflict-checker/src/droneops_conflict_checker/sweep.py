@@ -19,11 +19,13 @@ The model, stated once
     ``HOLD_BEFORE`` / ``HOLD_AFTER``
         the same position held across the leg's padded window, because timing
         uncertainty says the aircraft may be *late to arrive* or *early to leave*.
-        The planner pads timing uncertainty on every leg and the transition buffer
-        only on a leg that changes height; the checker pads both on every leg, so a
-        level pass that runs late is still protected. That asymmetry is intentional
-        and it is one of the ways this implementation is allowed to be wrong in the
-        safe direction.
+        Each leg is held for its own pad, from the padding rule the policy file
+        states: timing uncertainty on every leg, level or climbing, and the
+        transition buffer additionally on a leg whose altitude changes. The planner
+        reaches the same numbers from the same file by a different route - a padded
+        moving prism rather than three pieces - and the two are compared verdict to
+        verdict by ``tests/…/test_planner_checker_agreement.py``, because independence
+        is about method and a different padding rule would be a different policy.
 
     Every piece carries its own lateral reach and vertical half-extent, computed
     from the versioned policy at the time the sweep is built, so a verdict can be
@@ -245,20 +247,32 @@ def _reference(record: CommittedPlanRecord) -> AltitudeReference:
     return reference
 
 
+def _leg_manoeuvres(first: TrackPoint, second: TrackPoint) -> bool:
+    """The policy's declared manoeuvre test (``leg_altitude_changes``) on one leg.
+
+    Read off the two altitudes the record itself claims - not off a planner's edge list
+    and not off a corridor lane type. A leg whose altitude changes is a climb, a descent
+    or a layer transition, and only such a leg carries the transition buffer; a level leg
+    carries timing uncertainty alone. The same rule, reached by a different route.
+    """
+    return second.altitude_mm != first.altitude_mm
+
+
 def _motion_pieces(
     record: CommittedPlanRecord, track: tuple[TrackPoint, ...], policy: CheckerPolicy
 ) -> tuple[PositionPiece, ...]:
     """The exact continuous claim: motion plus a held tail and head on every leg.
 
-    The pad is :meth:`CheckerPolicy.leg_pad_us`, applied without exception, and the
-    reach is the body radius plus the policy's lateral margins.
+    Each leg's head and tail are held for that leg's own pad -
+    :meth:`CheckerPolicy.leg_pad_us` with the leg's manoeuvre status - and the reach is
+    the body radius plus the policy's lateral margins plus the contact tolerance.
     """
-    pad = policy.leg_pad_us()
     reach = policy.lateral_reach_mm(record.body_radius_mm)
     vertical_half = policy.vertical_reach_mm(record.body_half_height_mm)
     pieces: list[PositionPiece] = []
     for index in range(len(track) - 1):
         first, second = track[index], track[index + 1]
+        pad = policy.leg_pad_us(_leg_manoeuvres(first, second))
         pieces.append(
             PositionPiece(
                 leg_index=index, sample_index=0, kind=PieceKind.HOLD_BEFORE,
@@ -315,10 +329,12 @@ def _sampled_pieces(
         raise SweepError(f"a sample step must be positive, got {step_us}")
     reach = policy.lateral_reach_mm(record.body_radius_mm)
     vertical_half = policy.vertical_reach_mm(record.body_half_height_mm)
-    pad = policy.leg_pad_us() if inflate else 0
     pieces: list[PositionPiece] = []
     for index in range(len(track) - 1):
         first, second = track[index], track[index + 1]
+        # A sample runs across its own leg's padded window: timing uncertainty on every
+        # leg, the transition buffer only on the leg that changes height.
+        pad = policy.leg_pad_us(_leg_manoeuvres(first, second)) if inflate else 0
         duration = second.at_us - first.at_us
         span_start = first.at_us - pad
         span_end = second.at_us + pad
@@ -357,14 +373,16 @@ def _sampled_pieces(
     return tuple(pieces)
 
 
-def pad_tail_us(policy: CheckerPolicy) -> int:
-    """How far past the last plan point a plan's protection still reaches.
+def pad_tail_us(policy: CheckerPolicy, manoeuvring: bool = False) -> int:
+    """How far past a plan point a plan's protection still reaches.
 
     A separate name for the same policy quantity because the two callers ask
-    different questions: the sweep pads every leg, and the pair-level window is
-    padded once at each end of the whole plan.
+    different questions: the sweep pads every leg with that leg's own pad, and the
+    pair-level window is padded once at each end of the whole plan - the head with the
+    first leg's pad and the tail with the last leg's, so a plan that climbs out gets
+    the manoeuvre slack at the end where the climb actually happened.
     """
-    return int(policy.leg_pad_us())
+    return int(policy.leg_pad_us(manoeuvring))
 
 
 def sweep_plan(
@@ -401,10 +419,12 @@ def sweep_plan(
         )
     if len(track) == 1:
         only = track[0]
+        # One point is a hover, not a manoeuvre: timing uncertainty, no transition buffer.
+        stationary_pad = policy.level_leg_pad_us()
         held: tuple[PositionPiece, ...] = (
             PositionPiece(
                 leg_index=0, sample_index=0, kind=PieceKind.MOTION,
-                start_us=only.at_us - policy.leg_pad_us(), end_us=only.at_us + policy.leg_pad_us(),
+                start_us=only.at_us - stationary_pad, end_us=only.at_us + stationary_pad,
                 east_start=only.east_mm, north_start=only.north_mm, alt_start=only.altitude_mm,
                 east_end=only.east_mm, north_end=only.north_mm, alt_end=only.altitude_mm,
                 reach_mm=policy.lateral_reach_mm(record.body_radius_mm),
@@ -418,14 +438,17 @@ def sweep_plan(
         pieces = _sampled_pieces(record, track, policy, basis_step_us, inflate=inflate)
 
     first_instant, last_instant = min(instants), max(instants)
-    pad = policy.leg_pad_us()
+    head_pad = pad_tail_us(policy, _leg_manoeuvres(track[0], track[1]) if len(track) > 1 else False)
+    tail_pad = pad_tail_us(
+        policy, _leg_manoeuvres(track[-2], track[-1]) if len(track) > 1 else False
+    )
     return SweptPlan(
         plan_version=record.plan_version,
         reference=reference,
         pieces=pieces,
         track_mm=tuple((point.east_mm, point.north_mm) for point in track),
         corridor_keys=_corridor_keys(record),
-        window=Interval.of(first_instant - pad, last_instant + pad + 1),
+        window=Interval.of(first_instant - head_pad, last_instant + tail_pad + 1),
         policy_key=policy.key(),
     )
 

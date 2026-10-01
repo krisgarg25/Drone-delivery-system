@@ -31,7 +31,7 @@ from droneops_adapters_gis_etl.geom import boundary_polygon
 from droneops_adapters_gis_etl.overpass import OverpassClient
 from droneops_adapters_gis_etl.pipeline import ChandigarhEtl
 
-from conftest import (
+from gis_etl_support import (
     MockTransport,
     building_node,
     config_template,

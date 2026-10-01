@@ -1,15 +1,57 @@
 # Protected-volume policy — versioned configuration contract.
-# Source: technical-build/11-simulation-routing-engine.md section 5.
+# Source: technical-build/11-simulation-routing-engine.md section 5,
+# technical-build/01-technical-architecture.md section 8,
+# technical-build/05-implementation-phases.md Phase 2.
 # Every number is ILLUSTRATIVE. The safety requirement is the invariant and test
 # suite, not these specific margins. A real route must replace these from a
 # validated aircraft, operation and regulatory profile. Simulation only.
 schema_version: 1
 policy_version: sim-policy-v1
-authoritative: false
+
+# ---------------------------------------------------------------------------------
+# WHAT EACH NUMBER MEANS — stated, not implied.
+#
+# The two temporal parameters answer different questions and apply to different legs.
+# A reader must not have to infer this, and the planner's volume builder and the
+# independent conflict checker must not have to agree by accident: both parse this
+# block with their own parser and both refuse a file that states any other reading.
+#
+#   timing_uncertainty_s  -> EVERY leg, level or climbing alike.
+#       Uncertainty about WHEN the aircraft is where its plan says it is. It is not
+#       about what the aircraft is doing, so a straight-and-level pass gets the same
+#       widening in time as a climb does.
+#
+#   transition_buffer_s   -> ONLY a leg that contains a MANOEUVRE: a leg whose
+#       altitude changes (climb, descent, altitude-layer transition) or a merge or
+#       crossing where the aircraft changes track. Uncertainty about a MANOEUVRE
+#       running late, which is why it is also spent extending the manoeuvre's
+#       footprint along track, not just its window.
+#       Applying it to a leg with no manoeuvre would conflate "we do not know when"
+#       with "we do not know how the flying went", and would make the checker convict
+#       pairs the planner can never clear — i.e. no committable plan at all.
+#
+# So the padding on one leg is:
+#       timing_uncertainty_s                                   (level leg)
+#       timing_uncertainty_s + transition_buffer_s             (altitude-changing leg)
+# Both implementations derive a leg's manoeuvre status the same way: the leg's start
+# and end altitudes differ. Conservatism in the checker comes from a *different
+# method* — its own continuous relative-track sweep, its padded head/tail holds, its
+# outward-rounded reaches and its time-blind lane and crossing inspections — never
+# from a different reading of this policy. Independence is about method (I1), and two
+# implementations that disagree about semantics would block every release forever.
+# ---------------------------------------------------------------------------------
+temporal_semantics:
+  # Bumped from 1 to 2 when the MEANING of a parameter was pinned down; the numbers
+  # below did not move. The version travels in the policy key of every verdict, so a
+  # decision trace records which reading of the separation rule produced it.
+  meaning_version: 2
+  timing_uncertainty_applies_to: every_leg
+  transition_buffer_applies_to: manoeuvre_leg_only
+  manoeuvre_test: leg_altitude_changes
 altitude_reference: AGL
 protected_volume:
   horizontal_margin_m: 15      # illustrative
   vertical_margin_m: 10        # illustrative
   position_uncertainty_m: 5    # illustrative
-  timing_uncertainty_s: 5      # illustrative
-  transition_buffer_s: 10      # illustrative
+  timing_uncertainty_s: 5      # illustrative — every leg, level or climbing
+  transition_buffer_s: 10      # illustrative — manoeuvre (altitude-changing) legs only

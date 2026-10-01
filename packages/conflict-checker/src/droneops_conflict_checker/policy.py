@@ -9,21 +9,34 @@ checker to "recompute protected volumes from raw plan points" and to use
 planner's policy object it would inherit the planner's arithmetic on the planner's
 terms, and agreement between the two would stop being evidence.
 
-The differences from the planner's policy handling are deliberate and are the
-conservatism this package exists to provide:
+The differences from the planner's policy handling are deliberate, and they are
+differences of **method**, never of what the policy means:
 
-* :meth:`CheckerPolicy.leg_pad_us` applies **timing uncertainty and the transition
-  buffer to every leg**. The planner pads timing uncertainty on every leg and adds
-  the transition buffer only to a leg that changes height. A manoeuvre that runs
-  late is a climb *or* a high-speed level pass, and the checker does not get to
-  decide which ones are worth buffering.
-* :meth:`CheckerPolicy.lateral_reach_mm` inflates the protected radius by the
-  along-track distance the declared speed can cover inside that pad, rounded
-  **up**. A volume that could only shrink if an aircraft was late is a claim of
-  clearance nobody made.
-* :data:`CONTACT_TOLERANCE_MM` is added to every contact test. The checker's
-  geometry runs on shapely floats, so the tolerance is what makes a rounding error
-  able to produce a false ``CONFLICT`` but not a false ``SAFE``.
+* :meth:`CheckerPolicy.lateral_reach_mm` adds :data:`CONTACT_TOLERANCE_MM` to every
+  reach, so a float rounding error can produce a false ``CONFLICT`` but never a false
+  ``SAFE``.
+* The sweep materialises each leg's padded window as a *held* head and tail rather
+  than padding a moving prism, and the sampled basis inflates every reach by the
+  along-track distance the declared speed covers inside the step - a coarser claim on
+  space than the planner's, built a different way.
+* Two inspections the planner does not run at all: the time-blind adjacent-corridor
+  test and the crossing-arrival test at :meth:`CheckerPolicy.crossing_tolerance_us`.
+
+What the padding rule *is* is agreed, not assumed. Both readers parse the
+``temporal_semantics`` block of the same file and both reject a file that states any
+other reading:
+
+``timing_uncertainty_s``
+    applies to **every** leg, level or climbing - it is uncertainty about when.
+``transition_buffer_s``
+    applies only to a **manoeuvre** leg, one whose altitude changes - it is
+    uncertainty about how the flying went, and a level pass contains no manoeuvre.
+
+Padding level legs with the transition buffer as well was not conservatism: it was a
+second definition of the policy. A validator that convicts plans the planner can
+never produce does not make releases safe, it makes releases impossible, and it turns
+invariant I1 into a permanent block rather than a signal. Independence lives in the
+construction, the geometry library and the arithmetic; agreement lives here.
 
 Allow rules live here too, because they are policy: named, versioned, bounded by
 a geometric floor they cannot waive, and loadable only from a caller-supplied
@@ -68,6 +81,22 @@ _MARGIN_KEYS: Final[tuple[str, ...]] = (
 )
 _TIME_KEYS: Final[tuple[str, ...]] = ("timing_uncertainty_s", "transition_buffer_s")
 
+# ------------------------------------------------ policy meaning, re-declared here on purpose
+#: The meaning version this checker implements. ``1`` was the era in which the file
+#: stated numbers only and each reader inferred the rule; ``2`` is the era in which the
+#: file states it. Bumping a meaning is a re-version of both readers, never of one.
+SUPPORTED_MEANING_VERSION: Final[int] = 2
+#: The one reading this checker will execute, as (which legs get timing uncertainty,
+#: which get the transition buffer, how a manoeuvre is recognised). A file that
+#: describes any other combination is rejected rather than executed: the checker's
+#: conservatism comes from its own sweep, holds and tolerance, and a different padding
+#: rule would be a different policy, not an independent check.
+CANONICAL_SEMANTICS: Final[dict[str, str]] = {
+    "timing_uncertainty_applies_to": "every_leg",
+    "transition_buffer_applies_to": "manoeuvre_leg_only",
+    "manoeuvre_test": "leg_altitude_changes",
+}
+
 
 class PolicyInputError(ValueError):
     """The policy document cannot be read as the contract requires.
@@ -95,12 +124,38 @@ class CheckerPolicy:
     position_uncertainty_mm: int
     timing_uncertainty_us: int
     transition_buffer_us: int
+    meaning_version: int = SUPPORTED_MEANING_VERSION
+    timing_applies_to: str = CANONICAL_SEMANTICS["timing_uncertainty_applies_to"]
+    transition_applies_to: str = CANONICAL_SEMANTICS["transition_buffer_applies_to"]
+    manoeuvre_test: str = CANONICAL_SEMANTICS["manoeuvre_test"]
 
     def __post_init__(self) -> None:
         if self.schema_version != SUPPORTED_SCHEMA_VERSION:
             raise PolicyInputError(
                 f"protected_volume_policy schema_version {self.schema_version} is not "
                 f"supported; this checker speaks version {SUPPORTED_SCHEMA_VERSION}"
+            )
+        if self.meaning_version != SUPPORTED_MEANING_VERSION:
+            raise PolicyInputError(
+                f"temporal semantics meaning_version {self.meaning_version} is not executed by "
+                f"this checker, which implements version {SUPPORTED_MEANING_VERSION}"
+            )
+        declared = {
+            "timing_uncertainty_applies_to": str(self.timing_applies_to),
+            "transition_buffer_applies_to": str(self.transition_applies_to),
+            "manoeuvre_test": str(self.manoeuvre_test),
+        }
+        unexpected = {
+            key: value
+            for key, value in declared.items()
+            if CANONICAL_SEMANTICS[key] != value
+        }
+        if unexpected:
+            described = ", ".join(f"{key}={value}" for key, value in sorted(unexpected.items()))
+            raise PolicyInputError(
+                f"the policy describes a padding rule this checker does not implement: "
+                f"{described}; this checker pads every leg with timing uncertainty and a "
+                f"manoeuvre leg with the transition buffer as well"
             )
         if not self.policy_version.strip():
             raise PolicyInputError("policy_version must be a non-empty tag")
@@ -120,24 +175,45 @@ class CheckerPolicy:
                 raise PolicyInputError(f"{name} must be non-negative, got {value}")
 
     # ------------------------------------------------------- derived quantities, in the open
-    def leg_pad_us(self) -> int:
-        """Absolute-time padding applied to both ends of every leg, without exception.
+    def leg_pad_us(self, manoeuvring: bool) -> int:
+        """Absolute-time padding applied to both ends of one leg, per the policy's stated rule.
 
-        Timing uncertainty plus transition buffer. The planner applies the
-        transition buffer only to a leg that changes height; the checker does not
-        discriminate, because deciding which manoeuvres are allowed to be late is
-        exactly the decision a validator must not take on the planner's word.
+        ``timing_uncertainty_s`` on every leg - it is uncertainty about *when* the
+        aircraft is where its plan says it is, which a straight-and-level pass has just
+        as much of as a climb. ``transition_buffer_s`` additionally only on a leg whose
+        altitude changes, because that buffer is uncertainty about a *manoeuvre* running
+        late and a level leg contains no manoeuvre.
+
+        The manoeuvre test is the policy's own (``manoeuvre_test``), so this and the
+        planner's ``ProfileSegment.is_vertical_change`` answer the same question from the
+        same two altitudes - by different code, never by a different rule.
         """
-        return as_microseconds(self.timing_uncertainty_us + self.transition_buffer_us)
+        pad = self.timing_uncertainty_us
+        if manoeuvring:
+            pad += self.transition_buffer_us
+        return as_microseconds(pad)
 
-    def crossing_tolerance_us(self) -> int:
+    def level_leg_pad_us(self) -> int:
+        """The pad a leg with no manoeuvre gets: timing uncertainty, and nothing else."""
+        return self.leg_pad_us(False)
+
+    def manoeuvre_leg_pad_us(self) -> int:
+        """The pad a climb, descent or layer transition gets: timing plus transition."""
+        return self.leg_pad_us(True)
+
+    def crossing_tolerance_us(
+        self, left_manoeuvring: bool = False, right_manoeuvring: bool = False
+    ) -> int:
         """How close two arrivals at a shared point count as simultaneous.
 
-        Two independent margins add here: each body may be late by its own timing
-        uncertainty, and the pair may both be in a transition.
+        Two independent margins add here, one per body: each aircraft may be late to the
+        crossing point by its own timing uncertainty, and whichever of them is arriving on
+        a leg that changes height may also be late by the transition buffer. A level pass
+        through a crossing contributes no manoeuvre slack, because there is no manoeuvre
+        to be late.
         """
         return as_microseconds(
-            2 * (self.timing_uncertainty_us + self.transition_buffer_us)
+            self.leg_pad_us(left_manoeuvring) + self.leg_pad_us(right_manoeuvring)
         )
 
     def along_track_slack_mm(self, speed_mm_per_us: Fraction, pad_us: int) -> int:
@@ -186,6 +262,10 @@ class CheckerPolicy:
             (
                 f"schema={self.schema_version}",
                 f"policy={self.policy_version}",
+                (
+                    f"meaning={self.meaning_version}:{self.timing_applies_to}"
+                    f":{self.transition_applies_to}"
+                ),
                 f"ref={self.altitude_reference.value}",
                 f"h={self.horizontal_margin_mm}",
                 f"v={self.vertical_margin_mm}",
@@ -242,6 +322,23 @@ def _boolean(value: object, key: str) -> bool:
     raise PolicyInputError(f"protected_volume_policy.{key} must be true or false, got {value!r}")
 
 
+def _semantics(source: Mapping[str, object]) -> dict[str, object]:
+    """The ``temporal_semantics`` block, or an empty one for a file that predates it.
+
+    A file with no block is read as the canonical meaning - the one this checker
+    implements - because that is what the numbers always meant; a file with a block is
+    read literally, so a future release that redefines a margin has to say so here and
+    both readers then refuse it together. An absent block and a declared block can never
+    disagree, which is the point: the rule is stated, not inferred.
+    """
+    block = source.get("temporal_semantics")
+    if block is None:
+        return {}
+    if not isinstance(block, dict):
+        raise PolicyInputError("protected_volume_policy.temporal_semantics must be a mapping")
+    return {str(key): value for key, value in block.items()}
+
+
 def policy_from_mapping(source: Mapping[str, object]) -> CheckerPolicy:
     """Build a policy from an already-parsed mapping. Pure: no file, no clock.
 
@@ -261,6 +358,10 @@ def policy_from_mapping(source: Mapping[str, object]) -> CheckerPolicy:
         raise PolicyInputError(f"unknown altitude_reference {reference_token!r}") from error
     margins = {key: _millimetres(_required(volume, key), key) for key in _MARGIN_KEYS}
     pads = {key: _microseconds(_required(volume, key), key) for key in _TIME_KEYS}
+    stated = _semantics(top)
+    version = stated.get("meaning_version", SUPPORTED_MEANING_VERSION)
+    if isinstance(version, bool) or not isinstance(version, int):
+        raise PolicyInputError("temporal_semantics.meaning_version must be an integer")
     return CheckerPolicy(
         schema_version=schema,
         policy_version=str(_required(top, "policy_version")),
@@ -271,6 +372,12 @@ def policy_from_mapping(source: Mapping[str, object]) -> CheckerPolicy:
         position_uncertainty_mm=margins["position_uncertainty_m"],
         timing_uncertainty_us=pads["timing_uncertainty_s"],
         transition_buffer_us=pads["transition_buffer_s"],
+        meaning_version=version,
+        timing_applies_to=str(stated.get("timing_uncertainty_applies_to",
+                                        CANONICAL_SEMANTICS["timing_uncertainty_applies_to"])),
+        transition_applies_to=str(stated.get("transition_buffer_applies_to",
+                                             CANONICAL_SEMANTICS["transition_buffer_applies_to"])),
+        manoeuvre_test=str(stated.get("manoeuvre_test", CANONICAL_SEMANTICS["manoeuvre_test"])),
     )
 
 

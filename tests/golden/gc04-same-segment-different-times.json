@@ -4,7 +4,7 @@
   "description": "Two plans hold the same lane, the same height and the same track, ten minutes apart. This is the negative control: a checker that answered CONFLICT here could say nothing at all.",
   "invariant": "I1",
   "what_this_does_not_prove": [
-    "That ten minutes is enough separation for any other pair, policy release or speed: it is enough for this geometry only, and the padding that decides it is 15 s of timing plus transition buffer.",
+    "That ten minutes is enough separation for any other pair, policy release or speed: it is enough for this geometry only, and the padding that decides it is 5 s of timing uncertainty at each end of these level legs, and no transition buffer at all because neither leg changes height.",
     "That the two plans are individually lawful - only that they do not overlap each other."
   ],
   "policy": {
@@ -122,7 +122,7 @@
       ],
       "description": "Two plans hold the same lane, the same height and the same track, ten minutes apart. This is the negative control: a checker that answered CONFLICT here could say nothing at all.",
       "what_this_does_not_prove": [
-        "That ten minutes is enough separation for any other pair, policy release or speed: it is enough for this geometry only, and the padding that decides it is 15 s of timing plus transition buffer.",
+        "That ten minutes is enough separation for any other pair, policy release or speed: it is enough for this geometry only, and the padding that decides it is 5 s of timing uncertainty at each end of these level legs, and no transition buffer at all because neither leg changes height.",
         "That the two plans are individually lawful - only that they do not overlap each other."
       ]
     }

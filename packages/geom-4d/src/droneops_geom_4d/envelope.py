@@ -148,7 +148,7 @@ def climb_descent_envelopes(
             segment.start.altitude.value_mm, segment.end.altitude.value_mm
         )
         extension = policy.along_track_mm(segment.speed_mm_per_us, buffer_us)
-        pad = policy.timing_uncertainty_us + buffer_us
+        pad = policy.leg_pad_us(True)  # every envelope here is a manoeuvre leg
         envelopes.append(
             TransitionEnvelope(
                 envelope_id=f"{profile.source}:envelope:{segment.index}:{manoeuvre.value.lower()}",

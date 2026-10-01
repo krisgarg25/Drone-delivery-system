@@ -20,7 +20,7 @@ from droneops_adapters_gis_etl.errors import GisEtlError
 from droneops_adapters_gis_etl.provenance import RetrievalProvenance, assert_synthetic_flags
 from droneops_adapters_gis_etl.vertical import build_obstacles, write_obstacles
 
-from conftest import RETRIEVED_AT, building_node, wire_way
+from gis_etl_support import RETRIEVED_AT, building_node, wire_way
 
 REQUIRED_FLAGS = ("obstacle_source", "vertical_authority", "requires_survey", "synthetic", "authoritative")
 

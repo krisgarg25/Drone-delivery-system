@@ -80,7 +80,7 @@ def test_the_checker_has_its_own_sweep_and_its_own_policy_parser() -> None:
     assert "def sweep_plan" in sweep and "PairFrame" in sweep
     policy = (SRC / "policy.py").read_text(encoding="utf-8")
     assert "def policy_from_mapping" in policy and "protected_volume" in policy
-    assert "leg_pad_us()" in sweep, "the sweep must pad through the policy, not a literal"
+    assert "leg_pad_us(" in sweep, "the sweep must pad through the policy, not a literal"
     for module in MODULES:
         roots = {name.split(".")[0] for name in imports_of(module)}
         assert "droneops_geom_4d" not in roots, module.name
@@ -121,7 +121,10 @@ def test_policy_is_read_from_the_versioned_file_in_integer_units() -> None:
     assert from_file.timing_uncertainty_us == 5_000_000
     assert from_file.transition_buffer_us == 10_000_000
     assert from_file.authoritative is False
-    assert from_file.key().count("|") == 9
+    assert from_file.key().count("|") == 10
+    # The meaning version travels in the key, so a decision trace names the reading of
+    # the separation rule that produced it, not merely the numbers.
+    assert "meaning=2:every_leg:manoeuvre_leg_only" in from_file.key()
 
 
 @pytest.mark.unit
@@ -162,16 +165,31 @@ def test_negative_margins_are_rejected_rather_than_clamped() -> None:
 
 
 @pytest.mark.unit
-def test_the_checker_pads_every_leg_where_the_planner_pads_only_climbing_ones() -> None:
-    """The conservatism is a number, so the number can be asserted.
+def test_the_two_readers_agree_on_the_padding_rule_and_disagree_on_the_method() -> None:
+    """The padding rule is one rule; the conservatism is elsewhere and it is a number.
 
-    ``geom-4d`` adds the transition buffer to a leg only when the height changes; this
-    checker adds it to every leg, and the difference is exactly the buffer. The test
-    names the difference instead of trusting a comment about it.
+    ``geom-4d`` and this checker each parse the policy file their own way, and both must
+    land on the same answer for the same leg: timing uncertainty on every leg, the
+    transition buffer only on a leg whose altitude changes. A checker that padded level
+    flight with a manoeuvre buffer was not independent, it was enforcing a different
+    policy - and the planner could never have satisfied it.
     """
     active = load_policy_file(POLICY_PATH)
-    assert active.leg_pad_us() == active.timing_uncertainty_us + active.transition_buffer_us
-    assert active.crossing_tolerance_us() == 2 * active.leg_pad_us()
+    assert active.timing_applies_to == "every_leg"
+    assert active.transition_applies_to == "manoeuvre_leg_only"
+    assert active.manoeuvre_test == "leg_altitude_changes"
+    assert active.level_leg_pad_us() == active.timing_uncertainty_us
+    assert active.manoeuvre_leg_pad_us() == (
+        active.timing_uncertainty_us + active.transition_buffer_us
+    )
+    assert active.leg_pad_us(False) == active.level_leg_pad_us()
+    assert active.leg_pad_us(True) == active.manoeuvre_leg_pad_us()
+    # A crossing is judged on when each body arrives, so it gets each side's own pad.
+    assert active.crossing_tolerance_us(False, False) == 2 * active.level_leg_pad_us()
+    assert active.crossing_tolerance_us(True, False) == (
+        active.manoeuvre_leg_pad_us() + active.level_leg_pad_us()
+    )
+    # The conservatism this package does claim, and its sources, stated as numbers.
     assert active.lateral_reach_mm(0) > active.horizontal_margin_mm + active.position_uncertainty_mm
     assert active.vertical_reach_mm(0) >= active.vertical_margin_mm
 

@@ -7,9 +7,13 @@ geodetic metres and UTC datetimes, which is all a committed ledger row has to gi
 
 The margins in play come from the real policy file - 15 m horizontal, 10 m vertical,
 5 m position uncertainty, 5 s timing, 10 s transition - so a body of radius 0.25 m
-and half height 0.15 m protects 20.25 m laterally and 10.15 m vertically, and every
-leg is padded 15 s at each end. Distances below are chosen against those numbers, not
-against a tolerance someone tuned until the test went green.
+and half height 0.15 m protects 20.25 m laterally and 10.15 m vertically. A leg is
+padded with timing uncertainty (5 s) and, only if its altitude changes, with the
+transition buffer as well (15 s): the rule the policy file states and the planner's
+builder applies, so the checker's extra reach over the planner is its 1 mm contact
+tolerance, its held heads and tails and its two time-blind inspections - never a
+different reading of the same two margins. Distances below are chosen against those
+numbers, not against a tolerance someone tuned until the test went green.
 """
 
 from __future__ import annotations

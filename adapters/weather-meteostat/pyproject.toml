@@ -8,6 +8,7 @@ dependencies = [
   "shapely>=2.0",
   "tenacity>=9.0",
   "droneops-contracts",
+  "droneops-energy",
 ]
 
 [build-system]
@@ -19,3 +20,4 @@ module-name = "droneops_adapters_weather_meteostat"
 
 [tool.uv.sources]
 droneops-contracts = { workspace = true }
+droneops-energy = { workspace = true }

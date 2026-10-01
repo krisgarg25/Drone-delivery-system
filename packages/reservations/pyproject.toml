@@ -4,11 +4,13 @@ version = "0.1.0"
 description = "DroneOps reservation commit state and atomic resource semantics"
 requires-python = ">=3.12,<3.14"
 dependencies = [
+  "asyncpg>=0.30",
   "pydantic>=2.0",
   "droneops-contracts",
   "droneops-core-domain",
   "droneops-geom-core",
   "droneops-platform",
+  "droneops-conflict-checker",
 ]
 
 [build-system]
@@ -16,10 +18,18 @@ requires = ["uv_build>=0.11,<1"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-module-name = "droneops_reservations"
+# Two top-level modules by design. `.importlinter`'s domain-is-pure contract forbids
+# droneops_reservations from importing asyncpg or droneops_persistence, so the SQL half of
+# the ledger is a sibling module in the same distribution instead of a submodule that
+# would break the boundary. See droneops_reservations_ledger.__doc__.
+module-paths = [
+  "src/droneops_reservations",
+  "src/droneops_reservations_ledger",
+]
 
 [tool.uv.sources]
 droneops-contracts = { workspace = true }
 droneops-core-domain = { workspace = true }
 droneops-geom-core = { workspace = true }
 droneops-platform = { workspace = true }
+droneops-conflict-checker = { workspace = true }
