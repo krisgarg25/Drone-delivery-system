@@ -35,11 +35,13 @@ The checker votes and its vote is not a preference
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping, Sequence
+from contextvars import ContextVar, Token
 from dataclasses import replace
 from datetime import datetime, timezone
 from typing import Final
 from uuid import UUID
 
+from droneops_conflict_checker import CommittedPlanRecord
 from droneops_geom_core.intervals import Interval
 from droneops_platform.ports import TenantContext
 
@@ -74,7 +76,14 @@ from droneops_reservations.states import (
 )
 
 from .store import LedgerStore, OrderRow, ReservationRow, Transaction, WorldRead
-from .validators import PlanRecordPayload, identity_of
+from .validators import PlanRecordPayload, identity_of, records_from_pool_rows
+
+_COMMITTED_POOL: ContextVar[tuple[CommittedPlanRecord, ...]] = ContextVar(
+    "droneops_ledger_committed_pool", default=()
+)
+"""The pool captured for the vote in flight. A ContextVar, not an attribute, because one
+ledger instance serves many concurrent commits and a shared attribute would let a slower
+vote read somebody else's airspace."""
 
 _EVENT_BY_CODE: Final[dict[RejectionCode, str]] = {
     RejectionCode.CHECKER_CONFLICT: "conflict.detected",
@@ -249,7 +258,24 @@ _REOPENABLE = frozenset({"draft", "eligible", "planning", "reserved_pending_comm
 
 
 class ReservationCommitLedger:
-    """The only writer of committed airspace in the system."""
+    """The only writer of committed airspace in the system.
+
+    ``adjacency`` is the frozen physical neighbourhood of the resources - lane next to
+    lane, cell next to cell - as ``{resource identity: (neighbour identities...)}``. With
+    it, step 8 reads the *adjacency-expanded* pool instead of only same-key holders: the
+    neighbours are never allowed to block on identity (that is :func:`_overlap_rejection`'s
+    job, and a neighbouring lane is not the same lane) but they do reach the vote, which is
+    the only place a contact between two different resources can be convicted. Without it
+    the ledger reasons exactly as it did before: same identity, overlapping window.
+
+    ``record_pool`` captures, for the duration of the vote, the committed
+    :class:`~droneops_conflict_checker.CommittedPlanRecord` set grouped per mission, and
+    hands it out through :meth:`committed_records`. A composition root wiring
+    :class:`~droneops_reservations.ledger.validators.CheckerCommitValidator` passes that
+    method as the validator's ``committed_records`` port, so the checker sees the rest of
+    the airspace the database holds rather than only the rows this plan's own keys named.
+    The capture is opt-in because the 100-way stress proofs do not need a second read.
+    """
 
     def __init__(
         self,
@@ -258,11 +284,32 @@ class ReservationCommitLedger:
         *,
         clock: Callable[[], datetime] = utc_now,
         fault: FaultProgram | None = None,
+        adjacency: Mapping[str, Sequence[str]] | None = None,
+        record_pool: bool = False,
     ) -> None:
         self._store = store
         self._vote = validator
         self._clock = clock
         self._fault = fault if fault is not None else FaultProgram()
+        self._adjacency = {
+            identity: tuple(neighbour for neighbour in neighbours)
+            for identity, neighbours in (adjacency or {}).items()
+        }
+        self._record_pool = record_pool
+
+    # ------------------------------------------------------------------ the checker's pool port
+    def committed_records(self, final: FinalSet) -> Sequence[CommittedPlanRecord]:
+        """The ``committed_records`` port for a validator built against this ledger.
+
+        Reads the pool captured for *this* vote, in this task, and nothing else: the state
+        lives in a :class:`~contextvars.ContextVar`, so two commits running concurrently on
+        one ledger instance cannot read each other's pool, and a validator that never asked
+        is handed an empty sequence rather than a stale one. The candidate's own plan is
+        already in the set under examination, so it is dropped from the pool.
+        """
+        pool = _COMMITTED_POOL.get()
+        digest = final.candidate.route_digest
+        return tuple(record for record in pool if record.plan_version != digest)
 
     # ------------------------------------------------------------------ the transaction
     async def commit(self, context: TenantContext, command: CommitCommand) -> CommitReceipt:
@@ -541,12 +588,21 @@ class ReservationCommitLedger:
 
         # ---- step 8: recheck committed reservations
         self._fault.fire(CommitStep.RECHECK_COMMITTED_RESERVATIONS)
-        holders = await self._holders(tx, claims)
+        holders, pool = await self._holders(tx, claims)
         overlap = _overlap_rejection(claims, holders)
         if overlap is not None:
             raise Declined(overlap, summarise(frozen, selection))
+        watched = {identity for identity in locks}
+        for claim in claims:
+            watched.update(
+                neighbour
+                for neighbour in self._adjacency.get(claim.identity, ())
+                if neighbour.partition(":")[0] == _kind(claim)
+            )
         version, holder_count = await self._store.claim_version(
-            tx, [_kind(claim) for claim in claims], [_identifier(claim) for claim in claims]
+            tx,
+            sorted({identity.partition(":")[0] for identity in watched}),
+            sorted({identity.partition(":")[1] for identity in watched}),
         )
         if command.expected_reservation_version is not None and version != command.expected_reservation_version:
             raise Declined(
@@ -616,7 +672,14 @@ class ReservationCommitLedger:
                 config_release_sha=command.config_release_sha,
                 candidate=selection.candidate,
             )
-            vote: ValidationOutcome = self._vote(final)
+            token: Token[tuple[CommittedPlanRecord, ...]] | None = None
+            if self._record_pool:
+                token = _COMMITTED_POOL.set(pool)
+            try:
+                vote: ValidationOutcome = self._vote(final)
+            finally:
+                if token is not None:
+                    _COMMITTED_POOL.reset(token)
             blocked = promotion(vote, command)
             if blocked is not None:
                 raise Declined(blocked, summary, vote)
@@ -746,17 +809,63 @@ class ReservationCommitLedger:
         )
 
     # ------------------------------------------------------------------ primitives
-    async def _holders(self, tx: Transaction, claims: Sequence[ResourceClaim]) -> tuple[ProtectedHolding, ...]:
+    async def _holders(
+        self, tx: Transaction, claims: Sequence[ResourceClaim]
+    ) -> tuple[tuple[ProtectedHolding, ...], tuple[CommittedPlanRecord, ...]]:
+        """Step 8's read: who already holds this airspace, and who holds next to it.
+
+        Returns the protected holders *and* the committed-record pool those holders belong
+        to, grouped per mission with every window each mission holds. The first is what the
+        ledger blocks on; the second is what the checker is allowed to see, and it is a
+        different shape on purpose: a mission claiming two resources is one record with two
+        keys, not two records that can each be mistaken for a stranger.
+
+        With no adjacency frozen the read is exactly the key-scoped one it always was, and
+        the pool is only built when a caller asked for it.
+        """
         unique: dict[tuple[str, UUID], ReservationRow] = {}
         for claim in claims:
-            for row in await self._store.claim_holders(
-                tx, _kind(claim), _identifier(claim), claim.valid_from, claim.valid_until
-            ):
+            identifier = _identifier(claim)
+            neighbours = self._neighbours_of(claim)
+            if neighbours:
+                rows = await self._store.adjacent_holders(
+                    tx, _kind(claim), (identifier, *neighbours), claim.valid_from, claim.valid_until
+                )
+            else:
+                rows = await self._store.claim_holders(
+                    tx, _kind(claim), identifier, claim.valid_from, claim.valid_until
+                )
+            for row in rows:
                 unique[(row.resource_key, row.reservation_id)] = row
-        return tuple(
+        holders = tuple(
             sorted(
                 (_holding(row) for row in unique.values()),
                 key=lambda holder: (identity_sort_key(identity_of(holder.resource_key)), holder.valid_from, holder.mission_id.hex),
+            )
+        )
+        if not self._record_pool:
+            return holders, ()
+        pool_rows = await self._store.mission_pool_rows(
+            tx, sorted({row.mission_id for row in unique.values()})
+        )
+        return holders, records_from_pool_rows(pool_rows)
+
+    def _neighbours_of(self, claim: ResourceClaim) -> tuple[str, ...]:
+        """The frozen identities adjacent to this claim's own identity, same kind only.
+
+        A neighbour of a different kind is a different question, not a nearby one: a cell
+        adjacent to a corridor is not airspace a corridor plan can reach, and letting it in
+        would widen step 8 into a tenant-wide scan.
+        """
+        neighbours = self._adjacency.get(claim.identity, ())
+        kind = _kind(claim)
+        return tuple(
+            sorted(
+                {
+                    neighbour.partition(":")[2]
+                    for neighbour in neighbours
+                    if neighbour.startswith(f"{kind}:") and neighbour != claim.identity
+                }
             )
         )
 

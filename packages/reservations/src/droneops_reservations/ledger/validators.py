@@ -188,6 +188,69 @@ def identity_of(stored_key: str) -> str:
     return f"{parts[0]}:{parts[1]}"
 
 
+def records_from_pool_rows(
+    rows: Sequence[Mapping[str, object]],
+    *,
+    body_radius_mm: int = 1200,
+    body_half_height_mm: int = 750,
+) -> tuple[CommittedPlanRecord, ...]:
+    """Group stored reservation rows into one checker record per (plan, mission).
+
+    The ledger's holder read returns one row per resource window; the checker reasons
+    about *plans*, each of which claims several windows. Reconstructing the grouping here
+    is what stops a mission's second resource from being presented as an unrelated
+    conflict, and it is the same shape :class:`CheckerCommitValidator` builds from its own
+    ``final.holders``.
+
+    A row whose plan carries no profile is skipped rather than guessed at: without stored
+    points there is no volume to re-derive, and that absence is the ledger's holder read
+    (``left join``) telling the truth about a mission that reserved airspace before plan
+    evidence existed. Such a mission still blocks by identity at step 8; it simply cannot
+    be judged by geometry.
+    """
+    grouped: dict[tuple[str, str], list[tuple[str, str]]] = {}
+    payloads: dict[tuple[str, str], tuple[str, str]] = {}
+    for row in rows:
+        plan_version = str(row.get("route_hash") or "")
+        profile_json = row.get("profile_json")
+        if not plan_version or not profile_json:
+            continue
+        mission_id = str(row.get("mission_id"))
+        key = (plan_version, mission_id)
+        grouped.setdefault(key, []).append((str(row.get("resource_key")), str(row.get("state"))))
+        payloads[key] = (str(profile_json), mission_id)
+    built: list[CommittedPlanRecord] = []
+    for (plan_version, mission_id), keys in sorted(grouped.items()):
+        payload = PlanRecordPayload.from_json(payloads[(plan_version, mission_id)][0])
+        built.append(
+            CommittedPlanRecord(
+                plan_version=plan_version,
+                mission_id=mission_id,
+                status=sorted({state for _, state in keys})[0],
+                points=tuple(
+                    PlanPoint(
+                        at=sample.at,
+                        lat_deg=sample.lat_deg,
+                        lon_deg=sample.lon_deg,
+                        altitude_m=sample.altitude_m,
+                        altitude_reference=sample.altitude_reference.value,
+                        speed_mm_per_s=sample.speed_mm_per_s,
+                    )
+                    for sample in payload.points
+                ),
+                resource_keys=tuple(sorted({key for key, _ in keys})),
+                body_radius_mm=body_radius_mm,
+                body_half_height_mm=body_half_height_mm,
+                policy_release=payload.policy_version,
+                source="ledger",
+                planner_claim=PlannerClaim(
+                    verdict=payload.planner_verdict, policy_version=payload.policy_version
+                ),
+            )
+        )
+    return tuple(built)
+
+
 class IntervalCommitValidator:
     """Overlap-by-identity validation over half-open microsecond windows.
 
@@ -379,4 +442,5 @@ __all__ = [
     "IntervalCommitValidator",
     "PlanRecordPayload",
     "identity_of",
+    "records_from_pool_rows",
 ]

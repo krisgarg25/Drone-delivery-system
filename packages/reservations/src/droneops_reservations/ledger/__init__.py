@@ -43,6 +43,7 @@ from .validators import (
     IntervalCommitValidator,
     PlanRecordPayload,
     identity_of,
+    records_from_pool_rows,
 )
 
 __all__ = [
@@ -66,5 +67,6 @@ __all__ = [
     "Transaction",
     "WorldRead",
     "identity_of",
+    "records_from_pool_rows",
     "utc_now",
 ]

@@ -1,0 +1,2174 @@
+{
+  "notice": "Simulation only. Not authorised for flight.",
+  "authoritative": false,
+  "provenance": {
+    "scenario_id": "chandigarh-basic",
+    "title": "Chandigarh synthetic golden run: two hubs, eight nodes, corridor contention",
+    "seed": 20260930,
+    "policy_version": "chandigarh-synthetic-p1",
+    "horizon_minutes": 60,
+    "topology": { "hubs": 2, "nodes": 8 },
+    "synthetic_flags": {
+      "corridors": true,
+      "demand": true,
+      "facilities": true,
+      "fleet": true,
+      "obstacles_require_survey": true,
+      "weather": true
+    },
+    "bundle_files": {
+      "corridors.yaml": "f4d4f5ab5a5bf0e727df746af5f6b4136afd251f4642d8fbac7853be7861f4bc",
+      "demand.yaml": "b4bce2ff8282c52e2184daa8e8debbaef8ad8f87394542b6daf1d90c3773d242",
+      "facilities.yaml": "eef56693ce9b5d10f1e6822a63ef9453245a0df6654d86dabff64249baf97f0b",
+      "faults.yaml": "ecd26e552debc6acca717abcc90f6d8715769c2243875ca40c2d857d899cc45f",
+      "fleet.yaml": "498ffe8dd2f0213e0e9eb51aeab1395bc79ed5633bab83b835699a58b86e6005",
+      "policies.yaml": "0f5038f70ed663cb0f6f1f2b66e67fe099093c3f8f2d37a98d0ef3e8d4aab4d0",
+      "scenario.yaml": "ccba9a5abf6f8987367a82d399a5a7af55e465e41e51aed00276012c0d343b76",
+      "weather.yaml": "29e5e5c1e701f7322a46b5b8ff761a22049d8ee1ecae2455d8b45fda6f98054b"
+    },
+    "bundle_sha256": "f4d4f5ab5a5bf0e727df746af5f6b4136afd251f4642d8fbac7853be7861f4bc",
+    "dataset_id": "chandigarh-synthetic-v1",
+    "dataset_retrieved_at": "2026-09-30T21:45:44+00:00",
+    "dataset_produced_at": "2026-09-30T21:45:50+00:00",
+    "config_version": "chandigarh-geodata-1.0.0",
+    "config_sha256": "sha256:c187759afea990902ec6159579f7032b4892475b063600d75d2480472285532f",
+    "boundary_source": "OpenStreetMap",
+    "boundary_relation_id": 1942809,
+    "boundary_hash": "sha256:954f766ac0b64419f310708bfd33372c48764e34b4cde2a46471f63ae68c4f29",
+    "boundary_extract_date": "2026-09-20",
+    "licence": "ODbL",
+    "attribution": "(c) OpenStreetMap contributors",
+    "weather": {
+      "station": "IXC-synthetic",
+      "source": "synthetic frozen trace (no live fetch during a deterministic run)",
+      "retrieved_at": "2026-09-30T05:00:00Z",
+      "expires_at": "2026-10-07T06:00:00Z",
+      "freshness": "frozen_bundle"
+    },
+    "corridor_label": "Synthetic corridor model (planning heuristic only, not a clearance assessment)",
+    "corridor_summary": {
+      "authoritative": false,
+      "basis": "road and green-space heuristic",
+      "corridors": 60,
+      "green_space_aligned": 19,
+      "grouping_tolerance_m": 120.0,
+      "method": "synthetic",
+      "min_corridor_length_m": 400.0,
+      "note": "Derived from road and green-space alignment only, as a visual and planning heuristic. A drone is not safer for flying above a road: wires, traffic, trees and rooftops still apply, and this dataset has no vertical measurement for any of them.",
+      "planning_heuristic_only": true,
+      "requires_survey": true,
+      "road_classes": ["primary", "residential", "secondary", "tertiary", "unclassified"],
+      "road_side_obstacle_density_available": true,
+      "safety_claim": false,
+      "total_length_m": 101501.1,
+      "truncated_to_max": true,
+      "what_this_does_not_prove": [
+        "that any corridor has obstacle clearance",
+        "that any corridor is permitted, or legal, or surveyed",
+        "that flying above a road reduces risk",
+        "that the wires crossing these roads are anywhere near the assumed height"
+      ]
+    },
+    "service_bbox": [76.78, 30.73, 76.8, 30.75],
+    "what_this_does_not_prove": "Nothing about real Chandigarh airspace, aircraft performance, weather or certification. Geometry is synthetic and obstacle heights in the wider dataset require survey.",
+    "bundle_manifest_sha256": "sha256:b5119b35747c494bbc847aca2f1d4772238671b2e63c8b840e7f8ea2a49f753e",
+    "snapshot_digest": "sha256:b5119b35747c494bbc847aca2f1d4772238671b2e63c8b840e7f8ea2a49f753e"
+  },
+  "layers": {
+    "basemap": {
+      "id": "basemap",
+      "label": "Basemap: synthetic region mask, no live tiles",
+      "bbox": [76.78, 30.73, 76.8, 30.75]
+    },
+    "corridor_centerline": {
+      "id": "corridor_centerline",
+      "edges": [
+        {
+          "corridor_id": "lane-airfield-south-C-synthetic",
+          "from": "pad-airfield-synthetic",
+          "to": "depot-south-synthetic",
+          "band": "C",
+          "width_m": 100,
+          "length_m": 8300,
+          "max_wind_ms": 11,
+          "altitude_m": 85,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.765, 30.748],
+            [76.776624, 30.713915],
+            [76.79, 30.678]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-campus-industrial-B-synthetic",
+          "from": "pad-campus-synthetic",
+          "to": "pad-industrial-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 6200,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.76, 30.69],
+            [76.784719, 30.685348],
+            [76.81, 30.683]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-campus-south-A-synthetic",
+          "from": "pad-campus-synthetic",
+          "to": "depot-south-synthetic",
+          "band": "A",
+          "width_m": 100,
+          "length_m": 3100,
+          "max_wind_ms": 11,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.76, 30.69],
+            [76.774211, 30.684418],
+            [76.79, 30.678]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-central-market-A-synthetic",
+          "from": "pad-central-synthetic",
+          "to": "pad-market-synthetic",
+          "band": "A",
+          "width_m": 100,
+          "length_m": 1800,
+          "max_wind_ms": 11,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.735],
+            [76.79316, 30.732057],
+            [76.8, 30.728]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-central-north-B-synthetic",
+          "from": "pad-central-synthetic",
+          "to": "depot-north-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 2600,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.735],
+            [76.78626, 30.745222],
+            [76.78, 30.756]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-central-ridge-C-synthetic",
+          "from": "pad-central-synthetic",
+          "to": "pad-ridge-synthetic",
+          "band": "C",
+          "width_m": 100,
+          "length_m": 4900,
+          "max_wind_ms": 11,
+          "altitude_m": 85,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.735],
+            [76.8089, 30.73967],
+            [76.825, 30.745]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-industrial-campus-B-synthetic",
+          "from": "pad-industrial-synthetic",
+          "to": "pad-campus-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 6200,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.81, 30.683],
+            [76.78447, 30.68574],
+            [76.76, 30.69]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-industrial-south-B-synthetic",
+          "from": "pad-industrial-synthetic",
+          "to": "depot-south-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 4400,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.81, 30.683],
+            [76.799783, 30.67851],
+            [76.79, 30.678]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-market-central-A-synthetic",
+          "from": "pad-market-synthetic",
+          "to": "pad-central-synthetic",
+          "band": "A",
+          "width_m": 100,
+          "length_m": 1800,
+          "max_wind_ms": 11,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.8, 30.728],
+            [76.794387, 30.729593],
+            [76.79, 30.735]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-market-south-B-synthetic",
+          "from": "pad-market-synthetic",
+          "to": "depot-south-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 5600,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.8, 30.728],
+            [76.79393, 30.701938],
+            [76.79, 30.678]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-market-stadium-B-synthetic",
+          "from": "pad-market-synthetic",
+          "to": "pad-stadium-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 3900,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.8, 30.728],
+            [76.811959, 30.720104],
+            [76.82, 30.71]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-north-central-B-synthetic",
+          "from": "depot-north-synthetic",
+          "to": "pad-central-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 2600,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.78, 30.756],
+            [76.784116, 30.746847],
+            [76.79, 30.735]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-north-riverside-A-synthetic",
+          "from": "depot-north-synthetic",
+          "to": "pad-riverside-synthetic",
+          "band": "A",
+          "width_m": 100,
+          "length_m": 3700,
+          "max_wind_ms": 11,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.78, 30.756],
+            [76.791948, 30.76081],
+            [76.805, 30.762]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-ridge-central-C-synthetic",
+          "from": "pad-ridge-synthetic",
+          "to": "pad-central-synthetic",
+          "band": "C",
+          "width_m": 100,
+          "length_m": 4900,
+          "max_wind_ms": 11,
+          "altitude_m": 85,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.825, 30.745],
+            [76.80617, 30.740551],
+            [76.79, 30.735]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-ridge-stadium-C-synthetic",
+          "from": "pad-ridge-synthetic",
+          "to": "pad-stadium-synthetic",
+          "band": "C",
+          "width_m": 100,
+          "length_m": 5100,
+          "max_wind_ms": 11,
+          "altitude_m": 85,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.825, 30.745],
+            [76.821592, 30.727078],
+            [76.82, 30.71]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-riverside-north-A-synthetic",
+          "from": "pad-riverside-synthetic",
+          "to": "depot-north-synthetic",
+          "band": "A",
+          "width_m": 100,
+          "length_m": 3700,
+          "max_wind_ms": 11,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.805, 30.762],
+            [76.79159, 30.757979],
+            [76.78, 30.756]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-south-airfield-C-synthetic",
+          "from": "depot-south-synthetic",
+          "to": "pad-airfield-synthetic",
+          "band": "C",
+          "width_m": 100,
+          "length_m": 8300,
+          "max_wind_ms": 11,
+          "altitude_m": 85,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.678],
+            [76.77626, 30.712308],
+            [76.765, 30.748]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-south-campus-A-synthetic",
+          "from": "depot-south-synthetic",
+          "to": "pad-campus-synthetic",
+          "band": "A",
+          "width_m": 100,
+          "length_m": 3100,
+          "max_wind_ms": 11,
+          "altitude_m": 40,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.678],
+            [76.776331, 30.684801],
+            [76.76, 30.69]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-south-industrial-B-synthetic",
+          "from": "depot-south-synthetic",
+          "to": "pad-industrial-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 4400,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.678],
+            [76.801838, 30.681025],
+            [76.81, 30.683]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-south-market-B-synthetic",
+          "from": "depot-south-synthetic",
+          "to": "pad-market-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 5600,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.79, 30.678],
+            [76.794459, 30.70336],
+            [76.8, 30.728]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-stadium-market-B-synthetic",
+          "from": "pad-stadium-synthetic",
+          "to": "pad-market-synthetic",
+          "band": "B",
+          "width_m": 100,
+          "length_m": 3900,
+          "max_wind_ms": 11,
+          "altitude_m": 60,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.82, 30.71],
+            [76.809786, 30.71993],
+            [76.8, 30.728]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "corridor_id": "lane-stadium-ridge-C-synthetic",
+          "from": "pad-stadium-synthetic",
+          "to": "pad-ridge-synthetic",
+          "band": "C",
+          "width_m": 100,
+          "length_m": 5100,
+          "max_wind_ms": 11,
+          "altitude_m": 85,
+          "altitude_reference": "AGL",
+          "line": [
+            [76.82, 30.71],
+            [76.823044, 30.727029],
+            [76.825, 30.745]
+          ],
+          "synthetic": true,
+          "authoritative": false
+        }
+      ]
+    },
+    "candidate_corridors": {
+      "id": "candidate_corridors",
+      "lines": [
+        {
+          "corridor_id": "corridor-000--58992",
+          "length_m": 1569.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7715367, 30.7909953],
+              [76.771479, 30.7879902],
+              [76.7714597, 30.7874056],
+              [76.770085, 30.7857757],
+              [76.7700218, 30.7825284],
+              [76.7699919, 30.7804207],
+              [76.769559, 30.7795151],
+              [76.7695554, 30.7791543],
+              [76.7701547, 30.7781298],
+              [76.7704398, 30.7776263],
+              [76.7704398, 30.7776263]
+            ],
+            [
+              [76.795411, 30.7621787],
+              [76.7954038, 30.7620917],
+              [76.7954038, 30.7620917]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-001-+50464",
+          "length_m": 2007.4,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.749784, 30.769145],
+              [76.7514364, 30.7715811],
+              [76.7519596, 30.7727054],
+              [76.7524103, 30.7741885],
+              [76.7538428, 30.7787969],
+              [76.7545806, 30.7811035],
+              [76.7550799, 30.7827048],
+              [76.7554493, 30.7839067],
+              [76.75574, 30.7848465],
+              [76.7558287, 30.7855136],
+              [76.7557198, 30.786285],
+              [76.7557198, 30.786285]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-001--50338",
+          "length_m": 1997.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7558844, 30.7861934],
+              [76.7559409, 30.7855135],
+              [76.7557808, 30.784646],
+              [76.7553587, 30.78328],
+              [76.7549426, 30.7819701],
+              [76.7532044, 30.7764252],
+              [76.7524188, 30.7738837],
+              [76.7518789, 30.7722452],
+              [76.7513198, 30.7712214],
+              [76.7499149, 30.769128],
+              [76.7499149, 30.769128]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-001--55161",
+          "length_m": 1533.6,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7926826, 30.7508868],
+              [76.7906863, 30.7496382],
+              [76.7864709, 30.7470156],
+              [76.7862287, 30.7462906],
+              [76.787597, 30.7445596],
+              [76.7906282, 30.7411149],
+              [76.7906387, 30.7411125]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-002-+34767",
+          "length_m": 1518.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8033559, 30.700466],
+              [76.8047321, 30.7022425],
+              [76.8052393, 30.7028735],
+              [76.8082999, 30.7068205],
+              [76.8094323, 30.7082282],
+              [76.8120612, 30.7115272],
+              [76.8122487, 30.7117833]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-002-+42904",
+          "length_m": 1319.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8241302, 30.7205398],
+              [76.8249469, 30.7234799],
+              [76.8257897, 30.7263414],
+              [76.8276698, 30.7285741],
+              [76.8298503, 30.7308824],
+              [76.8299567, 30.731003]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-002--34593",
+          "length_m": 1537.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8096032, 30.7132867],
+              [76.808315, 30.7117067],
+              [76.8075815, 30.7108003],
+              [76.8063243, 30.7092009],
+              [76.8057263, 30.708318],
+              [76.8048777, 30.7069155],
+              [76.8032752, 30.7052193],
+              [76.801587, 30.7031473],
+              [76.8005879, 30.7018849],
+              [76.8005879, 30.7018849]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-002--34713",
+          "length_m": 2234.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8123276, 30.7116279],
+              [76.8109533, 30.7098225],
+              [76.8092921, 30.7077458],
+              [76.8084573, 30.7067261],
+              [76.8062896, 30.7039749],
+              [76.8053512, 30.7028114],
+              [76.8048525, 30.7021727],
+              [76.8040639, 30.701186],
+              [76.803412, 30.7003771],
+              [76.8032815, 30.7002107],
+              [76.8017136, 30.6981738],
+              [76.8008037, 30.6970204],
+              [76.7999279, 30.6958846],
+              [76.799325, 30.6951403],
+              [76.7992339, 30.6949942]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-002--42097",
+          "length_m": 1249.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7499149, 30.769128],
+              [76.7480922, 30.7663446],
+              [76.7474886, 30.76549],
+              [76.7446753, 30.7611855],
+              [76.7443423, 30.7603626],
+              [76.7441515, 30.7591425]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-002--43624",
+          "length_m": 1393.4,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8300272, 30.7309157],
+              [76.8291269, 30.7299166],
+              [76.826225, 30.7267248],
+              [76.8255915, 30.7251718],
+              [76.8246412, 30.7217866],
+              [76.8242222, 30.7204144],
+              [76.8240454, 30.7197775],
+              [76.8240454, 30.7197775]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-003-+15909",
+          "length_m": 1426.0,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8242465, 30.7344284],
+              [76.824865, 30.7338731],
+              [76.825865, 30.734524],
+              [76.8274632, 30.7353437],
+              [76.8285816, 30.7360666],
+              [76.8302909, 30.7369613],
+              [76.8311885, 30.7375496],
+              [76.8315064, 30.7383892],
+              [76.8314303, 30.7391566],
+              [76.8325085, 30.7403358],
+              [76.832965, 30.740611],
+              [76.8337732, 30.74107],
+              [76.8346566, 30.7415684],
+              [76.8346566, 30.7415684]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-003-+27310",
+          "length_m": 1487.6,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7504857, 30.7721659],
+              [76.7481872, 30.7733438],
+              [76.7467228, 30.7740941],
+              [76.7453184, 30.7748137],
+              [76.7464232, 30.7764054],
+              [76.751155, 30.7748141],
+              [76.7524103, 30.7741885],
+              [76.7524983, 30.7741473]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+0072",
+          "length_m": 1523.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7808963, 30.7761421],
+              [76.7801676, 30.7742465],
+              [76.7791824, 30.7718337],
+              [76.7780736, 30.7707513],
+              [76.7755552, 30.7699189],
+              [76.7736741, 30.7699802],
+              [76.7720665, 30.7706299],
+              [76.7703178, 30.7715721],
+              [76.7698644, 30.771734]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+12554",
+          "length_m": 1754.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.749263, 30.751272],
+              [76.7503034, 30.7519149],
+              [76.753002, 30.7535822],
+              [76.7585295, 30.7569975],
+              [76.7600171, 30.7579166]
+            ],
+            [
+              [76.7712771, 30.7257625],
+              [76.7743896, 30.7276757],
+              [76.7753577, 30.7282827],
+              [76.7754268, 30.728325]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+12609",
+          "length_m": 1452.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7439256, 30.7582003],
+              [76.7460328, 30.7582606],
+              [76.7484572, 30.7597356],
+              [76.752913, 30.7630263],
+              [76.754718, 30.7648692],
+              [76.7550251, 30.7650715]
+            ],
+            [
+              [76.7837302, 30.7615895],
+              [76.7845639, 30.7621054]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+12704",
+          "length_m": 1353.3,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7876872, 30.746392],
+              [76.7940362, 30.7503637],
+              [76.7969038, 30.7521538],
+              [76.7977842, 30.7526913],
+              [76.7979091, 30.7527341]
+            ],
+            [
+              [76.7620198, 30.6894298],
+              [76.7632746, 30.6902081]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+12807",
+          "length_m": 1482.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.726818, 30.7373581],
+              [76.727311, 30.7375516],
+              [76.730766, 30.739749],
+              [76.7317152, 30.7403187],
+              [76.7373241, 30.7438256],
+              [76.737615, 30.7440842],
+              [76.737615, 30.7440842]
+            ],
+            [
+              [76.7781128, 30.7295142],
+              [76.7798526, 30.7305972],
+              [76.7798526, 30.7305972]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+12836",
+          "length_m": 1663.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7803981, 30.7353168],
+              [76.7827319, 30.7367708],
+              [76.7842441, 30.737713],
+              [76.7852828, 30.7383601],
+              [76.7869416, 30.7393937],
+              [76.7884139, 30.740311],
+              [76.7899807, 30.741287]
+            ],
+            [
+              [76.7211972, 30.7337736],
+              [76.7257069, 30.7365859],
+              [76.7257069, 30.7365859]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+12887",
+          "length_m": 1639.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7703819, 30.7352382],
+              [76.7713367, 30.7358367],
+              [76.771549, 30.7359667]
+            ],
+            [
+              [76.7753229, 30.7388173],
+              [76.7789628, 30.7410891],
+              [76.779811, 30.7416184],
+              [76.7815508, 30.7427043],
+              [76.7836506, 30.7440148],
+              [76.7855501, 30.7452002],
+              [76.7862494, 30.7456366]
+            ],
+            [
+              [76.7965645, 30.7362585],
+              [76.7982287, 30.7372968],
+              [76.7983542, 30.7373752]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+13803",
+          "length_m": 1363.3,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8000761, 30.7372267],
+              [76.8034113, 30.7393211],
+              [76.8064654, 30.7412389],
+              [76.8067293, 30.7414998]
+            ],
+            [
+              [76.7962706, 30.7259185],
+              [76.8007174, 30.728699],
+              [76.801028, 30.7289738],
+              [76.801028, 30.7289738]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+7102",
+          "length_m": 2765.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8068361, 30.7488416],
+              [76.8079758, 30.7498771],
+              [76.8090781, 30.7515079],
+              [76.8101607, 30.7520547],
+              [76.8147429, 30.7529153],
+              [76.8156653, 30.7532009],
+              [76.8163868, 30.753473],
+              [76.8173234, 30.7541032],
+              [76.8181368, 30.7549981],
+              [76.8191354, 30.7562788],
+              [76.8197753, 30.7567527],
+              [76.8209467, 30.7566979],
+              [76.8218442, 30.7566519],
+              [76.8224606, 30.7566278],
+              [76.822979, 30.7566479],
+              [76.8237449, 30.7566118],
+              [76.8245201, 30.7565676],
+              [76.8250644, 30.7565318],
+              [76.8259129, 30.7565001],
+              [76.826234, 30.7567843],
+              [76.8263031, 30.7572778],
+              [76.8263087, 30.7575428],
+              [76.8261394, 30.7579956],
+              [76.8256019, 30.7582153],
+              [76.8251952, 30.7584256],
+              [76.8251596, 30.7589626],
+              [76.8251486, 30.7592389],
+              [76.8251784, 30.7592498],
+              [76.8264082, 30.7591862],
+              [76.8268461, 30.7591775]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+7474",
+          "length_m": 1324.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7572951, 30.7620181],
+              [76.760744, 30.7647895],
+              [76.7672728, 30.7675176],
+              [76.7690047, 30.768149],
+              [76.7690047, 30.768149]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004-+7619",
+          "length_m": 1266.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.776068, 30.7591451],
+              [76.7767625, 30.7594606],
+              [76.7821865, 30.7623394],
+              [76.7873706, 30.7650898],
+              [76.7873706, 30.7650898]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004--12825",
+          "length_m": 1668.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7423648, 30.7235642],
+              [76.7413509, 30.7229324]
+            ],
+            [
+              [76.7672734, 30.714948],
+              [76.7659732, 30.7141382],
+              [76.7653765, 30.7137665]
+            ],
+            [
+              [76.7970002, 30.7520388],
+              [76.7924037, 30.7491943],
+              [76.7877731, 30.7462909]
+            ],
+            [
+              [76.7876427, 30.7383273],
+              [76.7856413, 30.7370807]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004--12929",
+          "length_m": 2749.0,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8081174, 30.7144813],
+              [76.8052841, 30.7127062],
+              [76.8023158, 30.71085],
+              [76.8001543, 30.7094952],
+              [76.7987276, 30.7085944],
+              [76.7957745, 30.7067718],
+              [76.7957745, 30.7067718]
+            ],
+            [
+              [76.7863251, 30.7455484],
+              [76.7847151, 30.7445421],
+              [76.781706, 30.7426614],
+              [76.7806012, 30.7419709],
+              [76.7799727, 30.741578]
+            ],
+            [
+              [76.7799727, 30.741578],
+              [76.7791407, 30.741058],
+              [76.7791407, 30.741058]
+            ],
+            [
+              [76.7791407, 30.741058],
+              [76.7767758, 30.7395798],
+              [76.7754043, 30.7387226]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004--13074",
+          "length_m": 1656.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7670683, 30.707088],
+              [76.7651152, 30.7058619],
+              [76.7630105, 30.7045407],
+              [76.7630105, 30.7045407]
+            ],
+            [
+              [76.7651183, 30.7389277],
+              [76.7643508, 30.7384457]
+            ],
+            [
+              [76.7661185, 30.7420654],
+              [76.7648515, 30.7412697]
+            ],
+            [
+              [76.7647983, 30.7392987],
+              [76.7640308, 30.7388167]
+            ],
+            [
+              [76.7644911, 30.7396604],
+              [76.7637236, 30.7391784]
+            ],
+            [
+              [76.76377, 30.7405115],
+              [76.762229, 30.7395437]
+            ],
+            [
+              [76.7725121, 30.7405377],
+              [76.7708069, 30.7394669]
+            ],
+            [
+              [76.7687966, 30.7400585],
+              [76.7667518, 30.7387744]
+            ],
+            [
+              [76.7688129, 30.7376393],
+              [76.7677396, 30.7369653]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004--13688",
+          "length_m": 1340.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7429939, 30.747253],
+              [76.73869, 30.7445647],
+              [76.7382882, 30.7442383]
+            ],
+            [
+              [76.7793466, 30.7062815],
+              [76.7790545, 30.7060962],
+              [76.7730017, 30.7023281],
+              [76.7728309, 30.7021116]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004--3489",
+          "length_m": 2075.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7697583, 30.7717936],
+              [76.7695444, 30.7719827],
+              [76.7665041, 30.7737153],
+              [76.7650368, 30.77437],
+              [76.763724, 30.7744381],
+              [76.7615501, 30.7735371],
+              [76.7599959, 30.7727591],
+              [76.759285, 30.772009],
+              [76.7584052, 30.7693817],
+              [76.7575362, 30.7671739],
+              [76.7553042, 30.7653342],
+              [76.7550251, 30.7650715]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-004--8469",
+          "length_m": 1274.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7246426, 30.7641274],
+              [76.7230546, 30.7632473],
+              [76.7197984, 30.7614841],
+              [76.7188033, 30.7609517],
+              [76.7179048, 30.7608088],
+              [76.7152055, 30.7593809],
+              [76.7146084, 30.7589856],
+              [76.714206, 30.7584901],
+              [76.7134758, 30.7580787]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-006--31766",
+          "length_m": 1342.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7331533, 30.7539716],
+              [76.7356892, 30.7539693],
+              [76.737393, 30.7539693],
+              [76.739227, 30.7539584],
+              [76.7417786, 30.7534508],
+              [76.7438627, 30.753433],
+              [76.7452303, 30.753408]
+            ],
+            [
+              [76.8259054, 30.6931332],
+              [76.8260359, 30.6933099],
+              [76.8263125, 30.6934457],
+              [76.8264792, 30.6935215],
+              [76.8265769, 30.6934398],
+              [76.8268243, 30.6932044],
+              [76.8268774, 30.6930871]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-006--33595",
+          "length_m": 1292.3,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8085693, 30.7730816],
+              [76.8090587, 30.773247],
+              [76.8091315, 30.773839],
+              [76.8091619, 30.7741457],
+              [76.8092365, 30.7749144],
+              [76.8092951, 30.7754337],
+              [76.8093481, 30.7759859],
+              [76.8094024, 30.7766735],
+              [76.8094338, 30.7768626],
+              [76.8099743, 30.7768308],
+              [76.810435, 30.7768164],
+              [76.8112853, 30.7767588],
+              [76.8121349, 30.7767181],
+              [76.8129697, 30.7766689],
+              [76.8135785, 30.7766672],
+              [76.8136322, 30.7765577],
+              [76.8135598, 30.7757655],
+              [76.8134793, 30.7751641],
+              [76.8133586, 30.7741109],
+              [76.8133025, 30.7734219],
+              [76.8132178, 30.772742],
+              [76.8132178, 30.772742]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-006--35007",
+          "length_m": 1533.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8303384, 30.7312319],
+              [76.8338572, 30.7309303],
+              [76.8361706, 30.7307013],
+              [76.8380622, 30.7305006],
+              [76.8405183, 30.7301737],
+              [76.842687, 30.7296373],
+              [76.84351, 30.7294547],
+              [76.8442932, 30.7293926],
+              [76.844568, 30.7294089],
+              [76.8453849, 30.7295334],
+              [76.8461222, 30.729736]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-007-+48952",
+          "length_m": 2494.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8299202, 30.7389726],
+              [76.8289224, 30.7384205],
+              [76.8269595, 30.7372721],
+              [76.8250138, 30.7364263],
+              [76.8227363, 30.7360164],
+              [76.8212312, 30.7360243],
+              [76.8199903, 30.7361917],
+              [76.8182449, 30.7366917],
+              [76.8162939, 30.7377367],
+              [76.8149501, 30.7388972],
+              [76.81219, 30.7421969],
+              [76.8111387, 30.7434329],
+              [76.8108347, 30.7438495],
+              [76.8107001, 30.744189],
+              [76.8104613, 30.7452473],
+              [76.8103722, 30.7455983]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-007--40253",
+          "length_m": 1729.0,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8130679, 30.7402444],
+              [76.8154418, 30.7376575],
+              [76.8178902, 30.7362221],
+              [76.8206094, 30.7355233],
+              [76.8225917, 30.7354713],
+              [76.8245699, 30.7357662],
+              [76.8273233, 30.7368524],
+              [76.8284876, 30.7375109]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-007--41840",
+          "length_m": 2036.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8120815, 30.7421805],
+              [76.8140176, 30.7398406],
+              [76.8155092, 30.7381999],
+              [76.8176223, 30.7368438],
+              [76.819885, 30.7360774],
+              [76.8217051, 30.7358825],
+              [76.823833, 30.7360495],
+              [76.8256389, 30.7365483],
+              [76.828951, 30.7382893],
+              [76.8295203, 30.7386233]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-007--41895",
+          "length_m": 2041.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8120815, 30.7421805],
+              [76.8139856, 30.7398239],
+              [76.815487, 30.7381758],
+              [76.8175903, 30.7368271],
+              [76.819853, 30.7360607],
+              [76.8216977, 30.7358598],
+              [76.8238598, 30.7360281],
+              [76.8256547, 30.736528],
+              [76.8276819, 30.7375318],
+              [76.8287707, 30.738141],
+              [76.8295339, 30.7386042]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-007--47506",
+          "length_m": 2026.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7246426, 30.7641274],
+              [76.7276409, 30.763159],
+              [76.7282876, 30.7621629],
+              [76.7285652, 30.7618114],
+              [76.7287871, 30.7616393],
+              [76.7296958, 30.7614276],
+              [76.7303985, 30.7612847],
+              [76.7312211, 30.7611151],
+              [76.7326355, 30.7604665],
+              [76.7350289, 30.7592808],
+              [76.7352761, 30.7594155],
+              [76.7362196, 30.7593734],
+              [76.7386061, 30.7590225],
+              [76.7433891, 30.7582849],
+              [76.743806, 30.7582035]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-008--59130",
+          "length_m": 3017.6,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8151201, 30.7482848],
+              [76.8156579, 30.7481059],
+              [76.8164036, 30.7476495],
+              [76.8169373, 30.7479054],
+              [76.8172806, 30.7476265],
+              [76.8194586, 30.7465891],
+              [76.8206736, 30.7461627],
+              [76.8216151, 30.7459506],
+              [76.822511, 30.7460728],
+              [76.8237743, 30.7459368],
+              [76.8259977, 30.7460027],
+              [76.827403, 30.7470079],
+              [76.8281701, 30.7471278],
+              [76.8290605, 30.7465699],
+              [76.8303259, 30.7461963],
+              [76.8306676, 30.7457086],
+              [76.8322742, 30.7440211],
+              [76.8331996, 30.7424155],
+              [76.8332277, 30.7417596],
+              [76.8327958, 30.7409356],
+              [76.8293947, 30.7394325],
+              [76.8299202, 30.7389726]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-009-+61070",
+          "length_m": 1263.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8441802, 30.7246653],
+              [76.843589, 30.7258987],
+              [76.8411753, 30.727398],
+              [76.8398482, 30.7279026],
+              [76.8365692, 30.7282483],
+              [76.8357742, 30.7301967],
+              [76.8358378, 30.730647]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-009-+61891",
+          "length_m": 1401.2,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7675887, 30.7773613],
+              [76.7673822, 30.7773804],
+              [76.7665198, 30.7778874],
+              [76.7654604, 30.7785107],
+              [76.7644488, 30.779114],
+              [76.764079, 30.7793242],
+              [76.7634997, 30.7797632],
+              [76.7629284, 30.780239],
+              [76.7621009, 30.780928],
+              [76.7614987, 30.7814361],
+              [76.7609825, 30.7818634],
+              [76.7601959, 30.7824817],
+              [76.7580731, 30.7843265],
+              [76.7567385, 30.7854916],
+              [76.7567119, 30.7856366]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-009-+64414",
+          "length_m": 1473.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7729563, 30.7322091],
+              [76.7742633, 30.7329548],
+              [76.7750968, 30.7328801],
+              [76.7754214, 30.7329031],
+              [76.7761434, 30.7331193],
+              [76.7771869, 30.7337952],
+              [76.7772683, 30.7342255],
+              [76.7760233, 30.7356563],
+              [76.7757286, 30.7359905],
+              [76.7744917, 30.7373933],
+              [76.7740908, 30.7374478],
+              [76.773289, 30.7369725],
+              [76.7724335, 30.7364164],
+              [76.7719516, 30.7356525],
+              [76.7710683, 30.7350709],
+              [76.7704998, 30.7345342]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-009-+64558",
+          "length_m": 2640.5,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7703726, 30.7726306],
+              [76.7707488, 30.7731371],
+              [76.770749, 30.7733113],
+              [76.770568, 30.7739186],
+              [76.7702942, 30.7748225],
+              [76.7699847, 30.7755882],
+              [76.7697533, 30.7758802],
+              [76.7695638, 30.776052],
+              [76.7691674, 30.7762891],
+              [76.7686992, 30.7766029],
+              [76.7675887, 30.7773613],
+              [76.7652219, 30.7787526],
+              [76.7637079, 30.779713],
+              [76.7597154, 30.7830755],
+              [76.7575631, 30.7848959]
+            ],
+            [
+              [76.8117514, 30.7184434],
+              [76.8094153, 30.720784],
+              [76.8072098, 30.7229646],
+              [76.8068239, 30.7231692]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-009--64666",
+          "length_m": 2004.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7572486, 30.7854022],
+              [76.7576891, 30.7850083],
+              [76.7598563, 30.7831891],
+              [76.7626119, 30.7808105],
+              [76.76484, 30.77918],
+              [76.7653086, 30.7789095],
+              [76.765842, 30.7786031],
+              [76.7677236, 30.7774824],
+              [76.7684043, 30.7770086],
+              [76.7690597, 30.7764523],
+              [76.7696273, 30.7761107],
+              [76.7699306, 30.7758173],
+              [76.770144, 30.7754799],
+              [76.7703186, 30.7750502],
+              [76.7705017, 30.7744264],
+              [76.7708485, 30.7732083],
+              [76.7707669, 30.7729637],
+              [76.7705094, 30.7725579]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-009--65673",
+          "length_m": 1380.6,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7740381, 30.7198658],
+              [76.7756476, 30.718028],
+              [76.7761565, 30.7174523],
+              [76.7779195, 30.7154583],
+              [76.7783139, 30.71513],
+              [76.7784352, 30.7150536]
+            ],
+            [
+              [76.780236, 30.7328761],
+              [76.7823174, 30.7305387],
+              [76.7846269, 30.7279906],
+              [76.7847428, 30.7279518]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66178",
+          "length_m": 1408.6,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7645105, 30.7101626],
+              [76.7638569, 30.7109338],
+              [76.7631527, 30.7117645],
+              [76.762364, 30.7126956],
+              [76.7620995, 30.7130086]
+            ],
+            [
+              [76.7719102, 30.698321],
+              [76.7711925, 30.6991685],
+              [76.7711925, 30.6991685]
+            ],
+            [
+              [76.7721438, 30.7215501],
+              [76.7705227, 30.723453],
+              [76.7691393, 30.7250902]
+            ],
+            [
+              [76.7709523, 30.7384225],
+              [76.7700433, 30.7394918]
+            ],
+            [
+              [76.7714363, 30.7387265],
+              [76.7705273, 30.7397958],
+              [76.7705273, 30.7397958]
+            ],
+            [
+              [76.8032407, 30.7388887],
+              [76.8031288, 30.7390199]
+            ],
+            [
+              [76.7961927, 30.7244215],
+              [76.7962704, 30.7245559],
+              [76.7959127, 30.7250313],
+              [76.7957184, 30.7249788],
+              [76.7957184, 30.7249788]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66214",
+          "length_m": 1632.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7301551, 30.7416435],
+              [76.7317272, 30.7426433],
+              [76.7331599, 30.7435544],
+              [76.7341087, 30.7442123],
+              [76.7340781, 30.7446093],
+              [76.7335762, 30.7451961],
+              [76.7321234, 30.7469126],
+              [76.7317226, 30.7468306],
+              [76.729859, 30.7456692],
+              [76.7278321, 30.7444034]
+            ],
+            [
+              [76.7327796, 30.7120796],
+              [76.7325119, 30.7123985]
+            ],
+            [
+              [76.7323197, 30.7117802],
+              [76.7320443, 30.7121083]
+            ],
+            [
+              [76.7327565, 30.711845],
+              [76.7325008, 30.7121496]
+            ],
+            [
+              [76.7847892, 30.7366553],
+              [76.7843708, 30.7371423],
+              [76.7837843, 30.7378429],
+              [76.7837843, 30.7378429]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66264",
+          "length_m": 1577.3,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7441984, 30.7049037],
+              [76.7434243, 30.7058656],
+              [76.7426584, 30.7067917],
+              [76.7410756, 30.7086527],
+              [76.7410756, 30.7086527]
+            ],
+            [
+              [76.7602148, 30.7268859],
+              [76.7588552, 30.7273709],
+              [76.7594816, 30.7277627]
+            ],
+            [
+              [76.7943262, 30.7118177],
+              [76.7936736, 30.7125964]
+            ],
+            [
+              [76.8027265, 30.7411957],
+              [76.8003343, 30.7440393],
+              [76.8003343, 30.7440393]
+            ],
+            [
+              [76.7475965, 30.7204987],
+              [76.7471975, 30.7209751],
+              [76.7463733, 30.7219644],
+              [76.7463733, 30.7219644]
+            ],
+            [
+              [76.8017191, 30.7184847],
+              [76.8011236, 30.7191942]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66265",
+          "length_m": 1332.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7663496, 30.7001805],
+              [76.7655051, 30.7011926],
+              [76.7647235, 30.7021295],
+              [76.7641143, 30.7028596],
+              [76.7635802, 30.7034997]
+            ],
+            [
+              [76.7739, 30.7106578],
+              [76.773504, 30.7111315]
+            ],
+            [
+              [76.8034805, 30.7392395],
+              [76.8024799, 30.7404286],
+              [76.8008813, 30.7423293],
+              [76.7989768, 30.7445937],
+              [76.7984983, 30.7451626]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66275",
+          "length_m": 2194.5,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.794941, 30.7136083],
+              [76.7941329, 30.7145741]
+            ],
+            [
+              [76.8020827, 30.7391457],
+              [76.8010159, 30.7404125],
+              [76.8000748, 30.7415302],
+              [76.7997474, 30.74192],
+              [76.7990418, 30.7427634],
+              [76.7979279, 30.7440948],
+              [76.7979279, 30.7440948]
+            ],
+            [
+              [76.8004336, 30.7560511],
+              [76.7978525, 30.7591194],
+              [76.7966219, 30.7605911],
+              [76.7956736, 30.7617123]
+            ],
+            [
+              [76.7794688, 30.7435069],
+              [76.7781728, 30.7450581],
+              [76.7765659, 30.7469735],
+              [76.7759702, 30.7476824]
+            ],
+            [
+              [76.7874185, 30.7650328],
+              [76.7873706, 30.7650898]
+            ],
+            [
+              [76.79528, 30.7161457],
+              [76.7951419, 30.7162787],
+              [76.7951188, 30.7163383]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66276",
+          "length_m": 1505.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.754236, 30.6928537],
+              [76.7562007, 30.6940266],
+              [76.7569109, 30.6945694],
+              [76.7567046, 30.6949766],
+              [76.7551672, 30.6967769],
+              [76.7546472, 30.6972392],
+              [76.7543016, 30.697166],
+              [76.7537483, 30.6968186],
+              [76.7526027, 30.6960912],
+              [76.7518991, 30.6956656]
+            ],
+            [
+              [76.7370884, 30.7440764],
+              [76.736721, 30.7445143],
+              [76.7362605, 30.7450631],
+              [76.7358703, 30.7455281],
+              [76.7352474, 30.7462842],
+              [76.7352474, 30.7462842]
+            ],
+            [
+              [76.7828346, 30.7184197],
+              [76.7821327, 30.7192594]
+            ],
+            [
+              [76.7954022, 30.713057],
+              [76.794941, 30.7136083]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66330",
+          "length_m": 2013.3,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7665967, 30.7031867],
+              [76.7659358, 30.7039874],
+              [76.7653559, 30.70469]
+            ],
+            [
+              [76.7697605, 30.6924454],
+              [76.7690471, 30.6933104]
+            ],
+            [
+              [76.8063803, 30.7423883],
+              [76.8035785, 30.7457455],
+              [76.8026625, 30.7468541]
+            ],
+            [
+              [76.811961, 30.7357008],
+              [76.8095428, 30.7386395],
+              [76.8077142, 30.7408023],
+              [76.8077142, 30.7408023]
+            ],
+            [
+              [76.7938716, 30.7573378],
+              [76.7918157, 30.7598073],
+              [76.7918157, 30.7598073]
+            ],
+            [
+              [76.7472919, 30.6934803],
+              [76.7470221, 30.6938082]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66359",
+          "length_m": 1434.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7680358, 30.6952784],
+              [76.7676367, 30.6957647]
+            ],
+            [
+              [76.7903233, 30.7110718],
+              [76.7897507, 30.7117666],
+              [76.7897507, 30.7117666]
+            ],
+            [
+              [76.8150252, 30.7530061],
+              [76.8135871, 30.7547581],
+              [76.8109324, 30.7578595],
+              [76.8085869, 30.7607424],
+              [76.8072841, 30.7623317],
+              [76.8072841, 30.7623317]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66414",
+          "length_m": 1275.6,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7546748, 30.6911986],
+              [76.753633, 30.6924833]
+            ],
+            [
+              [76.7685821, 30.7272807],
+              [76.7663599, 30.730024],
+              [76.7648329, 30.7318835],
+              [76.7642027, 30.7326511]
+            ],
+            [
+              [76.7946332, 30.7590619],
+              [76.7940185, 30.7598109]
+            ],
+            [
+              [76.8079837, 30.7375011],
+              [76.80736, 30.7382782],
+              [76.8067197, 30.7390424],
+              [76.8067197, 30.7390424]
+            ],
+            [
+              [76.7346578, 30.7459035],
+              [76.7342949, 30.7463494]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+66934",
+          "length_m": 2064.7,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8190703, 30.7235688],
+              [76.8176371, 30.7245304],
+              [76.8148581, 30.7262281],
+              [76.8148202, 30.7270511],
+              [76.815177, 30.7276524],
+              [76.8163787, 30.7273549],
+              [76.81821, 30.7277535],
+              [76.8192101, 30.7290676],
+              [76.8167807, 30.7313662],
+              [76.8152601, 30.7288874],
+              [76.8154699, 30.7284667]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+67108",
+          "length_m": 1272.9,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8373254, 30.7206701],
+              [76.8366225, 30.7220486],
+              [76.8355289, 30.7236872],
+              [76.8341826, 30.7252178],
+              [76.8328121, 30.7271305],
+              [76.8304606, 30.7304474]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010-+67412",
+          "length_m": 2190.1,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8080694, 30.6783],
+              [76.8073682, 30.6794542],
+              [76.8063826, 30.681466],
+              [76.8054155, 30.6838312],
+              [76.8044923, 30.6863535],
+              [76.8037535, 30.6883674],
+              [76.8027586, 30.6909231],
+              [76.8025716, 30.6912652],
+              [76.8012446, 30.6925696],
+              [76.799698, 30.6938511],
+              [76.7989084, 30.6944484],
+              [76.7984714, 30.694422]
+            ],
+            [
+              [76.7815508, 30.7427043],
+              [76.7812597, 30.7431295],
+              [76.7810488, 30.7435408],
+              [76.7810488, 30.7435408]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010--66117",
+          "length_m": 1427.8,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7574778, 30.7191991],
+              [76.7575954, 30.7188899],
+              [76.7618394, 30.713941],
+              [76.7620941, 30.7138029]
+            ],
+            [
+              [76.7636116, 30.7322595],
+              [76.7648592, 30.7309749],
+              [76.7661024, 30.7294464],
+              [76.7669779, 30.7283794],
+              [76.7677874, 30.7273877]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-010--66235",
+          "length_m": 1317.0,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7600247, 30.7117218],
+              [76.7605613, 30.7110822],
+              [76.7610717, 30.7104739],
+              [76.7613234, 30.7101739]
+            ],
+            [
+              [76.7631327, 30.7027442],
+              [76.7638519, 30.7018865],
+              [76.7638519, 30.7018865]
+            ],
+            [
+              [76.8092625, 30.7178409],
+              [76.8095608, 30.7174874]
+            ],
+            [
+              [76.8052304, 30.7484017],
+              [76.8068025, 30.7465435],
+              [76.8092121, 30.7436953]
+            ],
+            [
+              [76.7826623, 30.7617457],
+              [76.7844557, 30.7596237],
+              [76.7844557, 30.7596237]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-011-+64700",
+          "length_m": 2232.3,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.7941245, 30.7425779],
+              [76.7983864, 30.7452224],
+              [76.8017573, 30.7474188],
+              [76.8015784, 30.7479973],
+              [76.7977929, 30.7524962],
+              [76.7967995, 30.7534674],
+              [76.7926826, 30.7508868]
+            ]
+          ]
+        },
+        {
+          "corridor_id": "corridor-011--67067",
+          "length_m": 1314.4,
+          "basis": "road and green-space heuristic",
+          "lines": [
+            [
+              [76.8030565, 30.6912823],
+              [76.8039313, 30.6888707],
+              [76.8049693, 30.6861397],
+              [76.8063265, 30.6825389],
+              [76.8074677, 30.6800929],
+              [76.8074677, 30.6800929]
+            ]
+          ]
+        }
+      ]
+    },
+    "facility_pads": {
+      "id": "facility_pads",
+      "facilities": [
+        {
+          "facility_id": "depot-north-synthetic",
+          "name": "Fictional North Depot",
+          "kind": "hub",
+          "position": [76.78, 30.756],
+          "pads": 2,
+          "charger_bays": 3,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "depot-south-synthetic",
+          "name": "Fictional South Depot",
+          "kind": "hub",
+          "position": [76.79, 30.678],
+          "pads": 2,
+          "charger_bays": 3,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-central-synthetic",
+          "name": "Fictional Central Handover",
+          "kind": "node",
+          "position": [76.79, 30.735],
+          "pads": 1,
+          "charger_bays": 1,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-campus-synthetic",
+          "name": "Fictional Campus Handover",
+          "kind": "node",
+          "position": [76.76, 30.69],
+          "pads": 1,
+          "charger_bays": 1,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-ridge-synthetic",
+          "name": "Fictional Ridge Handover",
+          "kind": "node",
+          "position": [76.825, 30.745],
+          "pads": 1,
+          "charger_bays": 1,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-market-synthetic",
+          "name": "Fictional Market Handover",
+          "kind": "node",
+          "position": [76.8, 30.728],
+          "pads": 1,
+          "charger_bays": 0,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-industrial-synthetic",
+          "name": "Fictional Industrial Handover",
+          "kind": "node",
+          "position": [76.81, 30.683],
+          "pads": 1,
+          "charger_bays": 1,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-riverside-synthetic",
+          "name": "Fictional Riverside Handover",
+          "kind": "node",
+          "position": [76.805, 30.762],
+          "pads": 1,
+          "charger_bays": 0,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-stadium-synthetic",
+          "name": "Fictional Stadium Handover",
+          "kind": "node",
+          "position": [76.82, 30.71],
+          "pads": 1,
+          "charger_bays": 1,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        },
+        {
+          "facility_id": "pad-airfield-synthetic",
+          "name": "Fictional Airfield Perimeter Handover",
+          "kind": "node",
+          "position": [76.765, 30.748],
+          "pads": 1,
+          "charger_bays": 0,
+          "band_m_agl": 320,
+          "altitude_reference": "AGL",
+          "synthetic": true,
+          "authoritative": false
+        }
+      ]
+    },
+    "restriction_buffers": {
+      "id": "restriction_buffers",
+      "polygons": [
+        {
+          "restriction_id": "modelled-airfield-keepout-synthetic",
+          "label": "Modelled keep-out around a fictional airfield pad - NOT official airspace data",
+          "official": false,
+          "authoritative": false,
+          "synthetic": true,
+          "basis": "demo input: fixed radius, no survey, no NOTAM, no publication",
+          "polygon": [
+            [
+              [76.765, 30.761475],
+              [76.779442, 30.75528],
+              [76.780606, 30.742393],
+              [76.767422, 30.73466],
+              [76.752011, 30.739192],
+              [76.748542, 30.751822],
+              [76.760204, 30.760938],
+              [76.776276, 30.758159],
+              [76.78198, 30.746039],
+              [76.772073, 30.735723],
+              [76.755663, 30.736694],
+              [76.747837, 30.74806],
+              [76.755791, 30.759371],
+              [76.772211, 30.760228],
+              [76.782002, 30.749842],
+              [76.776161, 30.737763],
+              [76.760059, 30.735096],
+              [76.7485, 30.744292],
+              [76.752111, 30.756898],
+              [76.767572, 30.761322],
+              [76.780669, 30.753499],
+              [76.779359, 30.74062],
+              [76.764848, 30.734526],
+              [76.750476, 30.74082],
+              [76.749458, 30.753716],
+              [76.762728, 30.761356],
+              [76.778088, 30.756717],
+              [76.781414, 30.744064],
+              [76.76965, 30.735029],
+              [76.75361, 30.73792],
+              [76.748043, 30.750078],
+              [76.758066, 30.760326],
+              [76.774464, 30.759241],
+              [76.782161, 30.747821],
+              [76.774081, 30.736566],
+              [76.757651, 30.735823],
+              [76.747978, 30.746276],
+              [76.753955, 30.758314],
+              [76.770087, 30.760869],
+              [76.781541, 30.751593],
+              [76.777788, 30.739013],
+              [76.762278, 30.734696],
+              [76.74927, 30.74261],
+              [76.750724, 30.75548],
+              [76.765304, 30.761473],
+              [76.779604, 30.755079],
+              [76.780477, 30.742177],
+              [76.767121, 30.734629],
+              [76.782163, 30.748]
+            ]
+          ]
+        }
+      ]
+    },
+    "weather": {
+      "id": "weather",
+      "trace": [
+        { "minute": 0, "wind_ms": 6, "headwind_bp": 1200 },
+        { "minute": 1, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 2, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 3, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 4, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 5, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 6, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 7, "wind_ms": 8, "headwind_bp": 1200 },
+        { "minute": 8, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 9, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 10, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 11, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 12, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 13, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 14, "wind_ms": 6, "headwind_bp": 1200 },
+        { "minute": 15, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 16, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 17, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 18, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 19, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 20, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 21, "wind_ms": 6, "headwind_bp": 1200 },
+        { "minute": 22, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 23, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 24, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 25, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 26, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 27, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 28, "wind_ms": 8, "headwind_bp": 1200 },
+        { "minute": 29, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 30, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 31, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 32, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 33, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 34, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 35, "wind_ms": 8, "headwind_bp": 1200 },
+        { "minute": 36, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 37, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 38, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 39, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 40, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 41, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 42, "wind_ms": 6, "headwind_bp": 1200 },
+        { "minute": 43, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 44, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 45, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 46, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 47, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 48, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 49, "wind_ms": 8, "headwind_bp": 1200 },
+        { "minute": 50, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 51, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 52, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 53, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 54, "wind_ms": 5, "headwind_bp": 1200 },
+        { "minute": 55, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 56, "wind_ms": 8, "headwind_bp": 1200 },
+        { "minute": 57, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 58, "wind_ms": 7, "headwind_bp": 1200 },
+        { "minute": 59, "wind_ms": 7, "headwind_bp": 1200 }
+      ]
+    }
+  }
+}

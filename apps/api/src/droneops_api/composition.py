@@ -3,12 +3,23 @@
 This is the only module in ``apps/api`` that knows which implementations satisfy the
 ports. Routers receive a
 :class:`~droneops_api.ports.ControlPlaneServices` bundle built here, and a deployment
-swaps the bundle - reference plane today, ``droneops_reservations.ledger`` plus
-persistence-backed read models in production - without a router changing.
+swaps the bundle without a router changing. There are two bundles, and they are named for
+what they are:
+
+:class:`build_reference_services`
+    the **test double**. Everything is in memory, ``reserve`` answers from a book the
+    process keeps, and nothing is written to a database. It is the default only because the
+    Phase 4 simulation deployment has no database to talk to.
+:class:`build_ledger_services`
+    **the real plane**. ``reserve`` runs the eleven steps of ``technical-build/01``
+    section 9 through :mod:`droneops_reservations.ledger` inside one PostgreSQL
+    transaction, the vote is taken by :mod:`droneops_conflict_checker` over the
+    adjacency-expanded pool, and audit appends chain into ``audit_log``.
 
 ``droneops_api`` never imports ``droneops_persistence`` and never holds a session: the
-contract ``api-has-no-command-path`` in ``.importlinter`` stays KEPT because the only
-thing injected here is a set of protocols.
+contract ``api-has-no-command-path`` in ``.importlinter`` stays KEPT, and it stays KEPT by
+design - the only things injected are protocols and the ledger's own asyncpg store, and the
+one collaborator this module cannot construct for itself (the audit sink) is passed in.
 """
 
 from __future__ import annotations
@@ -16,7 +27,8 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from datetime import datetime
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -24,6 +36,26 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from droneops_conflict_checker import CheckerPolicy, CommittedPlanRecord
+from droneops_reservations.commit import FinalSet
+from droneops_reservations.ledger import (
+    CheckerCommitValidator,
+    LedgerStore,
+    ReservationCommitLedger,
+    utc_now,
+)
+
+from droneops_api.ledger_plane import (
+    AuditChainPort,
+    AuditSink,
+    LedgerMissionPort,
+    LedgerOrderPort,
+    LedgerPlane,
+    LedgerReservationPort,
+    LoopRunner,
+    PlaneWorld,
+    frozen_adjacency,
+)
 from droneops_api.ports import (
     CapabilityDeniedError,
     ControlPlaneError,
@@ -135,7 +167,12 @@ SIMULATION_CREDENTIALS: tuple[tuple[str, Credential], ...] = (
 
 
 def build_reference_services() -> ControlPlaneServices:
-    """The default bundle: one in-memory plane behind every port."""
+    """The simulation bundle: one in-memory plane behind every port.
+
+    This is the test-double plane. It is the default only because the Phase 4 simulation
+    deployment has no database, and nothing that reads this module should mistake it for
+    the production one: :func:`build_ledger_services` is that.
+    """
 
     plane = InMemoryControlPlane(tenants=(TENANT_A, TENANT_B))
     return build_services(plane)
@@ -152,6 +189,127 @@ def build_services(plane: InMemoryControlPlane) -> ControlPlaneServices:
         simulations=ReferenceSimulationPort(plane),
         status=ReferenceStatusPort(plane),
         idempotency=InMemoryIdempotencyLedger(),
+    )
+
+
+class _CommittedRecordPort:
+    """Late binding for the checker's ``committed_records`` port.
+
+    The validator needs a reader the ledger only exposes once it exists, and the ledger
+    needs the validator to exist first. Rather than reach into either object after the fact,
+    the port is a one-method object both can name, and it is bound exactly once, here.
+    Unbound it returns nothing, which is the same answer as the validator's own ``None``
+    default - a pool that was never supplied is not a pool that is empty.
+    """
+
+    def __init__(self) -> None:
+        self._read: Callable[[FinalSet], Sequence[CommittedPlanRecord]] | None = None
+
+    def bind(self, reader: Callable[[FinalSet], Sequence[CommittedPlanRecord]]) -> None:
+        self._read = reader
+
+    def __call__(self, final: FinalSet) -> Sequence[CommittedPlanRecord]:
+        return () if self._read is None else self._read(final)
+
+
+def build_checker_ledger(
+    store: LedgerStore,
+    policy: CheckerPolicy,
+    *,
+    evaluated_at: datetime | None = None,
+    record_pool: bool = True,
+) -> ReservationCommitLedger:
+    """The real ledger, judged by the real checker, over the adjacency-expanded pool.
+
+    Three wirings, each the answer to a gap that was open:
+
+    ``adjacency=frozen_adjacency()``
+        step 8 reads who holds *this* resource **and who holds next door**, so a neighbouring
+        lane or cell reaches the vote instead of being invisible to it.
+    ``committed_records=port``
+        the checker's wider world: committed rows the ledger read but did not put in the
+        final set, grouped per mission. Without it the port keeps its ``None`` default and
+        the checker only ever sees same-key holders.
+    ``record_pool=True``
+        makes the ledger perform that read. Opt-in, because the 100-way stress proofs do not
+        need a second query per commit.
+    """
+    grid = frozen_adjacency()
+    port = _CommittedRecordPort()
+    validator = CheckerCommitValidator(
+        policy,
+        evaluated_at or utc_now(),
+        adjacency=grid,
+        committed_records=port,
+    )
+    ledger = ReservationCommitLedger(
+        store,
+        validator.validate,
+        adjacency=grid,
+        record_pool=record_pool,
+    )
+    port.bind(ledger.committed_records)
+    return ledger
+
+
+def build_ledger_services(
+    *,
+    plane: InMemoryControlPlane,
+    ledger: ReservationCommitLedger,
+    store: LedgerStore,
+    runner: LoopRunner,
+    audit_sink: AuditSink,
+    policy_version: str,
+    clock: Callable[[], datetime] = utc_now,
+) -> ControlPlaneServices:
+    """The production bundle: commits through the ledger, audit through ``audit_log``.
+
+    The commit path is the ledger's, end to end - ``POST /v1/missions/{id}/reserve`` runs
+    the eleven steps and its refusal arrives as the reason code the ledger persisted. The
+    read models with no ledger counterpart yet (fleet, facilities, simulation runs, the
+    status stream, decision traces, telemetry observations and workflow proposals) are still
+    served by the double passed in as ``plane``, and :class:`LedgerMissionPort` says so in
+    its own docstring rather than in a comment here.
+
+    ``audit_sink`` is the one collaborator this module cannot construct: it is
+    ``droneops_persistence.audit_chain.PostgresAuditChain``, and importing it from here would
+    break ``api-has-no-command-path``. A deployment opens it and passes it in, which is what
+    makes this a composition root instead of a god object.
+    """
+    fallback = ReferenceMissionPort(plane)
+    services_plane = LedgerPlane(
+        store,
+        ledger,
+        runner,
+        lambda principal: PlaneWorld(
+            tenant_id=principal.tenant_id,
+            facilities=tuple(
+                (PlaneWorld.facility_id(principal.tenant_id, name), name)
+                for name in ("hub-north", "node-hospital-a", "node-clinic-b")
+            ),
+            config_release_sha=CONFIG_RELEASE_SHA,
+            policy_version=policy_version,
+        ),
+        clock=clock,
+    )
+    audit = AuditChainPort(audit_sink, runner, clock)
+    reference = build_services(plane)
+    return ControlPlaneServices(
+        orders=LedgerOrderPort(services_plane),
+        missions=LedgerMissionPort(
+            services_plane,
+            audit=lambda principal, kind, resource_id, code: audit.append_note(
+                principal, kind, resource_id, code, principal.config_release_sha
+            ),
+            fallback=fallback,
+        ),
+        reservations=LedgerReservationPort(services_plane),
+        fleet=reference.fleet,
+        facilities=reference.facilities,
+        audit=audit,
+        simulations=reference.simulations,
+        status=reference.status,
+        idempotency=reference.idempotency,
     )
 
 

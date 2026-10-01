@@ -1,0 +1,12 @@
+cleared 0 scratch rows from the local container
+[ok] planner_candidates: median=0.002664 p95=0.230020 p99=0.252413 seconds/plan over 120 ops in 21.63s
+[ok] batch_scenarios: median=0.394340 p95=0.399594 p99=0.400061 seconds/scenario over 2 ops in 1.31s
+[ok] checker_set: median=0.029037 p95=0.039195 p99=0.049458 seconds/commit over 30 ops in 3.62s
+
+=== PHASE 3 BENCH TABLE ===
+bench                   median_ms     p95_ms     p99_ms   iters     thr/s  fail  peakRSS_MB status
+planner_candidates          2.664    230.020    252.413     120      5.55     0        None ok
+batch_scenarios           394.340    399.594    400.061       2      1.53     0        None ok
+checker_set                29.037     39.195     49.458      30      8.29     0        None ok
+
+wrote docs\performance\results\phase3-profile.json

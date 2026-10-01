@@ -1,0 +1,20 @@
+cleared 0 scratch rows from the local container
+[ok] planner_candidates: median=0.000522 p95=0.042768 p99=0.056979 seconds/plan over 1000 ops in 16.62s
+[ok] concurrent_commits: median=1.584043 p95=3.180230 p99=3.378594 seconds/commit over 400 ops in 12.13s
+[ok] telemetry_ingest: median=0.001058 p95=0.001504 p99=0.002294 seconds/insert over 3050 ops in 13.72s
+[ok] stale_aircraft: median=0.000293 p95=0.000835 p99=0.000887 seconds/query over 4 ops in 8.92s
+[ok] batch_scenarios: median=0.112411 p95=0.146786 p99=0.152460 seconds/scenario over 20 ops in 2.58s
+[ok] replay_determinism: median=0.016507 p95=0.301667 p99=0.304610 seconds/run over 8 ops in 1.00s
+[ok] checker_set: median=0.030031 p95=0.040650 p99=0.050467 seconds/commit over 30 ops in 3.90s
+
+=== PHASE 3 BENCH TABLE ===
+bench                   median_ms     p95_ms     p99_ms   iters     thr/s  fail  peakRSS_MB status
+planner_candidates          0.522     42.768     56.979    1000     60.17     0        None ok
+concurrent_commits       1584.043   3180.230   3378.594     400     32.97     0        None ok
+telemetry_ingest            1.058      1.504      2.294    3050     222.3     0        None ok
+stale_aircraft              0.293      0.835      0.887       4      0.45     0        None ok
+batch_scenarios           112.411    146.786    152.460      20      7.74     0        None ok
+replay_determinism         16.507    301.667    304.610       8      8.02     0        None ok
+checker_set                30.031     40.650     50.467      30      7.69     0        None ok
+
+wrote docs\performance\results\phase3-bench.json

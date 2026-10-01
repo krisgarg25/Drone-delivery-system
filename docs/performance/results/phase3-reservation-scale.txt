@@ -1,0 +1,218 @@
+Timing is on.
+=== 0. clean any previous bench tenant ===
+SET
+Time: 0.176 ms
+DELETE 0
+Time: 1.056 ms
+DELETE 0
+Time: 0.393 ms
+DELETE 0
+Time: 0.313 ms
+DELETE 0
+Time: 0.468 ms
+DELETE 0
+Time: 0.271 ms
+DELETE 0
+Time: 0.284 ms
+DELETE 0
+Time: 0.291 ms
+DELETE 0
+Time: 0.229 ms
+=== 1. parents: one tenant, two sites, one tail, one config release ===
+INSERT 0 1
+Time: 1.615 ms
+INSERT 0 2
+Time: 6.945 ms
+INSERT 0 1
+Time: 0.901 ms
+INSERT 0 1
+Time: 0.780 ms
+INSERT 0 1
+Time: 0.906 ms
+=== 2. 10,000 orders + missions + committed reservations over 24 h ===
+INSERT 0 10000
+Time: 219.958 ms
+INSERT 0 10000
+Time: 138.218 ms
+INSERT 0 10000
+Time: 709.703 ms
+ reservations_total | committed 
+--------------------+-----------
+              10030 |     10030
+(1 row)
+
+Time: 1.231 ms
+=== 3. index inventory on reservation (is there a GiST over valid_during?) ===
+          index_name          | index_type |                                                                                         definition                                                                                          
+------------------------------+------------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ ix_reservation_mission       | btree      | CREATE INDEX ix_reservation_mission ON public.reservation USING btree (mission_id)
+ ix_reservation_resource_key  | btree      | CREATE INDEX ix_reservation_resource_key ON public.reservation USING btree (resource_key)
+ ix_reservation_tenant_id     | btree      | CREATE INDEX ix_reservation_tenant_id ON public.reservation USING btree (tenant_id)
+ ix_reservation_tenant_window | gist       | CREATE INDEX ix_reservation_tenant_window ON public.reservation USING gist (valid_during)
+ no_committed_overlap         | gist       | CREATE INDEX no_committed_overlap ON public.reservation USING gist (resource_key, valid_during) WHERE (state = ANY (ARRAY['committed'::reservation_state, 'activated'::reservation_state]))
+ per_resource_token           | btree      | CREATE UNIQUE INDEX per_resource_token ON public.reservation USING btree (tenant_id, commitment_token, resource_key)
+ pk_reservation               | btree      | CREATE UNIQUE INDEX pk_reservation ON public.reservation USING btree (id)
+(7 rows)
+
+Time: 1.075 ms
+ANALYZE
+Time: 26.531 ms
+=== 4. the temporal overlap query, EXPLAIN (ANALYZE, BUFFERS) ===
+                                                                   QUERY PLAN                                                                   
+------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=301.90..301.91 rows=1 width=4) (actual time=0.080..0.080 rows=1 loops=1)
+   Buffers: shared hit=11
+   ->  Bitmap Heap Scan on reservation  (cost=13.90..301.34 rows=225 width=0) (actual time=0.047..0.071 rows=225 loops=1)
+         Recheck Cond: (valid_during && '["2027-03-04 12:00:00+00","2027-03-04 12:30:00+00")'::tstzrange)
+         Filter: ((state = ANY ('{committed,activated}'::reservation_state[])) AND ((resource_key)::text = 'corridor:SCALE-BENCH'::text))
+         Heap Blocks: exact=7
+         Buffers: shared hit=11
+         ->  Bitmap Index Scan on ix_reservation_tenant_window  (cost=0.00..13.85 rows=226 width=0) (actual time=0.040..0.040 rows=225 loops=1)
+               Index Cond: (valid_during && '["2027-03-04 12:00:00+00","2027-03-04 12:30:00+00")'::tstzrange)
+               Buffers: shared hit=4
+ Settings: search_path = '"$user", public, topology, tiger'
+ Planning:
+   Buffers: shared hit=75
+ Planning Time: 0.200 ms
+ Execution Time: 0.099 ms
+(15 rows)
+
+Time: 0.688 ms
+=== 5. the same query ten times, timed (index path) ===
+                                                                   QUERY PLAN                                                                    
+-------------------------------------------------------------------------------------------------------------------------------------------------
+ [                                                                                                                                              +
+   {                                                                                                                                            +
+     "Plan": {                                                                                                                                  +
+       "Node Type": "Aggregate",                                                                                                                +
+       "Strategy": "Plain",                                                                                                                     +
+       "Partial Mode": "Simple",                                                                                                                +
+       "Parallel Aware": false,                                                                                                                 +
+       "Async Capable": false,                                                                                                                  +
+       "Startup Cost": 301.90,                                                                                                                  +
+       "Total Cost": 301.91,                                                                                                                    +
+       "Plan Rows": 1,                                                                                                                          +
+       "Plan Width": 4,                                                                                                                         +
+       "Actual Startup Time": 0.080,                                                                                                            +
+       "Actual Total Time": 0.081,                                                                                                              +
+       "Actual Rows": 1,                                                                                                                        +
+       "Actual Loops": 1,                                                                                                                       +
+       "Plans": [                                                                                                                               +
+         {                                                                                                                                      +
+           "Node Type": "Bitmap Heap Scan",                                                                                                     +
+           "Parent Relationship": "Outer",                                                                                                      +
+           "Parallel Aware": false,                                                                                                             +
+           "Async Capable": false,                                                                                                              +
+           "Relation Name": "reservation",                                                                                                      +
+           "Alias": "reservation",                                                                                                              +
+           "Startup Cost": 13.90,                                                                                                               +
+           "Total Cost": 301.34,                                                                                                                +
+           "Plan Rows": 225,                                                                                                                    +
+           "Plan Width": 0,                                                                                                                     +
+           "Actual Startup Time": 0.041,                                                                                                        +
+           "Actual Total Time": 0.072,                                                                                                          +
+           "Actual Rows": 225,                                                                                                                  +
+           "Actual Loops": 1,                                                                                                                   +
+           "Recheck Cond": "(valid_during && '[\"2027-03-04 12:00:00+00\",\"2027-03-04 12:30:00+00\")'::tstzrange)",                            +
+           "Rows Removed by Index Recheck": 0,                                                                                                  +
+           "Filter": "((state = ANY ('{committed,activated}'::reservation_state[])) AND ((resource_key)::text = 'corridor:SCALE-BENCH'::text))",+
+           "Rows Removed by Filter": 0,                                                                                                         +
+           "Exact Heap Blocks": 7,                                                                                                              +
+           "Lossy Heap Blocks": 0,                                                                                                              +
+           "Plans": [                                                                                                                           +
+             {                                                                                                                                  +
+               "Node Type": "Bitmap Index Scan",                                                                                                +
+               "Parent Relationship": "Outer",                                                                                                  +
+               "Parallel Aware": false,                                                                                                         +
+               "Async Capable": false,                                                                                                          +
+               "Index Name": "ix_reservation_tenant_window",                                                                                    +
+               "Startup Cost": 0.00,                                                                                                            +
+               "Total Cost": 13.85,                                                                                                             +
+               "Plan Rows": 226,                                                                                                                +
+               "Plan Width": 0,                                                                                                                 +
+               "Actual Startup Time": 0.037,                                                                                                    +
+               "Actual Total Time": 0.037,                                                                                                      +
+               "Actual Rows": 225,                                                                                                              +
+               "Actual Loops": 1,                                                                                                               +
+               "Index Cond": "(valid_during && '[\"2027-03-04 12:00:00+00\",\"2027-03-04 12:30:00+00\")'::tstzrange)"                           +
+             }                                                                                                                                  +
+           ]                                                                                                                                    +
+         }                                                                                                                                      +
+       ]                                                                                                                                        +
+     },                                                                                                                                         +
+     "Planning Time": 0.059,                                                                                                                    +
+     "Triggers": [                                                                                                                              +
+     ],                                                                                                                                         +
+     "Execution Time": 0.092                                                                                                                    +
+   }                                                                                                                                            +
+ ]
+(1 row)
+
+Time: 0.346 ms
+=== 6. counterfactual: same query with index and bitmap scans disabled ===
+BEGIN
+Time: 0.087 ms
+SET
+Time: 0.084 ms
+SET
+Time: 0.056 ms
+                                                                                                           QUERY PLAN                                                                                                            
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=463.09..463.10 rows=1 width=4) (actual time=1.983..1.983 rows=1 loops=1)
+   Buffers: shared hit=287
+   ->  Seq Scan on reservation  (cost=0.00..462.52 rows=225 width=0) (actual time=0.551..1.969 rows=225 loops=1)
+         Filter: ((valid_during && '["2027-03-04 12:00:00+00","2027-03-04 12:30:00+00")'::tstzrange) AND (state = ANY ('{committed,activated}'::reservation_state[])) AND ((resource_key)::text = 'corridor:SCALE-BENCH'::text))
+         Rows Removed by Filter: 9805
+         Buffers: shared hit=287
+ Planning Time: 0.074 ms
+ Execution Time: 1.996 ms
+(8 rows)
+
+Time: 2.255 ms
+ROLLBACK
+Time: 0.113 ms
+=== 7. the ledger query shape: overlap on one key for one mission window ===
+                                                                  QUERY PLAN                                                                   
+-----------------------------------------------------------------------------------------------------------------------------------------------
+ Bitmap Heap Scan on reservation r  (cost=4.44..111.10 rows=38 width=52) (actual time=0.031..0.057 rows=38 loops=1)
+   Recheck Cond: (valid_during && '["2027-03-04 12:00:00+00","2027-03-04 12:05:00+00")'::tstzrange)
+   Filter: (((resource_key)::text = 'corridor:SCALE-BENCH'::text) AND (state = ANY ('{committed,activated,unresolved}'::reservation_state[])))
+   Heap Blocks: exact=2
+   Buffers: shared hit=5
+   ->  Bitmap Index Scan on ix_reservation_tenant_window  (cost=0.00..4.44 rows=38 width=0) (actual time=0.027..0.027 rows=38 loops=1)
+         Index Cond: (valid_during && '["2027-03-04 12:00:00+00","2027-03-04 12:05:00+00")'::tstzrange)
+         Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=5
+ Planning Time: 0.065 ms
+ Execution Time: 0.067 ms
+(12 rows)
+
+Time: 0.337 ms
+=== 8. exclusion-constraint cost: one overlapping insert must be refused ===
+NOTICE:  EXPECTED: GiST exclusion refused the overlap (conflicting key value violates exclusion constraint "no_committed_overlap");
+DO
+Time: 1.472 ms
+=== 9. cleanup: drop only the bench tenant ===
+DELETE 10000
+Time: 3.536 ms
+DELETE 10000
+Time: 278.810 ms
+DELETE 10000
+Time: 216.177 ms
+DELETE 1
+Time: 15.947 ms
+DELETE 1
+Time: 1.231 ms
+DELETE 2
+Time: 3.618 ms
+DELETE 1
+Time: 1.183 ms
+DELETE 1
+Time: 6.053 ms
+ bench_rows_left 
+-----------------
+               0
+(1 row)
+
+Time: 0.266 ms

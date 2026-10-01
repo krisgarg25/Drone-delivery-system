@@ -1,0 +1,37 @@
+cleared 221 scratch rows from the local container
+[FAILED] reservation_scale: median=nan p95=nan p99=nan seconds/op over 0 ops in 28.32s
+[ok] telemetry_ingest: median=0.001637 p95=0.003942 p99=0.017096 seconds/insert over 3050 ops in 40.27s
+
+=== PHASE 3 BENCH TABLE ===
+bench                   median_ms     p95_ms     p99_ms   iters     thr/s  fail  peakRSS_MB status
+reservation_scale               -          -          -   10000    353.14     0        None FAILED: CheckViolationError: new row for relatio
+telemetry_ingest            1.637      3.942     17.096    3050     75.74     0        None ok
+
+wrote docs\performance\results\phase3-bench-extra.json
+
+reservation_scale trace:
+g\connection.py", line 357, in execute
+    _, status, _ = await self._execute(
+                   ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "C:\Users\krisg\Desktop\Pankaj Tomar\drone\droneops\.venv\Lib\site-packages\asyncpg\connection.py", line 1873, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "C:\Users\krisg\Desktop\Pankaj Tomar\drone\droneops\.venv\Lib\site-packages\asyncpg\connection.py", line 1970, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "C:\Users\krisg\Desktop\Pankaj Tomar\drone\droneops\.venv\Lib\site-packages\asyncpg\connection.py", line 2033, in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 205, in bind_execute
+asyncpg.exceptions.CheckViolationError: new row for relation "order" violates check constraint "ck_order_origin_and_destination_differ"
+DETAIL:  Failing row contains (f8468e8b-0654-4eaf-a599-4a38c308edc0, 66e1a44e-2633-423f-9ddb-c0508e50af43, 55708850154ac02972ab04f116c6c6eb7b2238388658afe6c8805e7ed28b48a5, b4a9087d-209c-49d5-a02f-972e4057986c, b4a9087d-209c-49d5-a02f-972e4057986c, pp-light, routine, 2027-03-04 06:00:00+00, 2027-03-04 11:00:00+00, validated, conflict-0, a06e364c96420f72f9fbcd0dbe29341716bae476802d5bc62f908f0007bc00aa, 2026-10-01 04:03:36.865797+00, null, {}).
+

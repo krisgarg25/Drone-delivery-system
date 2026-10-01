@@ -4,35 +4,61 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DroneOps Console - Simulation Only</title>
+    <meta
+      name="description"
+      content="DroneOps operations console. Synthetic corridors, fleet and reservations for the Chandigarh simulation. Not authorised for flight."
+    />
+    <meta name="color-scheme" content="dark" />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
-    <header class="safety-banner" role="banner">Simulation only. Not authorised for flight.</header>
+    <a class="skip-link" href="#main">Skip to the working area</a>
 
-    <main>
-      <h1>DroneOps operations console</h1>
-      <p class="lede">
-        Phase 0 shows the service boundary only. No scheduling, dispatch or reservation logic lives
-        in the browser; every value below is read from the simulation API.
-      </p>
-
-      <section id="status" aria-live="polite">
-        <h2>Service status</h2>
-        <dl id="status-list">
-          <dt>Loading</dt>
-          <dd>contacting the API</dd>
-        </dl>
-      </section>
-
-      <section id="notice">
-        <p class="disclaimer">
-          Results are synthetic. Corridors, facilities, fleet and weather in this product are
-          experiment inputs, and no displayed state authorises an aircraft.
+    <header id="masthead">
+      <p class="safety-banner" role="banner">Simulation only. Not authorised for flight.</p>
+      <div class="masthead-row">
+        <h1>DroneOps operations console</h1>
+        <p id="transport-badge" class="transport-badge" data-mode="unknown" role="status">
+          contacting the control plane
         </p>
-      </section>
+      </div>
+
+      <aside
+        class="provenance-strip"
+        aria-labelledby="provenance-heading"
+        data-testid="provenance-strip"
+      >
+        <h2 id="provenance-heading">Data provenance</h2>
+        <!-- The e2e smoke test and the demo rules both read this list: scenario id,
+             source, retrieval date and hash must be visible on every screen. -->
+        <dl id="status-list">
+          <dt>loading</dt>
+          <dd>contacting the simulation control plane</dd>
+        </dl>
+      </aside>
+
+      <nav id="primary-nav" role="navigation" aria-label="Console screens"></nav>
+    </header>
+
+    <main id="main" role="main" aria-labelledby="route-heading">
+      <!-- The shell replaces this content per route. Route headings are h2: the h1 above
+           is the product, and every screen descends from it. -->
+      <h2 id="route-heading" tabindex="-1">Loading</h2>
+      <p class="route-summary">
+        Reading the simulation control plane. No scheduling, dispatch or reservation logic runs in
+        this browser; every value is read from the contract-typed API client.
+      </p>
     </main>
 
-    <footer class="safety-banner">Simulation only. Not authorised for flight.</footer>
+    <footer id="colophon">
+      <p class="safety-banner" role="contentinfo">Simulation only. Not authorised for flight.</p>
+      <p class="colophon-note">
+        Corridors, pads, fleet, weather and reservations in this product are experiment inputs from
+        a frozen synthetic bundle. No displayed state authorises an aircraft, and no screen here can
+        command one.
+      </p>
+    </footer>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

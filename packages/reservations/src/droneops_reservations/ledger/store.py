@@ -377,6 +377,40 @@ class LedgerStore:
         )
         return tuple(_reservation(row) for row in rows)
 
+    async def adjacent_holders(
+        self, tx: Transaction, kind: str, identifiers: Sequence[str], start: datetime, end: datetime
+    ) -> tuple[ReservationRow, ...]:
+        """Protected rows on this resource *or on any resource named as its neighbour*.
+
+        One call per claim, so the adjacency expansion cannot be forgotten for the second
+        or third resource a plan claims.
+        """
+        rows = await tx.fetch(
+            sql.SELECT_ADJACENT_HOLDERS,
+            tx.tenant_id,
+            list(PROTECTED_STATE_LIST),
+            kind,
+            list(identifiers),
+            start,
+            end,
+        )
+        return tuple(_reservation(row) for row in rows)
+
+    async def mission_pool_rows(
+        self, tx: Transaction, mission_ids: Sequence[UUID]
+    ) -> tuple[Mapping[str, object], ...]:
+        """Every protected window those missions hold, as checker-ready record rows.
+
+        Grouped by mission rather than by resource, which is what makes the row set a
+        *record pool* and not a second holder read.
+        """
+        if not mission_ids:
+            return ()
+        rows = await tx.fetch(
+            sql.SELECT_MISSION_POOL_ROWS, tx.tenant_id, list(PROTECTED_STATE_LIST), list(mission_ids)
+        )
+        return tuple(dict(row) for row in rows)
+
     async def claim_version(
         self, tx: Transaction, kinds: Sequence[str], identifiers: Sequence[str]
     ) -> tuple[int, int]:

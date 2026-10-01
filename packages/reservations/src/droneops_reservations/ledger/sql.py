@@ -144,6 +144,53 @@ select coalesce(max(xmin::text::bigint), 0) as version, count(*) as holder_count
    and split_part(resource_key, ':', 2) = any($4::text[])
 """
 
+# Step 8, adjacency-expanded form. ``SELECT_CLAIM_HOLDERS`` answers "who already holds
+# *this* resource"; this answers "who holds a resource whose protected volume can reach
+# this one", which is the question the independent checker actually asks. The two differ
+# exactly where the schema's exclusion constraint is blind: a neighbouring lane or cell is
+# a different ``resource_key``, so no index and no constraint can ever pair them, and a
+# windowed key (``volume_cell:V-01:<range>``) does not even match its own identity.
+# ``= any(...)`` carries the requested identifier plus its frozen neighbours, and the
+# window predicate stays: an adjacency two hours away is not a candidate for a contact.
+SELECT_ADJACENT_HOLDERS = """
+select r.id::text as reservation_id,
+       r.mission_id::text as mission_id,
+       r.resource_key,
+       r.state::text as state,
+       lower(r.valid_during) as valid_from,
+       upper(r.valid_during) as valid_until,
+       p.profile_json::text as profile_json,
+       p.route_hash,
+       p.config_release_sha
+  from reservation r
+  left join plan_version p on p.mission_id = r.mission_id and p.tenant_id = r.tenant_id
+ where r.tenant_id = $1
+   and r.state::text = any($2::text[])
+   and split_part(r.resource_key, ':', 1) = $3
+   and split_part(r.resource_key, ':', 2) = any($4::text[])
+   and r.valid_during && tstzrange($5, $6, '[)')
+ order by r.resource_key, lower(r.valid_during), r.id
+"""
+
+# The committed-record pool the checker's ``committed_records`` port is handed. Grouped by
+# mission, not by resource: one plan claims several windows, and a mission's second
+# resource must not be presented to the checker as somebody else's conflict. Read inside
+# the commit transaction, which is safe because the rows this transaction has not yet
+# promoted are ``tentative`` and the predicate asks only for protected states.
+SELECT_MISSION_POOL_ROWS = """
+select r.resource_key,
+       r.mission_id::text as mission_id,
+       r.state::text as state,
+       p.route_hash,
+       p.profile_json::text as profile_json
+  from reservation r
+  left join plan_version p on p.mission_id = r.mission_id and p.tenant_id = r.tenant_id
+ where r.tenant_id = $1
+   and r.state::text = any($2::text[])
+   and r.mission_id = any($3::uuid[])
+ order by p.route_hash, r.mission_id, r.resource_key
+"""
+
 SELECT_COMMITTED_OVERLAPPING = """
 select r.id::text as reservation_id,
        r.mission_id::text as mission_id,
@@ -339,6 +386,7 @@ __all__ = [
     "MISSING_LOCKED_RESOURCE",
     "PROMOTE_RESERVATIONS",
     "REGISTER_RESOURCE",
+    "SELECT_ADJACENT_HOLDERS",
     "SELECT_CLAIM_HOLDERS",
     "SELECT_CLAIM_VERSION",
     "SELECT_COMMITTED_OVERLAPPING",
@@ -346,6 +394,7 @@ __all__ = [
     "SELECT_DECISION_FOR_MISSION",
     "SELECT_EVENTS_FOR_MISSION",
     "SELECT_MISSION_BY_ORDER",
+    "SELECT_MISSION_POOL_ROWS",
     "SELECT_MISSION_ROWS",
     "SELECT_NEXT_EVENT_SEQ",
     "SELECT_ORDER",

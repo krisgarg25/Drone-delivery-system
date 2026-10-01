@@ -1,0 +1,35 @@
+cleared 11003 scratch rows from the local container
+[FAILED] reservation_scale: median=nan p95=nan p99=nan seconds/op over 0 ops in 26.40s
+
+=== PHASE 3 BENCH TABLE ===
+bench                   median_ms     p95_ms     p99_ms   iters     thr/s  fail  peakRSS_MB status
+reservation_scale               -          -          -   10000    378.84     0        None FAILED: CheckViolationError: new row for relatio
+
+wrote docs\performance\results\phase3-bench-reservations.json
+
+reservation_scale trace:
+g\connection.py", line 357, in execute
+    _, status, _ = await self._execute(
+                   ^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "C:\Users\krisg\Desktop\Pankaj Tomar\drone\droneops\.venv\Lib\site-packages\asyncpg\connection.py", line 1873, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+    ...<7 lines>...
+    )
+    ^
+  File "C:\Users\krisg\Desktop\Pankaj Tomar\drone\droneops\.venv\Lib\site-packages\asyncpg\connection.py", line 1970, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+  File "C:\Users\krisg\Desktop\Pankaj Tomar\drone\droneops\.venv\Lib\site-packages\asyncpg\connection.py", line 2033, in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 205, in bind_execute
+asyncpg.exceptions.CheckViolationError: new row for relation "order" violates check constraint "ck_order_origin_and_destination_differ"
+DETAIL:  Failing row contains (00b20a26-0101-43ab-8a5e-ab9a60c2b7a5, 06bac25a-8ed4-44db-bbb7-fba9f1b8c794, ef90d3b741dea98284afeda81959df417a294f0d08d021ede98155a12590a9a2, fcb54306-7942-49b6-85c3-694e97d8149e, fcb54306-7942-49b6-85c3-694e97d8149e, pp-light, routine, 2027-03-04 06:00:00+00, 2027-03-04 11:00:00+00, validated, conflict-0, 6e3dead4ad39b437b0b474de1a3537e127747e4ad65bb4952b94d4aaa01eb69d, 2026-10-01 04:05:15.588579+00, null, {}).
+

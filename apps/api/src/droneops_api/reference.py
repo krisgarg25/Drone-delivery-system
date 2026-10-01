@@ -1,4 +1,4 @@
-"""Reference control plane: the documented surface, real rules, no database.
+"""TEST DOUBLE - the documented surface, real rules, no database. Not the production plane.
 
 This module exists so the contract is *true* rather than *described*. It is a faithful
 in-memory implementation of the workflow the ledger runs inside PostgreSQL:
@@ -15,9 +15,16 @@ in-memory implementation of the workflow the ledger runs inside PostgreSQL:
 * the plan is a proposal, and only ``reserve`` commits. Nothing in this module touches an
   aircraft: there is no such operation to reach.
 
-A production deployment injects :mod:`droneops_reservations.ledger` and the
-persistence-backed read models in place of these classes. The routers cannot tell the
-difference, which is the point: ``droneops_api`` never imports ``droneops_persistence``.
+DO NOT CONFUSE THIS WITH THE COMMIT PATH. ``InMemoryControlPlane.reserve`` answers from a
+list this process keeps; it does not run the eleven steps and nothing it returns is backed
+by a ``reservation`` row. The real plane is :mod:`droneops_api.ledger_plane` - and the production bundle is
+:func:`droneops_api.composition.build_ledger_services`, which injects
+:mod:`droneops_reservations.ledger` for commits and ``audit_log`` for the audit trail.
+This module stays because the contract surface, the decision vocabulary and the read models
+(fleet, facilities, simulation runs, the status stream) are genuinely useful as a double,
+and because the simulation deployment has no database to talk to. The routers cannot tell
+the two planes apart, which is the point: ``droneops_api`` never imports
+``droneops_persistence``.
 """
 
 from __future__ import annotations

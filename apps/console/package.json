@@ -7,18 +7,28 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
     "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "lint": "eslint . && prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "generate:types": "openapi-typescript ../../contracts/openapi/v1.yaml --output src/generated/api-types.ts",
+    "check:generated": "node scripts/check-generated.mjs",
+    "audit:contrast": "node scripts/audit-contrast.mjs",
+    "build:synthetic-data": "python scripts/build_synthetic_dataset.py"
   },
   "dependencies": {
+    "@deck.gl/core": "9.4.0",
+    "@deck.gl/layers": "9.4.0",
+    "@deck.gl/mapbox": "9.4.0",
     "maplibre-gl": "5.6.2"
   },
   "devDependencies": {
     "@eslint/js": "9.34.0",
+    "@types/geojson": "7946.0.16",
     "@types/maplibre-gl": "1.14.0",
     "eslint": "9.34.0",
     "globals": "16.3.0",
+    "openapi-typescript": "7.13.0",
     "prettier": "3.6.2",
     "typescript": "5.9.2",
     "typescript-eslint": "8.41.0",

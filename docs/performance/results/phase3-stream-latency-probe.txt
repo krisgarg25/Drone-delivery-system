@@ -1,0 +1,7 @@
+
+  [32m[1mVITE[22m v7.1.3[39m  [2mready in [0m[1m203[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5199[22m/[39m
+vite http_code/time: 404 0.005858s
+=== API SSE ROUTE PROBE ===
+api http_code/time: 404 0.002507s

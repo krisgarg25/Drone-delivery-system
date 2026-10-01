@@ -38,9 +38,10 @@ def _scalar(value: object) -> object:
     if isinstance(value, uuid.UUID):
         return str(value)
     if isinstance(value, datetime):
-        if value.tzinfo is None or value.utcoffset() is None:
+        if value.tzinfo is None:
             raise ValueError("audit timestamps must be timezone-aware UTC")
-        if value.utcoffset().total_seconds() != 0:
+        offset = value.utcoffset()
+        if offset is None or offset.total_seconds() != 0:
             raise ValueError("audit timestamps must be UTC")
         return value.strftime("%Y-%m-%dT%H:%M:%S.") + f"{value.microsecond:06d}Z"
     if isinstance(value, (float,)):

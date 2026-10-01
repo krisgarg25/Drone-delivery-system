@@ -1,0 +1,312 @@
+/*
+ * The map region: canvas, legend, layer toggles, tooltip and the text twin that keeps the
+ * canvas from being the only place the data exists.
+ *
+ * Simulation only. Not authorised for flight.
+ */
+
+@layer map {
+  .map-region {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(26rem, 34%);
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  .map-root {
+    position: relative;
+    grid-column: 1;
+    min-height: 34rem;
+    height: min(70vh, 46rem);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--map-basemap);
+  }
+
+  .map-canvas {
+    position: absolute;
+    inset: 0;
+  }
+
+  .map-canvas canvas {
+    outline: none;
+  }
+
+  .map-canvas:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: -3px;
+  }
+
+  .map-model-badge {
+    position: absolute;
+    z-index: 3;
+    top: var(--space-3);
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    border: var(--border-width-thick) dashed var(--state-synthetic);
+    border-radius: var(--radius);
+    background: var(--surface-0);
+    color: var(--state-synthetic);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    max-width: min(90%, 40rem);
+    text-align: center;
+  }
+
+  .map-model-badge::before {
+    content: "◆ ";
+  }
+
+  .map-attribution {
+    position: absolute;
+    z-index: 3;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-1) var(--space-3);
+    background: color-mix(in srgb, var(--surface-0) 88%, transparent);
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+    border-top: 1px solid var(--rule);
+  }
+
+  .map-tip {
+    position: absolute;
+    z-index: 6;
+    max-width: 26rem;
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--rule-strong);
+    border-left-width: var(--border-width-thick);
+    border-radius: var(--radius);
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    box-shadow: var(--shadow-2);
+    pointer-events: none;
+    white-space: pre-wrap;
+  }
+
+  .map-tip strong {
+    display: block;
+    margin-bottom: var(--space-1);
+  }
+
+  /* The canvas twin: same numbers, as text, for a screen reader or a keyboard-only
+     operator who cannot see which layer is lit. */
+  .map-summary {
+    grid-column: 1 / -1;
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: 1.7;
+    max-height: 12rem;
+    overflow: auto;
+  }
+
+  .legend {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    background: var(--surface-1);
+    padding: var(--space-4);
+    max-height: min(70vh, 46rem);
+    overflow: auto;
+  }
+
+  .legend h3 {
+    margin-bottom: var(--space-2);
+  }
+
+  .legend-intro {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    margin-bottom: var(--space-4);
+  }
+
+  .legend-list {
+    display: grid;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+
+  .legend-item {
+    display: grid;
+    grid-template-columns: 2.25rem 1fr;
+    gap: var(--space-1) var(--space-2);
+    align-items: start;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .legend-swatch {
+    grid-row: span 2;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--swatch);
+    border: 2px solid var(--swatch);
+    border-top-style: dashed;
+    border-top-color: var(--swatch);
+    border-radius: var(--radius);
+    font-size: 1.1rem;
+    font-weight: 800;
+    background: repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--swatch) 22%, transparent) 0 3px,
+      transparent 3px 6px
+    );
+  }
+
+  .legend-tag {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--swatch);
+    margin-left: var(--space-2);
+  }
+
+  .legend-meaning,
+  .legend-dash {
+    grid-column: 2;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+  }
+
+  .legend-dash {
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+  }
+
+  .layer-toggles {
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    padding: var(--space-3);
+    margin: 0;
+  }
+
+  .layer-toggles legend {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--text-muted);
+    padding: 0 var(--space-1);
+  }
+
+  .layer-toggle {
+    display: grid;
+    grid-template-columns: 1.25rem 1fr;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    border-top: 1px solid var(--rule);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  .layer-toggle:first-of-type {
+    border-top: 0;
+  }
+
+  .layer-toggle input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--state-committed);
+    margin-top: 2px;
+  }
+
+  .layer-toggle strong {
+    display: block;
+    color: var(--text-primary);
+  }
+
+  .layer-source,
+  .layer-channel,
+  .layer-warning {
+    display: block;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+
+  .layer-channel {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+
+  .layer-warning {
+    color: var(--state-uncertain);
+    border-left: var(--border-width-thick) solid var(--state-rejected);
+    padding-left: var(--space-2);
+    margin-top: var(--space-1);
+  }
+
+  .maplibregl-ctrl-group {
+    background: var(--surface-2) !important;
+    border: 1px solid var(--rule-strong) !important;
+  }
+
+  .maplibregl-ctrl-group button {
+    color: var(--text-primary) !important;
+  }
+
+  .maplibregl-ctrl-attrib {
+    background: color-mix(in srgb, var(--surface-0) 80%, transparent) !important;
+    color: var(--text-secondary) !important;
+    font-size: var(--text-xs) !important;
+  }
+
+  .maplibregl-ctrl-attrib a {
+    color: var(--link) !important;
+  }
+}
+
+@media (max-width: 62rem) {
+  .map-region {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .legend {
+    grid-column: 1;
+    grid-row: auto;
+    max-height: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No data state is allowed to travel: uncertainty appears in place or not at all. */
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .map-region {
+    grid-template-columns: 1fr;
+  }
+}
