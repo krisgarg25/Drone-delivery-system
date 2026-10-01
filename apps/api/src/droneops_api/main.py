@@ -1,11 +1,20 @@
+"""Process entry point for the control plane.
+
+``create_app`` in :mod:`droneops_api.composition` is the composition root: it injects the
+ports the routers call. This module instantiates it for ``uvicorn`` and keeps the Phase 0
+``/v1/simulated-orders`` endpoint alive until the Phase 4 ``/v1/orders`` surface fully
+replaces it. :mod:`scripts.openapi_gate` lists that route as legacy: command-free,
+reviewed, and not allowed to gain new responsibilities.
+"""
+
 from __future__ import annotations
 
 import uuid
 from typing import Annotated
 
-from fastapi import FastAPI, Header, HTTPException, Request, Response
-from pydantic import BaseModel
+from fastapi import Header, HTTPException, Request, Response
 
+from droneops_api.composition import create_app
 from droneops_contracts import (
     AltitudeReference,
     MissionStatus,
@@ -15,48 +24,8 @@ from droneops_contracts import (
 from droneops_core_domain import create_simulated_mission, transition_mission
 from droneops_platform import get_clock
 
-APP_TITLE = "DroneOps Phase 1 API"
-APP_VERSION = "0.1.0"
-PHASE_NOTE = "Simulation only. This service contains no aircraft command path."
-
-
-class HealthResponse(BaseModel):
-    status: str
-    phase: str
-    authorized_for_flight: bool
-    detail: str
-
-
-class VersionResponse(BaseModel):
-    version: str
-    api_version: str
-    domain_schema_version: int
-
-
-app = FastAPI(
-    title=APP_TITLE,
-    version=APP_VERSION,
-    description=PHASE_NOTE,
-    openapi_tags=[
-        {"name": "operational-support", "description": "Simulated planning and audit workflows."},
-    ],
-)
+app = create_app()
 app.state.missions = {}
-
-
-@app.get("/health", response_model=HealthResponse, tags=["operational-support"])
-def health() -> HealthResponse:
-    return HealthResponse(
-        status="ok",
-        phase="phase-1-simulation",
-        authorized_for_flight=False,
-        detail=PHASE_NOTE,
-    )
-
-
-@app.get("/version", response_model=VersionResponse, tags=["operational-support"])
-def version() -> VersionResponse:
-    return VersionResponse(version=APP_VERSION, api_version="v1", domain_schema_version=1)
 
 
 @app.post(
@@ -81,12 +50,15 @@ def create_simulated_order(
 
     key = idempotency_key or payload.idempotency_key
     if not key:
-        raise HTTPException(status_code=422, detail="Idempotency-Key header or body key is required")
+        raise HTTPException(
+            status_code=422, detail="Idempotency-Key header or body key is required"
+        )
 
-    store = request.app.state.missions
+    store: dict[str, SimulatedOrderResponse] = request.app.state.missions
     if key in store:
         response.status_code = 200
-        return store[key]
+        replayed: SimulatedOrderResponse = store[key]
+        return replayed
 
     mission_id = uuid.uuid4()
     created = create_simulated_mission(
@@ -101,7 +73,7 @@ def create_simulated_order(
     # Phase 0 records a decision without inventing route, energy or airspace facts.
     transition_mission(created, MissionStatus.ELIGIBLE)
 
-    response = SimulatedOrderResponse(
+    simulated = SimulatedOrderResponse(
         mission_id=mission_id,
         status=created.status,
         phase="phase-1-simulation",
@@ -109,5 +81,5 @@ def create_simulated_order(
         source_kind="simulated_order_acceptance",
         notes="No aircraft, pad, corridor, weather or regulatory source was consulted.",
     )
-    store[key] = response
-    return response
+    store[key] = simulated
+    return simulated

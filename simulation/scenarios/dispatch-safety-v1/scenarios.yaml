@@ -1,0 +1,108 @@
+scenario_id: dispatch-safety-v1
+title: >-
+  Phase 3 dispatch safety scenarios: a battery that cannot recover, a priority that
+  arrives on the ground, and a priority that asks something already airborne
+schema_version: 1
+authoritative: false
+synthetic_flags:
+  fleet: true
+  demand: true
+  weather: true
+
+scenarios:
+  battery-shortfall:
+    failure_being_tested: mission reject and alternate aircraft
+    human_description: >-
+      Three tails are offered for a long, heavy mission. One is in maintenance, one
+      starts at a charge that cannot carry the outbound leg plus handover plus
+      recovery plus reserve, and one has enough. The mission must go to the third:
+      never to the aircraft that cannot get home, and never to the one that is not
+      even assignable.
+    machine_input:
+      as_of_us: 0
+      mission:
+        payload_g: 900
+        outbound_mm: 12000000
+        handover_mm: 200000
+        recovery_mm: 9000000
+        climb_mm: 90000
+        turnaround_us: 300000000
+        deadline_us: 2700000000
+      fleet:
+        - {aircraft_id: ac-offline,    status: offline,     charge_bp: 10000}
+        - {aircraft_id: ac-maintenance, status: maintenance, charge_bp: 10000}
+        - {aircraft_id: ac-flat,       status: available,   charge_bp: 1500}
+        - {aircraft_id: ac-fit,        status: available,   charge_bp: 9000}
+      weather: calm, 0 dm/s sustained, 0 gust
+    expected_invariant: >-
+      I4 (complete mission including recovery and reserve) and I5 (the candidate
+      query excludes offline and maintenance rather than ranking them last). The
+      assigned aircraft is ac-fit and nothing else; ac-flat is refused with a named
+      breaking term and a signed negative margin in the record.
+    expected_metrics:
+      assigned: 1
+      rejected: 0
+      queued: 0
+      exclusions: 2
+      energy_rejections: 1
+      assigned_aircraft: ac-fit
+    what_this_does_not_prove: >-
+      Nothing about a real battery's voltage curve, a real aircraft's recovery
+      behaviour or real wind. The energy basis is the illustrative airframe-x-sim
+      profile, so the margin numbers rank candidates; they do not certify an aircraft.
+
+  priority-arrival:
+    failure_being_tested: unlaunched resequencing
+    human_description: >-
+      A routine mission has been waiting longest and a life-critical mission arrives.
+      The queue must put the life-critical mission ahead of the unlaunched routine
+      work, and the routine mission must still be present afterwards - resequenced,
+      not cancelled, not deleted, still holding its place in the record.
+    machine_input:
+      routine_mission: {mission_id: m-routine, priority: routine, arrived_at_us: 0, deadline_us: 3600000000}
+      second_routine: {mission_id: m-routine-2, priority: routine, arrived_at_us: 600000000, deadline_us: 3600000000}
+      arriving: {mission_id: m-medlab, priority: life_critical, arrived_at_us: 900000000, deadline_us: 1800000000}
+      starvation_bound_us: 900000000
+      aging_step_us: 300000000
+    expected_invariant: >-
+      The arriving mission takes the head of the unlaunched queue; both routine
+      missions remain queued with their identifiers intact and their status
+      unchanged; the record names the rank each one moved from and to.
+    expected_metrics:
+      queue_length_after: 3
+      head_mission: m-medlab
+      routine_still_queued: 2
+      missions_deleted: 0
+    what_this_does_not_prove: >-
+      That a life-critical mission can be flown at all - it still needs an eligible
+      aircraft, an energy margin and a pad. Priority changes order, never feasibility.
+
+  priority-airborne-request:
+    failure_being_tested: proposal, refusal and delay
+    human_description: >-
+      A mission is already activated with an aircraft airborne. A commercial SLA
+      mission arrives and "needs" that slot. The dispatcher may not delete, displace
+      or downgrade the airborne commitment: it may only produce a preview that an
+      operator accepts, declines, or lets expire. Decline and expiry both leave the
+      airborne mission exactly where it was, and no payment tier turns an SLA into an
+      emergency.
+    machine_input:
+      airborne: {mission_id: m-air, priority: routine, status: activated, aircraft_id: ac-03}
+      arriving: {mission_id: m-sla, priority: commercial_sla, arrived_at_us: 600000000, deadline_us: 1800000000}
+      preview_expires_at_us: 1200000000
+      operator: {identity: op-1, role: flight_operations_officer, reason: reviewed alternative, second_factor: true}
+    expected_invariant: >-
+      Section 12 (priority may not displace an airborne commitment) and section 13
+      (proposal -> preview -> explicit acceptance, decline or expiry). The SLA cannot
+      even draft the proposal; a life-critical mission can draft one and it stays
+      pending until an operator with a second factor and an idempotent token accepts
+      it. command_issued is always false.
+    expected_metrics:
+      airborne_commitment_intact: true
+      proposals_generated_for_sla: 0
+      proposals_generated_for_life_critical: 1
+      missions_deleted: 0
+    what_this_does_not_prove: >-
+      Nothing about an operator actually flying a changed plan. The dispatcher holds
+      no vehicle link, so an accepted proposal is a recorded intent for the ledger
+      and the pilot in command, not an executed change.

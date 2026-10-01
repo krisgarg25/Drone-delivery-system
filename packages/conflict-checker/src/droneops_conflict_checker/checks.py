@@ -41,6 +41,7 @@ from typing import Final, Literal
 from droneops_geom_core import GeomCoreError, Interval
 
 from . import geometry
+from .candidates import select_adjacent_candidates
 from .policy import AllowRuleSet, CheckerPolicy
 from .records import (
     CommittedPlanRecord,
@@ -132,6 +133,24 @@ class Disagreement:
 
 
 @dataclass(frozen=True)
+class Admission:
+    """Why a committed record with no key in common was put into the set at all.
+
+    Selection is an argument, and an argument that is not written down cannot be audited:
+    a reviewer looking at a refused commit has to be able to see which rule admitted the
+    pair, from :mod:`~droneops_conflict_checker.candidates`, rather than take the
+    verdict on trust.
+    """
+
+    pair: str
+    rule: str
+    detail: str
+
+    def as_text(self) -> str:
+        return f"{self.pair}: admitted by {self.rule} ({self.detail})"
+
+
+@dataclass(frozen=True)
 class ConflictReport:
     """The batch answer over a committed reservation set."""
 
@@ -145,6 +164,7 @@ class ConflictReport:
     policy_authoritative: bool
     evaluated_at: datetime
     basis: Basis
+    admission: tuple[Admission, ...] = ()
 
     @property
     def blocks_release(self) -> bool:
@@ -162,7 +182,8 @@ class ConflictReport:
 
     def release_blockers(self) -> tuple[str, ...]:
         """Every reason the set may not be released, sorted, in one list."""
-        found: list[str] = [item.explain() for item in self.violations if item.blocked]
+        blocked = [item for item in self.violations if item.blocked]
+        found: list[str] = [item.explain() for item in blocked]
         found.extend(
             f"DISAGREEMENT {item.subject}: planner {item.planner_verdict} / checker "
             f"{item.checker_verdict} ({item.kind})"
@@ -173,6 +194,10 @@ class ConflictReport:
             f"UNVERIFIABLE RECORD {plan}: "
             + "; ".join(reason.as_text() for reason in reasons)
             for plan, reasons in self.defects
+        )
+        blocked_pairs = {item.subject for item in blocked}
+        found.extend(
+            f"ADMITTED {item.as_text()}" for item in self.admission if item.pair in blocked_pairs
         )
         return tuple(sorted(found))
 
@@ -820,6 +845,7 @@ def check_set(
     basis: Basis = "CONTINUOUS",
     step_us: int | None = None,
     rules: AllowRuleSet | None = None,
+    pool: Sequence[CommittedPlanRecord] = (),
 ) -> ConflictReport:
     """Every pair of a committed reservation set, and the full violation list.
 
@@ -831,6 +857,14 @@ def check_set(
     A record the checker cannot evaluate is never dropped: it appears in ``defects`` and
     it blocks the release, because "we could not check row 7" is not the statement
     "row 7 is clear", and only the second one releases airspace.
+
+    ``pool`` is the optional wider world: committed records the caller knows exist but did
+    not put in the set, usually because the set was built by resource identity and these
+    rows hold a *different* key. Which of them join is decided by
+    :mod:`~droneops_conflict_checker.candidates` - same key, adjacent lane, adjacent cell
+    or overlapping protected volume - and every admitted record is paired against the set
+    and reported with the rule that admitted it. An empty pool is today's behaviour
+    exactly: the set is the set.
     """
     holding = sorted(
         (record for record in records if record.holds_airspace),
@@ -843,6 +877,35 @@ def check_set(
             key=lambda item: item[0],
         )
     )
+    selection = select_adjacent_candidates(holding, pool, context) if pool else None
+    nearby: tuple[CommittedPlanRecord, ...] = ()
+    admission: tuple[Admission, ...] = ()
+    if selection is not None:
+        admitted = set(selection.records)
+        nearby = tuple(
+            sorted(
+                (
+                    record
+                    for record in pool
+                    if record.holds_airspace and record.plan_version in admitted
+                ),
+                key=lambda record: (record.plan_version, record.mission_id),
+            )
+        )
+        admission = tuple(
+            sorted(
+                (
+                    Admission(
+                        pair="|".join(sorted((item.subject or "-", item.plan_version or "-"))),
+                        rule=rule,
+                        detail=item.detail,
+                    )
+                    for item in selection.included
+                    for rule in item.rules
+                ),
+                key=lambda item: (item.pair, item.rule),
+            )
+        )
     violations: list[Violation] = []
     disagreements: list[Disagreement] = []
     verdicts: list[Verdict] = []
@@ -855,8 +918,17 @@ def check_set(
             disagreement = _disagreement_of(left, right, answer)
             if disagreement is not None:
                 disagreements.append(disagreement)
+    for left in holding:
+        for right in nearby:
+            answer = check_pair(left, right, context, basis=basis, step_us=step_us, rules=rules)
+            verdicts.append(answer.verdict)
+            if answer.verdict != "SAFE":
+                violations.append(_violation_of(answer))
+            disagreement = _disagreement_of(left, right, answer)
+            if disagreement is not None:
+                disagreements.append(disagreement)
     return ConflictReport(
-        records_checked=len(holding),
+        records_checked=len(holding) + len(nearby),
         pairs_checked=len(verdicts),
         verdict=worst(verdicts),
         violations=tuple(sorted(violations, key=lambda item: item.subject)),
@@ -866,6 +938,7 @@ def check_set(
         policy_authoritative=context.policy.authoritative,
         evaluated_at=context.evaluated_at,
         basis=basis,
+        admission=admission,
     )
 
 

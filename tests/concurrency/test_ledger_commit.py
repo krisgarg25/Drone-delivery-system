@@ -19,11 +19,14 @@ from collections.abc import Sequence
 import pytest
 from ledger_support import (
     BASE,
+    LANE_TRACKS,
+    CheckerRig,
     World,
     add_order,
     aircraft,
     candidate,
     cell_claim,
+    checker_rig,
     command,
     corridor_claim,
     make_ledger,
@@ -44,7 +47,6 @@ from droneops_reservations.ledger import (
     ReservationCommitLedger,
 )
 from droneops_reservations.ledger.store import ReservationRow
-from droneops_reservations.ledger.validators import CheckerCommitValidator
 
 pytestmark = pytest.mark.concurrency
 
@@ -77,6 +79,11 @@ async def _rows(store: LedgerStore, tenant_id: uuid.UUID, mission_id: uuid.UUID)
 async def _decisions(store: LedgerStore, tenant_id: uuid.UUID, mission_id: uuid.UUID) -> Sequence[object]:
     async with store.transaction(tenant_id) as tx:
         return await store.decisions(tx, mission_id)
+
+
+async def _events(store: LedgerStore, tenant_id: uuid.UUID, mission_id: uuid.UUID) -> Sequence[object]:
+    async with store.transaction(tenant_id) as tx:
+        return await store.events(tx, mission_id)
 
 
 # ------------------------------------------------------------------ the happy path
@@ -188,24 +195,33 @@ async def test_one_commitment_token_cannot_buy_two_orders(
 
 # ------------------------------------------------------------------ the checker votes
 async def test_a_planner_approved_pair_the_checker_does_not_clear_is_never_committable(
-    store: LedgerStore, world: World, checker_validator: CheckerCommitValidator
+    store: LedgerStore, world: World, checker_validator: CheckerRig
 ) -> None:
     """The Phase 2 "do not proceed" condition, executed rather than asserted in a comment.
 
-    Two plans over the same minutes and the same ground track, one per adjacent lane. The
-    interval view - which is what planner-side bucketing by resource key sees - calls that
-    SAFE, because the two rows hold *different* resource keys. The independent checker,
-    which sweeps the pair on its own construction, does not clear it. The ledger commits
-    only after the checker's answer, so the disagreement is decided against the plan.
+    Two plans over the same minutes, one on each of two adjacent lanes. The interval view -
+    which is what planner-side bucketing by resource key sees - calls that SAFE, because the
+    two rows hold *different* resource keys. The independent checker, which sweeps the pair
+    on its own construction and admits it by adjacency rather than by key, does not clear
+    it. The ledger commits only after the checker's answer, so the disagreement is decided
+    against the plan.
     """
-    checker_ledger = make_ledger(store, checker_validator)
+    rig = checker_validator
+    checker_ledger = make_ledger(store, rig.validator)
     first = await checker_ledger.commit(
         world.context(), command(world, "adjacent-first", claims=(corridor_claim(world.corridor, 6),))
     )
     assert first.committed is True, first.explained
     assert first.checker is not None and first.checker.verdict is Verdict.SAFE
 
-    plan = candidate("adjacent-second", "AC-002", (corridor_claim(world.other_corridor, 6),), profile(6))
+    assert await rig.pool.refresh() == 1, "the committed lane is the record the checker has to find"
+
+    plan = candidate(
+        "adjacent-second",
+        "AC-002",
+        (corridor_claim(world.other_corridor, 6),),
+        profile(6, lane=world.other_corridor),
+    )
     interval_view = IntervalCommitValidator().validate(
         FinalSet(
             requested=plan.ordered_claims(),
@@ -248,6 +264,93 @@ async def test_a_planner_approved_pair_the_checker_does_not_clear_is_never_commi
     ]
     stored = decisions[-1].rejected_json
     assert str(stored).find("checker") != -1 or stored["checker"] is not None
+
+
+async def test_two_missions_on_adjacent_lanes_that_share_no_resource_key_are_convicted_by_the_checker(
+    store: LedgerStore, checker_policy: CheckerPolicy
+) -> None:
+    """The gap the corridor exclusion constraint structurally cannot see, closed end to end.
+
+    ``no_committed_overlap`` indexes on ``resource_key WITH =``, so a plan on ``C-01`` and a
+    plan on ``C-02`` are two different strings and never collide in the index - and step 8's
+    holder read is keyed the same way, so the pair is never even assembled. This test puts
+    two missions on adjacent lanes, on *different* corridor keys, over the same minutes, with
+    ground tracks that are 19 m apart: inside each other's protected reach, and nowhere near
+    identical. The planner's interval answer is SAFE, the checker admits the pair by lane
+    adjacency and convicts it, the ledger refuses to promote, and the refusal is persisted
+    with its reason code and the checker's own evidence.
+
+    The second half is the convexity check: a third lane that is neither declared adjacent
+    nor within reach still commits, so what this proves is adjacency, not a blanket refusal.
+    """
+    lanes = await seed_world(
+        store, checker_policy, corridors=("C-01", "C-02", "C-03"), cells=("V-01", "V-02", "V-03")
+    )
+    rig = checker_rig(store, lanes, checker_policy)
+    ledger = make_ledger(store, rig.validator)
+
+    held = await ledger.commit(
+        lanes.context(), command(lanes, "lane-held", claims=(corridor_claim("C-01", 44),))
+    )
+    assert held.committed is True, held.explained
+    assert await rig.pool.refresh() == 1
+    assert LANE_TRACKS["C-01"] != LANE_TRACKS["C-02"], "the lanes must not share a ground track"
+
+    neighbour = candidate(
+        "lane-neighbour", "AC-002", (corridor_claim("C-02", 44),), profile(44, lane="C-02")
+    )
+    order_id, key = await add_order(store, lanes)
+    refusal = await ledger.commit(
+        lanes.context(),
+        command(
+            lanes,
+            "lane-neighbour",
+            candidates=(neighbour,),
+            aircraft_candidates=(aircraft("AC-002"),),
+            order_id=order_id,
+            idempotency_key=key,
+        ),
+    )
+
+    assert refusal.committed is False, "an adjacent lane with no key in common was let through"
+    assert refusal.code is RejectionCode.CHECKER_CONFLICT, refusal.explained
+    assert refusal.checker is not None
+    assert refusal.checker.verdict is Verdict.CONFLICT
+    assert refusal.checker.planner_disagreement is True, "the checker agreed with the planner, not overruled it"
+    assert (refusal.checker.records_checked, refusal.checker.pairs_checked) == (2, 1)
+    admitted = [line for line in refusal.checker.reasons if line.startswith("ADMITTED")]
+    assert admitted, refusal.checker.reasons
+    assert any("ADJACENT_LANE" in line and "C-02~C-01" in line for line in admitted), admitted
+    assert not any("SHARED_KEY" in line for line in admitted), admitted
+    assert any("OVERLAPPING_VOLUME" in line for line in admitted), admitted
+
+    assert await _rows(store, lanes.tenant_id, refusal.mission_id) == (), "a refusal wrote airspace"
+    decisions = await _decisions(store, lanes.tenant_id, refusal.mission_id)
+    assert decisions[-1].reason_codes == (RejectionCode.CHECKER_CONFLICT.value,)
+    assert [event.event_type for event in await _events(store, lanes.tenant_id, refusal.mission_id)] == [
+        "conflict.detected"
+    ]
+    evidence = str(decisions[-1].rejected_json)
+    assert "checker" in evidence and "ADJACENT_LANE" in evidence, evidence[:400]
+
+    far_away = candidate("lane-far", "AC-003", (corridor_claim("C-03", 44),), profile(44, lane="C-03"))
+    far_order, far_key = await add_order(store, lanes)
+    allowed = await ledger.commit(
+        lanes.context(),
+        command(
+            lanes,
+            "lane-far",
+            candidates=(far_away,),
+            aircraft_candidates=(aircraft("AC-003"),),
+            order_id=far_order,
+            idempotency_key=far_key,
+        ),
+    )
+    assert allowed.committed is True, allowed.explained
+    assert allowed.checker is not None and allowed.checker.pairs_checked == 0, (
+        "the far lane was admitted, so adjacency is not just a refusal of everything"
+    )
+    assert await ledger.policy_violations(lanes.context()) == ()
 
 
 async def test_unproven_blocks_promotion_even_when_the_plan_is_otherwise_clean(
@@ -548,17 +651,15 @@ async def test_no_command_surface_reaches_the_ledger() -> None:
 
 # ------------------------------------------------------------------ fixtures
 @pytest.fixture
-def checker_validator(
-    checker_policy: CheckerPolicy, world: World
-) -> CheckerCommitValidator:
+def checker_validator(store: LedgerStore, world: World, checker_policy: CheckerPolicy) -> CheckerRig:
     """The real adversarial checker, with the seeded lanes declared adjacent.
 
     ``adjacency`` is the lane map the world model would supply. Naming C-01 and C-02 as
     neighbours is what gives the checker's adjacent-corridor inspection something to
     compare; with no lane map it reasons only from geometry.
+
+    ``pool`` is the second half of the wiring: the committed rows the ledger's own recheck
+    does not hand over, because they hold a *different* resource key. What joins the set
+    under examination is decided by the checker, on adjacency - not by this reader.
     """
-    return CheckerCommitValidator(
-        checker_policy,
-        BASE,
-        adjacency={world.corridor: (world.other_corridor,), world.other_corridor: (world.corridor,)},
-    )
+    return checker_rig(store, world, checker_policy)

@@ -1,0 +1,79 @@
+scenario_id: dispatch-competition-v1
+title: >-
+  Routing-strategy competition: direct, lane-based and hybrid routing under one
+  identical demand, one weather trace, one fleet, one capacity set and one seed list
+schema_version: 1
+authoritative: false
+synthetic_flags:
+  demand: true
+  weather: true
+  fleet: true
+  facilities: true
+  obstacles_require_survey: true
+
+strategies:
+  - constraint_aware_direct
+  - hybrid
+  - structured_corridor
+
+# Repetitions are seeds, and the comparison refuses to run with fewer than the
+# dispatcher's published minimum (MIN_COMPARISON_REPETITIONS).
+seeds:
+  - 20261001
+  - 20261002
+  - 20261003
+  - 20261004
+  - 20261005
+  - 20261006
+  - 20261007
+  - 20261008
+  - 20261009
+  - 20261010
+  - 20261011
+  - 20261012
+  - 20261013
+  - 20261014
+  - 20261015
+  - 20261016
+  - 20261017
+  - 20261018
+  - 20261019
+  - 20261020
+  - 20261021
+
+# Held constant across all three arms, per seed. The comparison raises
+# WeakenedBaselineError if any arm is given a different value for any of these.
+held_constant:
+  demand: orders are generated from one seed and every arm receives the same requests
+  weather: one frozen trace from chandigarh-synthetic-v1/weather.yaml
+  aircraft_states: battery charge per order is drawn from the seed once, then shared
+  seed: every arm receives the seed itself in its PlanRequest
+  cutoff: one completion cutoff per seed for all arms
+  energy_profiles: airframe-x-sim@illustrative-1 for every aircraft in every arm
+  pad_capacity: declared hub pads from chandigarh-synthetic-v1/facilities.yaml
+  crew_capacity: declared crew slots from the same document
+  solver_workers: 1
+
+report:
+  statistics: median and spread over the seed list, never a single run
+  metrics:
+    - completed
+    - late
+    - unserved
+    - rejected
+    - energy_wh
+    - mean_lateness_us
+    - pad_wait_us
+    - crossings
+    - cost_units
+
+human_expectation: >-
+  All three strategies see exactly the same world. Whichever strategy wins on median
+  energy or median lateness must win without anyone having shrunk the fleet, the pads
+  or the deadline of the others, and the report must state the number of repetitions
+  it is summarising.
+what_this_does_not_prove: >-
+  Nothing about which routing approach is better for real Chandigarh airspace, real
+  aircraft or real demand. The demand, weather, hubs and corridors are synthetic and
+  the energy basis is an illustrative profile, so the comparison ranks the three
+  strategies inside this simulation only. Simulation only. Not authorised for flight.

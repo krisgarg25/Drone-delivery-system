@@ -15,6 +15,7 @@ deadlock by letting the driver raise has not handled anything: the caller cannot
 from __future__ import annotations
 
 import asyncio
+import os
 import random
 import uuid
 from collections import Counter
@@ -49,6 +50,79 @@ async def _gate(ready: asyncio.Event) -> None:
     """Every attempt waits here, then is released in the same instant."""
     ready.set()
     await ready.wait()
+
+
+UNGRANTED_LOCKS = """
+select l.pid, l.locktype, l.mode
+  from pg_locks l
+ where not l.granted
+   and l.pid <> pg_backend_pid()
+   and l.locktype in ('transactionid', 'tuple', 'advisory')
+"""
+
+LOCK_WAITERS = """
+select pid, wait_event, state
+  from pg_stat_activity
+ where wait_event_type = 'Lock'
+   and pid <> pg_backend_pid()
+"""
+
+
+class ContentionProbe:
+    """Counts backends that were genuinely *waiting on a lock* while the ledger committed.
+
+    The question this answers is the one a concurrency test cannot ask of itself: did any
+    two transactions ever queue? Elapsed time cannot say (a fast machine settles a lock
+    wait in microseconds), and neither can the ledger's own receipts. So the answer is read
+    out of the server - ungranted ``pg_locks`` rows and ``pg_stat_activity`` lock wait
+    events - from a third connection, sampled while the commits are in flight.
+
+    A row-level ``SELECT ... FOR UPDATE`` queue shows up as an ungranted *transactionid*
+    lock, not a relation lock, which is why the predicate names lock types rather than
+    trusting ``pg_locks.relation``. ``waits`` counts samples in which at least one backend
+    was blocked; ``distinct_waiters`` counts the blocked backends themselves.
+
+    The instrument reports what it saw, including nothing: ``samples`` and ``waits`` are
+    asserted on, because a contention test that never contended is worse than no test - it
+    reads as proof of the thing it never checked.
+    """
+
+    def __init__(self, dsn: str, *, interval: float = 0.001) -> None:
+        self._dsn = dsn
+        self._interval = interval
+        self.samples = 0
+        self.waits = 0
+        self.peak_waiters = 0
+        self._waiting_backends: set[int] = set()
+
+    @property
+    def distinct_waiters(self) -> int:
+        return len(self._waiting_backends)
+
+    async def run(self, stop: asyncio.Event) -> None:
+        connection = await asyncpg.connect(self._dsn, timeout=10)
+        try:
+            while True:
+                ungranted = await connection.fetch(UNGRANTED_LOCKS)
+                waiting = await connection.fetch(LOCK_WAITERS)
+                self.samples += 1
+                self._waiting_backends.update(row["pid"] for row in ungranted)
+                self._waiting_backends.update(row["pid"] for row in waiting)
+                blocked = len(ungranted) + len(waiting)
+                if blocked:
+                    self.waits += 1
+                    self.peak_waiters = max(self.peak_waiters, blocked)
+                if stop.is_set():
+                    return
+                await asyncio.sleep(self._interval)
+        finally:
+            await connection.close()
+
+    def summary(self) -> str:
+        return (
+            f"samples={self.samples} waited={self.waits} peak_waiters={self.peak_waiters} "
+            f"distinct_blocked_backends={self.distinct_waiters}"
+        )
 
 
 async def test_one_hundred_simultaneous_commits_over_one_corridor(
@@ -135,36 +209,77 @@ async def _gate_then(
 async def test_lock_inversion_produces_no_deadlock_and_a_valid_final_set(
     store: LedgerStore, world: World, postgres_dsn: str
 ) -> None:
-    """Two commits that list the same resources in opposite order, plus the control.
+    """Two commits that list the same resources in opposite order, on separate connections.
 
-    The inversion is real: the control half of this test locks the same two rows in
-    submission order from two connections and PostgreSQL reports ``DeadlockDetectedError``.
-    The ledger half runs the same two requests through the ledger, where step 7 re-sorts
-    into the canonical order, and asserts zero deadlocks and a valid final set. Without the
-    control, "no deadlock" could just mean "nothing actually contended".
+    Three things have to be true together, and none of them is implied by the others.
+
+    **The two requests must actually contend.** They ask for overlapping windows on the
+    same corridor row and the same volume-cell row, from two different orders and two
+    different pooled connections, released from one gate. ``ContentionProbe`` samples
+    ``pg_locks`` and ``pg_stat_activity`` from a third connection while they are in flight
+    and the test fails if no backend was ever blocked - because a run that observed nothing
+    proved nothing, and "no deadlock" on an idle database is not a result.
+
+    **No deadlock may escape to the caller.** Step 7 re-sorts into the canonical total
+    order, so the queue drains in one direction only.
+
+    **The final set must still be valid.** Exactly one of the two wins the window, the
+    other is refused with a ledger-chosen reason, and the database is asked - not told -
+    whether any two protected rows overlap.
+
+    The control at the end runs the same two rows through raw connections in *submission*
+    order and must deadlock, which is what makes the ledger half's zero deadlocks a fact
+    about lock order rather than an absence of contention.
     """
     both = (corridor_claim(world.corridor, 30), cell_claim(world.volume_cell, 30))
     reversed_claims = (both[1], both[0])
+    demands = await add_orders(store, world, 2)
 
-    ledger_a = make_ledger(store)
-    ledger_b = make_ledger(store)
+    probe = ContentionProbe(postgres_dsn)
+    stop = asyncio.Event()
+    sampler = asyncio.create_task(probe.run(stop))
     ready = asyncio.Event()
-    first = asyncio.create_task(_commit_after(ready, ledger_a, world, "invert-a", both))
-    second = asyncio.create_task(_commit_after(ready, ledger_b, world, "invert-b", reversed_claims))
+    first = asyncio.create_task(
+        _contended_commit(ready, make_ledger(store), world, "invert-a", both, *demands[0])
+    )
+    second = asyncio.create_task(
+        _contended_commit(ready, make_ledger(store), world, "invert-b", reversed_claims, *demands[1])
+    )
     await asyncio.sleep(0)
     ready.set()
     results = await asyncio.gather(first, second, return_exceptions=True)
+    stop.set()
+    await sampler
 
     deadlocks = [item for item in results if isinstance(item, asyncpg.DeadlockDetectedError)]
     errors = [item for item in results if isinstance(item, BaseException)]
-    assert deadlocks == []
+    assert deadlocks == [], f"a deadlock escaped the ledger to the caller: {deadlocks[:2]!r}"
     assert errors == [], f"unexpected database errors: {errors[:3]!r}"
+
+    assert probe.samples >= 5, f"the contention sampler barely ran ({probe.summary()})"
+    assert probe.waits >= 1, (
+        "the inverted pair never contended for a row lock, so this test proved only that "
+        f"the database was idle ({probe.summary()})"
+    )
+    if os.environ.get("DRONEOPS_CONTENTION_REPORT"):
+        print(f"contention observed: {probe.summary()}")
+
     receipts = [item for item in results if not isinstance(item, BaseException)]
-    assert sum(1 for item in receipts if item.committed) == 2 or {
-        item.code for item in receipts if not item.committed
-    } <= REASONED
-    violations = await ledger_a.policy_violations(world.context())
-    assert violations == ()
+    assert len(receipts) == 2
+    committed = [item for item in receipts if item.committed]
+    refused = [item for item in receipts if not item.committed]
+    assert len(committed) == 1, f"two commitments over one window: {[item.code for item in receipts]!r}"
+    assert {item.code for item in refused} <= REASONED, {item.code for item in refused}
+    assert committed[0].lock_order == (f"corridor:{world.corridor}", f"volume_cell:{world.volume_cell}"), (
+        "the ledger locked in submission order, not the canonical order"
+    )
+
+    violations = await make_ledger(store).policy_violations(world.context())
+    assert violations == (), f"the final committed set overlaps: {violations[:3]}"
+    async with store.transaction(world.tenant_id) as tx:
+        rows = [row for row in await store.mission_rows(tx, committed[0].mission_id)]
+    assert len({row.resource_key for row in rows}) == len(rows) == 2, [row.resource_key for row in rows]
+    assert {row.state for row in rows} == {"committed"}
 
     control_deadlocks = 0
     for _ in range(4):
@@ -173,7 +288,24 @@ async def test_lock_inversion_produces_no_deadlock_and_a_valid_final_set(
         )
     assert control_deadlocks >= 3, (
         "the inverted-order control did not deadlock, so the inversion above proves "
-        f"nothing (deadlocks={control_deadlocks})"
+        f"nothing (deadlocks={control_deadlocks}, contention={probe.summary()})"
+    )
+
+
+async def _contended_commit(
+    ready: asyncio.Event,
+    ledger: ReservationCommitLedger,
+    world: World,
+    token: str,
+    claims,
+    order_id: uuid.UUID,
+    idempotency_key: str,
+):
+    """One commit off the gate, on its own order and its own pooled connection."""
+    await ready.wait()
+    return await ledger.commit(
+        world.context(),
+        command(world, token, claims=claims, order_id=order_id, idempotency_key=idempotency_key),
     )
 
 
@@ -185,7 +317,13 @@ async def _commit_after(ready: asyncio.Event, ledger: ReservationCommitLedger, w
 async def _inverted_manual_lock_round(
     dsn: str, tenant_id: uuid.UUID, left: str, right: str
 ) -> int:
-    """One round of deliberately inverted manual locking: 1 if Postgres deadlocked."""
+    """One round of deliberately inverted manual locking: 1 if Postgres deadlocked.
+
+    The count is taken from what each half *reported*, not from what escaped: ``hold``
+    catches the victim's ``DeadlockDetectedError`` so the round can be scored, and an
+    earlier version of this function looked only at the escaped exceptions - which is how a
+    round that deadlocked every time came to be recorded as zero deadlocks.
+    """
 
     async def hold(connection: asyncpg.Connection, first: str, second: str) -> int:
         async with connection.transaction():
@@ -212,9 +350,11 @@ async def _inverted_manual_lock_round(
     finally:
         await a.close()
         await b.close()
-    if any(isinstance(item, asyncpg.DeadlockDetectedError) for item in results):
+    scored = [item for item in results if isinstance(item, int)]
+    escaped = [item for item in results if isinstance(item, BaseException)]
+    if any(isinstance(item, asyncpg.DeadlockDetectedError) for item in escaped):
         return 1
-    return 0
+    return 1 if any(item == 1 for item in scored) else 0
 
 
 async def test_twenty_simultaneous_duplicates_of_one_request_commit_once(

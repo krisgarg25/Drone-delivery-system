@@ -25,7 +25,7 @@ which blocks. Dropping it would turn "we did not check this" into "this is clear
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
@@ -65,6 +65,55 @@ def _instant(value: object) -> datetime:
         return value if value.tzinfo is not None else value.replace(tzinfo=timezone.utc)
     parsed = datetime.fromisoformat(str(value))
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
+
+
+def _text(value: object, field: str) -> str:
+    """A JSON string, refused rather than coerced if it is not one.
+
+    A payload whose altitude reference is a number is a corrupt record, and
+    ``AltitudeReference(str(3))`` would turn that corruption into a different,
+    confidently wrong error several layers away.
+    """
+    if not isinstance(value, str):
+        raise ValueError(f"profile payload field {field} is {type(value).__name__}, not text")
+    return value
+
+
+def _measurement(value: object, field: str) -> float:
+    """A JSON number as a float, with the type narrowed where it is read.
+
+    ``float(object)`` is what mypy --strict refuses, and the refusal is the point: a
+    payload row is untyped JSON, so the check has to happen at this boundary rather than
+    as a cast that promises a type nobody verified. A numeric *string* is accepted because
+    ``jsonb`` round-trips can hand one back; a bool is not, because ``True`` as a
+    coordinate is a defect and not a position.
+    """
+    if isinstance(value, bool):
+        raise ValueError(f"profile payload field {field} is a boolean, not a measurement")
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        return float(value)
+    raise ValueError(f"profile payload field {field} is {type(value).__name__}, not a measurement")
+
+
+def _whole(value: object, field: str) -> int:
+    """A JSON number as an integer, refusing a value with a fractional part.
+
+    Declared speed is in whole millimetres per second; ``int(11_999.7)`` would silently
+    restate a corrupt payload as a legal one.
+    """
+    if isinstance(value, bool):
+        raise ValueError(f"profile payload field {field} is a boolean, not a count")
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if not value.is_integer():
+            raise ValueError(f"profile payload field {field} is {value}, which is not whole")
+        return int(value)
+    if isinstance(value, str):
+        return int(value)
+    raise ValueError(f"profile payload field {field} is {type(value).__name__}, not a count")
 
 
 @dataclass(frozen=True)
@@ -112,11 +161,11 @@ class PlanRecordPayload:
             points=tuple(
                 ProfileSample(
                     at=_instant(row[0]),
-                    lat_deg=float(row[1]),
-                    lon_deg=float(row[2]),
-                    altitude_m=float(row[3]),
-                    altitude_reference=AltitudeReference(str(row[4])),
-                    speed_mm_per_s=int(row[5]),
+                    lat_deg=_measurement(row[1], "lat_deg"),
+                    lon_deg=_measurement(row[2], "lon_deg"),
+                    altitude_m=_measurement(row[3], "altitude_m"),
+                    altitude_reference=AltitudeReference(_text(row[4], "altitude_reference")),
+                    speed_mm_per_s=_whole(row[5], "speed_mm_per_s"),
                 )
                 for row in _rows(payload.get("points", ()))
                 if len(row) == 6
@@ -193,6 +242,14 @@ class CheckerCommitValidator:
     The candidate about to be committed is evaluated in the state it *would* hold,
     alongside every existing protected holder rebuilt from its own stored plan points, and
     the whole set goes to ``check_set`` together.
+
+    ``committed_records`` is the checker's wider world: a read-only source of *committed*
+    records the caller knows exist but did not put in the final set, because the set was
+    built by resource identity and those rows hold a different key. Which of them join the
+    examination is decided inside the checker - same key, adjacent lane, adjacent cell, or
+    protected volumes that reach - so a pair sharing no resource key can still be convicted
+    here. It is a port, not a database handle: this package still holds no session, and the
+    source must return only rows the database has committed.
     """
 
     name = "droneops_conflict_checker"
@@ -207,6 +264,7 @@ class CheckerCommitValidator:
         body_half_height_mm: int = 750,
         adjacency: Mapping[str, Sequence[str]] | None = None,
         rules: AllowRuleSet | None = None,
+        committed_records: Callable[[FinalSet], Sequence[CommittedPlanRecord]] | None = None,
     ) -> None:
         self._policy = policy
         self._context = EvaluationContext(
@@ -215,6 +273,7 @@ class CheckerCommitValidator:
         self._body_radius_mm = body_radius_mm
         self._body_half_height_mm = body_half_height_mm
         self._rules = rules
+        self._committed_records = committed_records
 
     @property
     def policy_version(self) -> str:
@@ -226,7 +285,8 @@ class CheckerCommitValidator:
             self._record_from_candidate(final),
             *(self._record_from_holder(holder, final) for holder in final.holders),
         ]
-        report = check_set(records, self._context, rules=self._rules)
+        pool = () if self._committed_records is None else tuple(self._committed_records(final))
+        report = check_set(records, self._context, rules=self._rules, pool=pool)
         blocked = [item for item in report.violations if item.blocked]
         if not report.blocks_release:
             verdict = Verdict.SAFE
