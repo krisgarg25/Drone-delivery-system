@@ -17,17 +17,7 @@ import uuid
 from collections.abc import Sequence
 
 import pytest
-from droneops_contracts import AircraftStatus
-from droneops_conflict_checker import CheckerPolicy
-
-from droneops_reservations.commit import AllowRule, FinalSet, ValidationOutcome
-from droneops_reservations.errors import RejectionCode
-from droneops_reservations.intake import Verdict
-from droneops_reservations_ledger import IntervalCommitValidator, LedgerStore, ReservationCommitLedger
-from droneops_reservations_ledger.store import ReservationRow
-from droneops_reservations_ledger.validators import CheckerCommitValidator
-
-from conftest import (
+from ledger_support import (
     BASE,
     World,
     add_order,
@@ -42,6 +32,19 @@ from conftest import (
     seed_world,
     window,
 )
+
+from droneops_conflict_checker import CheckerPolicy
+from droneops_contracts import AircraftStatus
+from droneops_reservations.commit import AllowRule, FinalSet, ValidationOutcome
+from droneops_reservations.errors import RejectionCode
+from droneops_reservations.intake import Verdict
+from droneops_reservations.ledger import (
+    IntervalCommitValidator,
+    LedgerStore,
+    ReservationCommitLedger,
+)
+from droneops_reservations.ledger.store import ReservationRow
+from droneops_reservations.ledger.validators import CheckerCommitValidator
 
 pytestmark = pytest.mark.concurrency
 
@@ -214,6 +217,7 @@ async def test_a_planner_approved_pair_the_checker_does_not_clear_is_never_commi
     )
     assert interval_view.verdict is Verdict.SAFE
 
+    second_order, second_key = await add_order(store, world)
     receipt = await checker_ledger.commit(
         world.context(),
         command(
@@ -221,6 +225,8 @@ async def test_a_planner_approved_pair_the_checker_does_not_clear_is_never_commi
             "adjacent-second",
             candidates=(plan,),
             aircraft_candidates=(aircraft("AC-002"),),
+            order_id=second_order,
+            idempotency_key=second_key,
         ),
     )
 
@@ -259,7 +265,9 @@ async def test_unproven_blocks_promotion_even_when_the_plan_is_otherwise_clean(
         decisions = await store.decisions(tx, receipt.mission_id)
     assert [event.event_type for event in events] == ["checker.verdictRecorded"]
     assert decisions[-1].reason_codes == (RejectionCode.CHECKER_UNPROVEN.value,)
-    assert decisions[-1].rejected_json["rejections"][0]["detail"].startswith("no altitude reference")
+    assert "no altitude reference" in decisions[-1].rejected_json["rejections"][0]["detail"], (
+        "the checker's own reason must be persisted verbatim, not paraphrased away"
+    )
 
 
 async def test_an_allow_rule_promotes_only_when_both_sides_name_the_same_version(
@@ -271,7 +279,9 @@ async def test_an_allow_rule_promotes_only_when_both_sides_name_the_same_version
 
     unnamed = await make_ledger(store, granting).commit(world.context(), command(world, "allow-unnamed", slot=8))
     assert unnamed.committed is False
-    assert unnamed.code is RejectionCode.ALLOW_RULE_UNMATCHED
+    # The checker's answer is a conflict; an exception the request never named cannot be
+    # used to clear it, so the refusal carries the conflict code and says so in the detail.
+    assert unnamed.code is RejectionCode.CHECKER_CONFLICT
 
     wrong_version = await make_ledger(store, granting).commit(
         world.context(), command(world, "allow-wrong", slot=8, allow_rule=("AR-014", "2"))
@@ -331,16 +341,21 @@ async def test_offline_and_maintenance_aircraft_are_excluded_not_ranked_last(
 ) -> None:
     """I5: the candidate query removes them, so they cannot appear as eligible at all."""
     ledger = make_ledger(store)
+    planes = (
+        aircraft("AC-OFF", status=AircraftStatus.OFFLINE),
+        aircraft("AC-MNT", status=AircraftStatus.MAINTENANCE),
+        aircraft("AC-OK", lateness_us=5),
+    )
+    elig_claims = (corridor_claim(world.corridor, 12),)
     receipt = await ledger.commit(
         world.context(),
         command(
             world,
             "elig-1",
             slot=12,
-            aircraft_candidates=(
-                aircraft("AC-OFF", status=AircraftStatus.OFFLINE),
-                aircraft("AC-MNT", status=AircraftStatus.MAINTENANCE),
-                aircraft("AC-OK", lateness_us=5),
+            aircraft_candidates=planes,
+            candidates=tuple(
+                candidate(f"cand-{plane.aircraft_id}", plane.aircraft_id, elig_claims, profile(12)) for plane in planes
             ),
         ),
     )
@@ -386,8 +401,16 @@ async def test_an_unresolved_reservation_still_protects_the_air_space(
         (f"corridor:{world.corridor}", "unresolved")
     ]
 
+    second_order, second_key = await add_order(store, world)
     blocked = await ledger.commit(
-        world.context(), command(world, "i3-second", claims=(corridor_claim(world.corridor, 14),))
+        world.context(),
+        command(
+            world,
+            "i3-second",
+            claims=(corridor_claim(world.corridor, 14),),
+            order_id=second_order,
+            idempotency_key=second_key,
+        ),
     )
     assert blocked.committed is False
     assert blocked.code is RejectionCode.UNRESOLVED_PROTECTION
@@ -396,10 +419,18 @@ async def test_an_unresolved_reservation_still_protects_the_air_space(
         world.context(), f"corridor:{world.corridor}", *window(14).as_datetimes()
     )
     assert [holder.state for holder in holders] == ["unresolved"]
-    assert await ledger.policy_violations(world.context()) == []
+    assert await ledger.policy_violations(world.context()) == ()
 
+    later_order, later_key = await add_order(store, world)
     later = await ledger.commit(
-        world.context(), command(world, "i3-later", claims=(corridor_claim(world.corridor, 40),))
+        world.context(),
+        command(
+            world,
+            "i3-later",
+            claims=(corridor_claim(world.corridor, 40),),
+            order_id=later_order,
+            idempotency_key=later_key,
+        ),
     )
     assert later.committed is True, "an unresolved row protects its window, not the calendar"
 
@@ -422,7 +453,7 @@ async def test_cancellation_after_a_commitment_loses_the_race_deterministically(
         assert await store.mission_status(tx, first.mission_id) == "accepted"
         codes = [code for decision in await store.decisions(tx, first.mission_id) for code in decision.reason_codes]
     assert codes[-1] == RejectionCode.CANCEL_REFUSED_ALREADY_COMMITTED.value
-    assert await ledger.policy_violations(world.context()) == []
+    assert await ledger.policy_violations(world.context()) == ()
 
 
 async def test_cancellation_before_a_commitment_is_recorded_and_the_commit_refuses(

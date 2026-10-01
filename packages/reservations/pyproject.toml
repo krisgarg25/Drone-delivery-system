@@ -18,14 +18,12 @@ requires = ["uv_build>=0.11,<1"]
 build-backend = "uv_build"
 
 [tool.uv.build-backend]
-# Two top-level modules by design. `.importlinter`'s domain-is-pure contract forbids
-# droneops_reservations from importing asyncpg or droneops_persistence, so the SQL half of
-# the ledger is a sibling module in the same distribution instead of a submodule that
-# would break the boundary. See droneops_reservations_ledger.__doc__.
-module-paths = [
-  "src/droneops_reservations",
-  "src/droneops_reservations_ledger",
-]
+# One import root, as ``technical-build/02-repository-layout.md`` section 4 specifies: the
+# SQL half of the ledger is the ``droneops_reservations.ledger`` subpackage. ``.importlinter``'s
+# ``domain-is-pure`` contract forbids fastapi, sqlalchemy, httpx and droneops_persistence from
+# ``droneops_reservations`` - not asyncpg - so the database half staying inside the package is
+# what the contracts actually require, and it keeps the boundary guards covering the ledger too.
+module-paths = ["src/droneops_reservations"]
 
 [tool.uv.sources]
 droneops-contracts = { workspace = true }

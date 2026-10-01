@@ -14,10 +14,12 @@ from pathlib import Path
 import pytest
 from droneops_adapters_weather_meteostat import (
     CrossCheckResult,
+    LiveFetchAuthorisation,
     StationReport,
     Verdict,
     cross_check_snapshot,
     report_from_payload,
+    request_report,
 )
 
 from droneops_energy import Freshness, snapshot_from_rows
@@ -134,6 +136,89 @@ def test_results_are_plain_frozen_values() -> None:
     assert isinstance(result, CrossCheckResult)
     with pytest.raises(dataclasses.FrozenInstanceError):
         result.verdict = Verdict.AGREES  # type: ignore[misc]
+
+
+# ------------------------------------------------------------------- the live path
+class _RecordingTransport:
+    """The only way anything reaches the network here: a transport handed in."""
+
+    def __init__(self, body: dict[str, object]) -> None:
+        self.body = body
+        self.calls = 0
+        self.url = ""
+
+    def get(self, url: str, _params: dict[str, str]) -> dict[str, object]:
+        self.calls += 1
+        self.url = url
+        return self.body
+
+
+AUTH = LiveFetchAuthorisation(authorised_by="kris", purpose="out-of-band bundle capture")
+
+
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        ({"data": {"hourly": {"wspd": [18.0, 21.6]}}}, ((0, 50), (60, 60))),
+        ({"wind_speed": [18.0, 21.6]}, ((0, 50), (60, 60))),
+    ],
+    ids=["nested under data", "bare hourly rows"],
+)
+def test_a_live_fetch_freezes_through_the_one_shared_unit_conversion(
+    body: dict[str, object], expected: tuple[tuple[int, int], ...]
+) -> None:
+    """18 km/h has to become 50 dm/s on the live path too, or the cross-check lies.
+
+    The live fetch reuses ``report_from_payload`` rather than carrying a second
+    conversion: a trace in dm/s compared against a station record still in km/h
+    would report agreement as contradiction and vice versa.
+    """
+    transport = _RecordingTransport(body)
+    frozen = request_report(
+        transport,
+        AUTH,
+        station_id="VCG-1",
+        start_iso="2026-10-01",
+        end_iso="2026-10-02",
+        retrieved_at_us=RETRIEVED_US,
+    )
+
+    assert transport.calls == 1, "the fetch is explicit, not implicit"
+    assert transport.url.startswith("https://meteostat.net/pub/met/v1/station/VCG-1?")
+    assert tuple(frozen.speeds_dmps) == expected
+    assert frozen.authoritative is False
+    assert cross_check_snapshot(snapshot(50), frozen).verdict is Verdict.AGREES
+
+
+def test_a_simulation_cannot_authorise_a_live_cross_check() -> None:
+    """Replay uses the frozen bundle; only a named human authoriser may fetch."""
+    with pytest.raises(EnergyError, match="may not authorise a live cross-check"):
+        LiveFetchAuthorisation(authorised_by="sim-runner", purpose="replay", for_simulation=True)
+    with pytest.raises(EnergyError, match="authoriser"):
+        LiveFetchAuthorisation(authorised_by="", purpose="")
+
+
+def test_a_live_body_that_will_not_freeze_is_a_refused_fetch() -> None:
+    """One error type at the boundary, whatever the freeze step objected to."""
+    transport = _RecordingTransport({"data": {"nothing": []}})
+    with pytest.raises(EnergyError, match="unusable"):
+        request_report(
+            transport,
+            AUTH,
+            station_id="VCG-1",
+            start_iso="2026-10-01",
+            end_iso="2026-10-02",
+            retrieved_at_us=RETRIEVED_US,
+        )
+    with pytest.raises(EnergyError, match="station id"):
+        request_report(
+            transport,
+            AUTH,
+            station_id="",
+            start_iso="2026-10-01",
+            end_iso="2026-10-02",
+            retrieved_at_us=RETRIEVED_US,
+        )
 
 
 NETWORK_MODULES = {"httpx", "socket", "urllib", "requests", "ssl", "aiohttp", "subprocess"}

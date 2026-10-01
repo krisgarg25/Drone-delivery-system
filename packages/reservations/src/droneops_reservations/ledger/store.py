@@ -233,7 +233,7 @@ class LedgerStore:
     Nothing in here decides anything. Every method reads, locks or writes exactly one
     thing and returns it, so that the decision logic stays in
     ``droneops_reservations`` and the ordering of calls stays in
-    :class:`~droneops_reservations_ledger.service.ReservationCommitLedger`.
+    :class:`~droneops_reservations.ledger.service.ReservationCommitLedger`.
     """
 
     def __init__(self, dsn: str, *, pool_max: int = 8, statement_cache_size: int = 0) -> None:

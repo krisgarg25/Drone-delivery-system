@@ -13,7 +13,7 @@ from typing import Final, Protocol
 
 from droneops_energy.errors import EnergyError
 
-from .cross_check import StationReport
+from .cross_check import ReportError, StationReport, report_from_payload
 
 #: Pinned endpoint version: an unpinned version would let a provider redefine a field.
 METEOSTAT_API_VERSION: Final = "v1"
@@ -83,20 +83,21 @@ def request_report(
     """Fetch a station record and freeze it into a cross-check report."""
     url = station_url(station_id, start_iso=start_iso, end_iso=end_iso)
     body = transport.get(url, {"station": station_id})
-    hourly: object = body.get("data", body)
-    if not isinstance(hourly, Mapping):
-        raise FetchRefusedError("station payload has no hourly object")
     del authorisation  # recorded by the caller at the fetch boundary, not used here
-    return StationReport.from_rows(
-        tuple((index * 60, int(speed)) for index, speed in enumerate(_speeds(dict(hourly)))),
-        station=station_id,
-        source=SOURCE_CLASS,
-        retrieved_at_us=retrieved_at_us,
-    )
-
-
-def _speeds(hourly: Mapping[str, object]) -> list[object]:
-    values = hourly.get("wspd") or hourly.get("wind_speed")
-    if not isinstance(values, (list, tuple)):
-        raise FetchRefusedError("station payload returned no wind-speed series")
-    return list(values)
+    envelope: object = body.get("data", body)
+    if not isinstance(envelope, Mapping):
+        raise FetchRefusedError("station payload has no hourly object")
+    # The unit conversion is not re-derived here: Meteostat reports kilometres per
+    # hour and the frozen trace is in decimetres per second, so a second conversion
+    # at the fetch site is how the two sources end up silently comparing different
+    # units. Whatever shape the provider wraps its rows in, they go through the same
+    # freeze path a stored bundle goes through.
+    rows: Mapping[str, object] = envelope if "hourly" in envelope else {"hourly": envelope}
+    try:
+        return report_from_payload(
+            dict(rows), station=station_id, retrieved_at_us=retrieved_at_us, source=SOURCE_CLASS
+        )
+    except ReportError as exc:
+        # A body that will not freeze is a refused fetch: the live boundary hands out
+        # one error type, so a caller never has to know which freeze step complained.
+        raise FetchRefusedError(f"station payload is unusable: {exc}") from exc

@@ -242,6 +242,12 @@ class CancelReceipt:
         return self.code is RejectionCode.CANCEL_REFUSED_ALREADY_COMMITTED
 
 
+#: Mission states the ledger may still walk forward to ``reserved_pending_commit``. Anything
+#: past this point on the commit path is a mission that already holds airspace, and the
+#: ledger refuses it with a reason instead of re-committing it (conventions section 9).
+_REOPENABLE = frozenset({"draft", "eligible", "planning", "reserved_pending_commit"})
+
+
 class ReservationCommitLedger:
     """The only writer of committed airspace in the system."""
 
@@ -405,9 +411,7 @@ class ReservationCommitLedger:
 
         # ---- step 1: validate duplicate request identity
         self._fault.fire(CommitStep.VALIDATE_DUPLICATE_IDENTITY)
-        derived_mission_id = deterministic_id(command.commitment_token, "mission")
         await self._store.lock_identity(tx, command.commitment_token)
-        await self._store.lock_identity(tx, f"mission:{derived_mission_id}")
         order: OrderRow | None = await self._store.find_order(tx, command.idempotency_key)
         if order is None:
             raise Declined(
@@ -417,6 +421,21 @@ class ReservationCommitLedger:
                 ),
                 summarise(command.world, None),
             )
+        if order.order_id != command.order_id:
+            raise Declined(
+                Rejection(
+                    RejectionCode.IDENTITY_MISMATCH,
+                    f"idempotency key {command.idempotency_key!r} belongs to order {order.order_id}, "
+                    f"not {command.order_id}",
+                ),
+                summarise(command.world, None),
+            )
+        # One mission per order is the schema's own idempotency guarantee (``uq
+        # tenant_id_order_id``), so the mission identity is derived from the order, never
+        # from the token: a second token replayed against another order cannot manufacture
+        # a second row for the first one.
+        derived_mission_id = deterministic_id(str(order.order_id), "mission")
+        await self._store.lock_identity(tx, f"mission:{derived_mission_id}")
         mission = await self._store.find_mission_by_order(tx, order.order_id)
         if mission is not None and mission.status == "cancelled":
             # Ordering (b) of the cancel/commit race: the cancellation got here first, it
@@ -550,6 +569,16 @@ class ReservationCommitLedger:
         summary = summarise(frozen, selection)
         async with tx.savepoint():
             effective_mission_id = mission.mission_id if mission is not None else mission_id
+            entry_status = mission.status if mission is not None else "draft"
+            if entry_status not in _REOPENABLE:
+                raise Declined(
+                    Rejection(
+                        RejectionCode.IDENTITY_MISMATCH,
+                        f"order {order.order_id} already carries mission {effective_mission_id} "
+                        f"in state {entry_status}; the ledger does not re-commit a mission",
+                    ),
+                    summary,
+                )
             if mission is None:
                 await self._insert_mission(
                     tx, command, effective_mission_id, selection.aircraft.aircraft_id, "draft"
@@ -575,8 +604,9 @@ class ReservationCommitLedger:
                     command.commitment_token,
                     command.config_release_sha,
                 )
-            if mission is None:
-                await self._advance_mission(tx, effective_mission_id, plan_version_id)
+            await self._advance_mission(
+                tx, effective_mission_id, plan_version_id, start=entry_status, stop="reserved_pending_commit"
+            )
             # The vote is taken over the set *as stored*. It can only happen after the
             # tentative INSERT, and it can only be undone by the savepoint.
             final = FinalSet(
@@ -658,10 +688,13 @@ class ReservationCommitLedger:
         mission_id = (
             existing.mission_id
             if existing is not None
-            else deterministic_id(command.commitment_token, "mission")
+            else deterministic_id(str(command.order_id), "mission")
         )
-        if existing is None:
-            await self._insert_mission(tx, command, mission_id, None, "failed")
+        if existing is None and await self._store.mission_status(tx, mission_id) is None:
+            # The anchor row is ``draft``, not ``failed``: what failed is this attempt, and the
+            # decision record is what says so. ``failed`` is a terminal mission state and would
+            # forbid the same order from ever committing - conventions section 9.
+            await self._insert_mission(tx, command, mission_id, None, "draft")
         rejection = refusal.rejection
         detail = rejection.detail if refusal.vote is None else f"{rejection.detail}"
         trace = DecisionTrace(
@@ -675,9 +708,9 @@ class ReservationCommitLedger:
                 claim.stored_key for plan in command.candidates for claim in in_lock_order(plan.claims)
             ),
         )
-        decision_id = deterministic_id(command.commitment_token, "decision", rejection.code.value)
+        decision_id = deterministic_id(str(mission_id), "decision", rejection.code.value)
         await self._write_decision(tx, command, mission_id, None, decision_id, trace)
-        event_id = deterministic_id(command.commitment_token, "event", rejection.code.value)
+        event_id = deterministic_id(str(mission_id), "event", rejection.code.value)
         await self._append_event(tx, command, mission_id, event_id, trace, rejection.code, ())
 
     async def _declined_receipt(
@@ -687,7 +720,7 @@ class ReservationCommitLedger:
         mission_id = (
             existing.mission_id
             if existing is not None
-            else deterministic_id(command.commitment_token, "mission")
+            else deterministic_id(str(command.order_id), "mission")
         )
         rejection = refusal.rejection
         identities = _lock_sequence(claim.stored_key for plan in command.candidates for claim in plan.claims)
@@ -701,8 +734,8 @@ class ReservationCommitLedger:
             plan_version_id=None,
             commitment_token=command.commitment_token,
             reservation_ids=(),
-            decision_record_id=deterministic_id(command.commitment_token, "decision", rejection.code.value),
-            event_id=deterministic_id(command.commitment_token, "event", rejection.code.value),
+            decision_record_id=deterministic_id(str(mission_id), "decision", rejection.code.value),
+            event_id=deterministic_id(str(mission_id), "event", rejection.code.value),
             committed=False,
             duplicate=False,
             code=rejection.code,
@@ -758,7 +791,7 @@ class ReservationCommitLedger:
         of bug conventions section 9 forbids.
         """
         labels = [state.value for state in mission_commit_path()]
-        if start not in labels or stop not in labels or labels.index(start) >= labels.index(stop):
+        if start not in labels or stop not in labels or labels.index(start) > labels.index(stop):
             raise InternalFault(f"{start} -> {stop} is not on the ledger's commit path")
         for hop in labels[labels.index(start) + 1 : labels.index(stop) + 1]:
             assert_mission_can_be_accepted(hop)

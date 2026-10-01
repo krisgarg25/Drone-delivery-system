@@ -8,7 +8,7 @@ because a safety test that silently stops being run is not a safety test.
 The Phase 2 ledger protocol lives in :mod:`droneops_reservations.protocol`,
 :mod:`droneops_reservations.states`, :mod:`droneops_reservations.intake` and
 :mod:`droneops_reservations.commit`; the SQL that executes it lives in the sibling
-module ``droneops_reservations_ledger``, which ``.importlinter``'s ``domain-is-pure``
+module ``droneops_reservations.ledger``, which ``.importlinter``'s ``domain-is-pure``
 contract forbids from inside this package.
 """
 

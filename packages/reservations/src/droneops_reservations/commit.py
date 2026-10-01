@@ -23,7 +23,7 @@ Why the validator is a port and not an import
     and the ledger must not import the checker's internals either, or the second opinion
     becomes a shared assumption. :class:`CommitValidator` is the seam: the ledger knows
     only ``validate(final_set) -> outcome``. The production adapter is
-    ``droneops_reservations_ledger.validators.CheckerCommitValidator`` (real checker,
+    ``droneops_reservations.ledger.validators.CheckerCommitValidator`` (real checker,
     ``check_set`` over the committed set); the deterministic one is
     ``IntervalCommitValidator``. Both are exercised by the same ledger code, so the
     "planner-approved, checker-convicted" proof is about the ledger, not about a stub.

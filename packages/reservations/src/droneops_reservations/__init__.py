@@ -7,7 +7,7 @@ Two authorities meet here and neither is allowed to do the other's job:
   a promotion requires. It never touches SQLAlchemy, asyncpg or
   ``droneops_persistence`` - ``.importlinter``'s ``domain-is-pure`` contract enforces
   that, which is why the SQL that executes the eleven steps lives in the sibling
-  module ``droneops_reservations_ledger``.
+  module ``droneops_reservations.ledger``.
 * the **independent validator votes**. This package owns the promotion rule
   (:func:`promotion`) and the vocabulary it votes in (:class:`Verdict`); the checker
   itself is a different implementation, reached through the :class:`CommitValidator`

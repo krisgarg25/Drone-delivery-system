@@ -21,11 +21,10 @@ from collections import Counter
 
 import asyncpg
 import pytest
+from ledger_support import World, add_orders, cell_claim, command, corridor_claim, make_ledger
 
 from droneops_reservations.errors import RejectionCode
-from droneops_reservations_ledger import LedgerStore, ReservationCommitLedger
-
-from conftest import World, cell_claim, command, corridor_claim, make_ledger
+from droneops_reservations.ledger import LedgerStore, ReservationCommitLedger
 
 pytestmark = pytest.mark.concurrency
 
@@ -43,7 +42,7 @@ REASONED = {
     RejectionCode.DUPLICATE_REQUEST_RESOLVED,
 }
 
-LOCK = "select resource_key from resource_catalog where tenant_id = $1 and resource_key = $2 for update"
+LOCK = "update resource_catalog set label = label where tenant_id = $1 and resource_key = $2"
 
 
 async def _gate(ready: asyncio.Event) -> None:
@@ -68,9 +67,10 @@ async def test_one_hundred_simultaneous_commits_over_one_corridor(
     tokens = [f"stress-{index}-{uuid.uuid4().hex[:8]}" for index in range(100)]
     ledger = make_ledger(store)
     ready = asyncio.Event()
+    demands = await add_orders(store, world, len(tokens))
     tasks = [
-        asyncio.create_task(_gate_then(ready, ledger, world, token, slot))
-        for token, slot in zip(tokens, slots, strict=True)
+        asyncio.create_task(_gate_then(ready, ledger, world, token, slot, *demand))
+        for token, slot, demand in zip(tokens, slots, demands, strict=True)
     ]
     await asyncio.sleep(0)
     ready.set()
@@ -110,9 +110,26 @@ async def test_one_hundred_simultaneous_commits_over_one_corridor(
     assert counts.outbox == counts.events, "an event without an outbox row is a lost publication"
 
 
-async def _gate_then(ready: asyncio.Event, ledger: ReservationCommitLedger, world: World, token: str, slot: int):
+async def _gate_then(
+    ready: asyncio.Event,
+    ledger: ReservationCommitLedger,
+    world: World,
+    token: str,
+    slot: int,
+    order_id: uuid.UUID,
+    idempotency_key: str,
+):
     await ready.wait()
-    return await ledger.commit(world.context(), command(world, token, claims=(corridor_claim(world.corridor, slot),)))
+    return await ledger.commit(
+        world.context(),
+        command(
+            world,
+            token,
+            claims=(corridor_claim(world.corridor, slot),),
+            order_id=order_id,
+            idempotency_key=idempotency_key,
+        ),
+    )
 
 
 async def test_lock_inversion_produces_no_deadlock_and_a_valid_final_set(
@@ -184,6 +201,10 @@ async def _inverted_manual_lock_round(
 
     a = await asyncpg.connect(dsn, timeout=3)
     b = await asyncpg.connect(dsn, timeout=3)
+    # RLS filters every business table on ``app.tenant_id``; without the GUC the locking
+    # statements would match zero rows and no contention - deadlocks=0 proves nothing.
+    for connection in (a, b):
+        await connection.execute("select set_config('app.tenant_id', $1, false)", str(tenant_id))
     try:
         results = await asyncio.gather(
             hold(a, left, right), hold(b, right, left), return_exceptions=True
@@ -275,7 +296,10 @@ async def test_seeded_fuzz_keeps_the_committed_set_valid(
 
     for round_index in range(25):
         attempts = []
-        for _ in range(rng.randint(6, 14)):
+        index = 0
+        planned = rng.randint(6, 14)
+        demand = await add_orders(store, world, planned)
+        for _ in range(planned):
             slot = rng.randrange(0, 24)
             length = rng.randint(1, 6)
             claims = []
@@ -285,7 +309,16 @@ async def test_seeded_fuzz_keeps_the_committed_set_valid(
                 claims.append(cell_claim(rng.choice(cells), slot, length_minutes=length))
             if not claims:
                 continue
-            attempts.append(command(world, f"fuzz-{round_index}-{uuid.uuid4().hex[:8]}", claims=claims))
+            attempts.append(
+                command(
+                    world,
+                    f"fuzz-{round_index}-{uuid.uuid4().hex[:8]}",
+                    claims=claims,
+                    order_id=demand[index][0],
+                    idempotency_key=demand[index][1],
+                )
+            )
+            index += 1
 
         ledger = make_ledger(store)
         receipts = await asyncio.gather(

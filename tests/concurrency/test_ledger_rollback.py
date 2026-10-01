@@ -17,14 +17,15 @@ import uuid
 
 import asyncpg
 import pytest
+from ledger_support import World, add_order, cell_claim, command, corridor_claim, make_ledger, seed_world
+
 from droneops_conflict_checker import CheckerPolicy
-from droneops_contracts.errors import ErrorResponse  # noqa: F401 - proves contracts is importable here
-
+from droneops_contracts.errors import (
+    ErrorResponse,  # noqa: F401 - proves contracts is importable here
+)
 from droneops_reservations.errors import RejectionCode, StepFault
+from droneops_reservations.ledger import LedgerStore
 from droneops_reservations.protocol import CommitStep
-from droneops_reservations_ledger import LedgerStore, ReservationCommitLedger
-
-from conftest import World, cell_claim, command, corridor_claim, make_ledger, seed_world
 
 pytestmark = pytest.mark.concurrency
 
@@ -64,7 +65,7 @@ async def test_forcing_failure_at_each_step_leaves_nothing_behind(
     assert await _counts(store, world.tenant_id, token) == (0, 0, 0, 0, 0, 0), (
         f"step {step.number} ({step.description}) left operational or explanatory rows"
     )
-    assert await ledger.decisions(world.context(), _mission_for(token)) == ()
+    assert await ledger.decisions(world.context(), _mission_for(world.order_id)) == ()
 
     # The locks are gone with the transaction: the same resources commit cleanly next.
     healthy = make_ledger(store)
@@ -85,24 +86,25 @@ async def test_a_conflict_the_ledger_did_not_expect_is_still_a_rollback(
     """
     ledger = make_ledger(store)
     planted = uuid.uuid4()
+    # The holder is somebody else's order: this tenant's own order must stay uncommitted, so
+    # what the ledger meets at step 8 is a foreign committed row, not its own mission.
+    foreign_order, _ = await add_order(store, world)
     async with store.transaction(world.tenant_id) as tx:
         await tx.execute(
             "insert into mission (id, order_id, tenant_id, status, priority_class, policy_version) "
             "values ($1, $2, $3, 'accepted', 'routine', $4)",
             planted,
-            world.order_id,
+            foreign_order,
             world.tenant_id,
             world.policy_version,
         )
         await tx.execute(
             "insert into reservation (id, tenant_id, mission_id, resource_key, resource_kind, "
             "valid_during, state, commitment_token, config_release_sha) "
-            "values ($5, $3, $1, $6, 'corridor', tstzrange($7, $8, '[)'), 'committed', $9, $10)",
-            planted,
-            world.order_id,
-            world.tenant_id,
-            world.policy_version,
+            "values ($1, $2, $3, $4, 'corridor', tstzrange($5, $6, '[)'), 'committed', $7, $8)",
             uuid.uuid4(),
+            world.tenant_id,
+            planted,
             f"corridor:{world.corridor}",
             *command(world, "planted", slot=9).candidates[0].ordered_claims()[0].window.as_datetimes(),
             "planted-token",
@@ -132,16 +134,22 @@ async def test_the_database_refuses_a_committed_overlap_written_past_the_ledger(
     ``unresolved`` row and a windowed key over the same cell are both invisible to it.
     Those cases are the ledger's step-8 recheck and the independent validator's job.
     """
-    mission = uuid.uuid4()
     token = f"direct-{uuid.uuid4().hex[:8]}"
+    rows_written = 0
 
     async def insert(commitment: str) -> None:
+        nonlocal rows_written
+        rows_written += 1
+        # Each out-of-band row is a different order's mission: ``unique (tenant_id,
+        # order_id)`` means one order cannot hold two accepted missions.
+        own_order, _ = await add_order(store, world)
+        own_mission = uuid.uuid4()
         async with store.transaction(world.tenant_id) as tx:
             await tx.execute(
                 "insert into mission (id, order_id, tenant_id, status, priority_class, policy_version) "
                 "values ($1, $2, $3, 'accepted', 'routine', $4)",
-                mission,
-                world.order_id,
+                own_mission,
+                own_order,
                 world.tenant_id,
                 world.policy_version,
             )
@@ -152,7 +160,7 @@ async def test_the_database_refuses_a_committed_overlap_written_past_the_ledger(
                 "values ($1, $2, $3, $4, 'corridor', tstzrange($5, $6, '[)'), 'committed', $7, $8)",
                 uuid.uuid4(),
                 world.tenant_id,
-                mission,
+                own_mission,
                 f"corridor:{world.corridor}",
                 start,
                 end,
@@ -165,8 +173,8 @@ async def test_the_database_refuses_a_committed_overlap_written_past_the_ledger(
         await insert(f"{token}-again")
 
 
-def _mission_for(token: str) -> uuid.UUID:
-    """The mission id the ledger would have derived for this token."""
+def _mission_for(order_id: uuid.UUID) -> uuid.UUID:
+    """The mission id the ledger derives for an order - one mission per order."""
     from droneops_reservations.commit import deterministic_id
 
-    return deterministic_id(token, "mission")
+    return deterministic_id(str(order_id), "mission")

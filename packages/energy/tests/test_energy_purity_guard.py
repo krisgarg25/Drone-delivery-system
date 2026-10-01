@@ -9,10 +9,13 @@ review, so this file reuses that approach for ``droneops_energy``.
 Four independent guards:
 
 1. **Import deny list** - ``httpx``, ``socket``, ``requests``, ``urllib``,
-   ``sqlalchemy``, ``time``, ``os``, ``pathlib``, ``random``, ``subprocess``,
-   ``threading`` and the rest of the outside world may not be imported at all.
+   ``sqlalchemy``, ``alembic``, ``asyncpg``, ``time``, ``os``, ``pathlib``,
+   ``random``, ``subprocess``, ``threading`` and the rest of the outside world may
+   not be imported at all, and neither may the workspace packages that *own* a
+   database or a clock (``droneops_persistence``, ``droneops_platform``).
 2. **Import allow list** - the inverse check, so a dependency cannot arrive simply
-   because nobody thought to forbid it in advance.
+   because nobody thought to forbid it in advance. This is the load-bearing gate:
+   domain reuse is whitelisted by name, never assumed.
 3. **Call scan** - wall-clock reads, unseeded randomness and file access detected
    on the syntax tree rather than as text, because they can arrive through an
    alias.
@@ -38,9 +41,13 @@ from droneops_energy import MissionEnergyRequest, assess_mission
 
 SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "droneops_energy"
 
-#: Modules that reach the outside world or read a clock.
+#: Modules that reach the outside world or read a clock. The database names mirror
+#: .importlinter's `energy-has-no-database` contract, so the two agree on what
+#: "impure" means instead of one of them drifting.
 FORBIDDEN_MODULES = frozenset(
     {
+        "alembic",
+        "asyncpg",
         "asyncio",
         "http",
         "httpx",
@@ -48,6 +55,8 @@ FORBIDDEN_MODULES = frozenset(
         "os",
         "pathlib",
         "pickle",
+        "psycopg",
+        "psycopg2",
         "random",
         "requests",
         "shelve",
@@ -107,8 +116,25 @@ FORBIDDEN_BUILTINS = frozenset({"eval", "exec", "open", "__import__", "compile",
 #: The two modules whose floats are the documented tolerance boundary.
 MATH_RUNTIME_MODULES = frozenset({"trig.py", "model.py", "numeric.py"})
 
-#: No droneops package may be reached from the energy kernel except contracts.
-ALLOWED_DRONEOPS = frozenset({"droneops_energy", "droneops_contracts"})
+#: The workspace packages the kernel may never reach, and why:
+#: ``droneops_persistence`` is the database, which conventions.md section 7 lists as
+#: the one package boundary the energy kernel must not own; ``droneops_platform``
+#: owns the clocks, IDs and auth port, so importing it is a wall clock arriving
+#: through the side door -- exactly what section 4 forbids.
+#:
+#: Reaching any *other* domain package is permitted, and deliberately so.
+#: conventions.md section 7 requires energy to own the energy model; it never asks
+#: energy to own geodesy. ``geometry.py`` bridging a corridor polyline to integer
+#: legs therefore calls geom-core's finished, tested ``geodesic_distance_mm`` and
+#: ``initial_bearing_deg`` rather than carrying a second distance formula inside the
+#: kernel -- two formulas that can disagree about the same route is a safety defect,
+#: not a purity win, and it would put the float leak the bridge exists to close back
+#: into the model. This stays a strong guard because ``ALLOWED_MODULES`` is a
+#: positive allow list: a new domain dependency still has to be added by name, with
+#: a reason, and anything absent from it fails. What is tightened below is the part
+#: that actually threatens determinism -- network, clock, ``time``, unseeded
+#: ``random`` and persistence.
+FORBIDDEN_DRONEOPS_PACKAGES = frozenset({"droneops_persistence", "droneops_platform"})
 
 
 def package_files() -> list[Path]:
@@ -165,18 +191,56 @@ def test_package_source_is_present() -> None:
     assert len(package_files()) >= 9, "the energy kernel lost a module"
 
 
+def import_violations(source: str, name: str = "probe.py") -> list[str]:
+    """Every import-level purity violation in a module's source, as the guard sees it.
+
+    Shared by the scan over the real package and by the negative self-test below, so
+    the two cannot drift apart.
+    """
+    offenders: list[str] = []
+    for module, type_only in imported_modules(ast.parse(source)):
+        top = module.split(".")[0]
+        if top in FORBIDDEN_MODULES:
+            offenders.append(f"{name} imports {module}")
+        if top not in ALLOWED_MODULES:
+            offenders.append(f"{name} imports {top}, which is not allow-listed")
+        if top in FORBIDDEN_DRONEOPS_PACKAGES:
+            offenders.append(f"{name} reaches {top}: database or clock ownership")
+        if top == "math" and not (type_only or name in MATH_RUNTIME_MODULES):
+            offenders.append(f"{name} uses math at runtime outside the kernel's own files")
+    return offenders
+
+
 @pytest.mark.parametrize("path", package_files(), ids=lambda path: path.name)
 def test_no_forbidden_import(path: Path) -> None:
-    for module, type_only in imported_modules(parse(path)):
-        top = module.split(".")[0]
-        assert top not in FORBIDDEN_MODULES, f"{path.name} imports {module}"
-        assert top in ALLOWED_MODULES, f"{path.name} imports {top}, which is not allow-listed"
-        if top.startswith("droneops_"):
-            assert top in ALLOWED_DRONEOPS, f"{path.name} reaches {top} from the energy kernel"
-        if top == "math":
-            assert type_only or path.name in MATH_RUNTIME_MODULES, (
-                f"{path.name} uses math at runtime; only {sorted(MATH_RUNTIME_MODULES)} may"
-            )
+    assert import_violations(path.read_text(encoding="utf-8"), path.name) == []
+
+
+#: Each of these must be caught. A deny list that has never been seen to bite is a
+#: comment, not a check -- and this guard was just loosened in one direction, so the
+#: other direction is now proven rather than assumed.
+GUARD_PROBES = {
+    "database-driver": "import httpx",
+    "raw-socket": "from socket import socket",
+    "wall-clock": "import time",
+    "unseeded-random": "import random",
+    "orm": "from sqlalchemy import select",
+    "migrations": "import alembic",
+    "asyncpg": "import asyncpg",
+    "persistence-package": "from droneops_persistence import get_session",
+    "platform-clock-port": "import droneops_platform",
+    "undeclared-dependency": "import pandas",
+}
+
+
+@pytest.mark.parametrize("label", sorted(GUARD_PROBES))
+def test_the_guard_bites_on_every_forbidden_import(label: str) -> None:
+    assert import_violations(GUARD_PROBES[label]), f"{label} walked past the purity guard"
+
+
+def test_the_guard_still_permits_domain_reuse() -> None:
+    """The one behaviour this file changed: geom-core is a legitimate import."""
+    assert import_violations("from droneops_geom_core import GeoPoint, geodesic_distance_mm") == []
 
 
 @pytest.mark.parametrize("path", package_files(), ids=lambda path: path.name)

@@ -233,6 +233,7 @@ update mission
 
 SELECT_MISSION_ROWS = """
 select id::text as reservation_id,
+       mission_id,
        resource_key,
        state::text as state,
        lower(valid_during) as valid_from,
@@ -246,7 +247,8 @@ select id::text as reservation_id,
 SELECT_NEXT_EVENT_SEQ = """
 select coalesce(max(event_seq), 0) + 1 as next_seq
   from domain_event
- where stream_type = $2::event_stream_type and stream_id = $3
+ where tenant_id = $1
+   and stream_type = $2::event_stream_type and stream_id = $3
 """
 
 INSERT_DOMAIN_EVENT = """

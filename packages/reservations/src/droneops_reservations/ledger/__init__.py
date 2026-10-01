@@ -1,4 +1,4 @@
-"""``droneops_reservations_ledger`` - the SQL half of the reservation ledger.
+"""``droneops_reservations.ledger`` - the SQL half of the reservation ledger.
 
 The sibling package ``droneops_reservations`` holds the decision logic and is forbidden
 by ``.importlinter``'s ``domain-is-pure`` contract from importing SQLAlchemy, asyncpg or
